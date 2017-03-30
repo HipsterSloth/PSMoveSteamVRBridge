@@ -1,3 +1,5 @@
+[![Documentation](https://codedocs.xyz/HipsterSloth/PSMoveSteamVRBridge.svg)](https://codedocs.xyz/HipsterSloth/PSMoveSteamVRBridge/)
+
 # PSMoveSteamVRBridge
 PSMoveSteamVRBridge is a client for [PSMoveService](https://github.com/cboulay/PSMoveService) that takes the pose and button data of PSMove/DualShock4/PSNavi controller and forwards it into SteamVR. The [FAQ](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki/Frequently-Asked-Questions) is a good starting point for any specific questions you may have about the project. 
 
@@ -8,6 +10,10 @@ You can download prebuilt releases (Windows only at the moment) from the [Releas
 
 # Building from source
 If you want to make modifications to the service or want to debug it, you can build the project from source by following the  [Building-from-source](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki/Building-from-source) instructions. Currently Win10 is the only supported build platform with OS X and Linux support hopefully coming in the near future.
+
+# Documentation
+* General setup guides, troubleshooting and design docs can be found on the [wiki](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki)
+* Documentation for the code is hosted on [codedocs](https://codedocs.xyz/HipsterSloth/PSMoveSteamVRBridge/) (In Progress)
 
 # Getting Help
 Please start with the wiki. If you can't find help with your problem then please search through the issues (especially the closed ones) to see if your problem has been addressed already. If you still find no previous mention of your problem then you have one of two options:
