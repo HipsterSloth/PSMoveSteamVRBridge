@@ -279,6 +279,9 @@ private:
 	float m_fVirtuallExtendControllersYMeters;
 	float m_fVirtuallExtendControllersZMeters;
 
+	// virtually rotate controller
+	bool m_fVirtuallyRotateController;
+
 	// delay in resetting touchpad position after touchpad press
 	bool m_bDelayAfterTouchpadPress;
 

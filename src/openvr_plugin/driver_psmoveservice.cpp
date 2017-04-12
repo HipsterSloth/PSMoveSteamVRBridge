@@ -1393,6 +1393,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 	, m_bUsePSNaviDPadRealign(false)
 	, m_fVirtuallExtendControllersZMeters(0.0f)
 	, m_fVirtuallExtendControllersYMeters(0.0f)
+	, m_fVirtuallyRotateController(false)
 	, m_bDelayAfterTouchpadPress(false)
 	, m_bTouchpadWasActive(false)
 	, m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis(false)
@@ -1500,7 +1501,8 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 			m_bRumbleSuppressed= LoadBool(pSettings, "psmove_settings", "rumble_suppressed", m_bRumbleSuppressed);
 			m_fVirtuallExtendControllersYMeters = LoadFloat(pSettings, "psmove_settings", "psmove_extend_y", 0.0f);
 			m_fVirtuallExtendControllersZMeters = LoadFloat(pSettings, "psmove_settings", "psmove_extend_z", 0.0f);
-			m_fControllerMetersInFrontOfHmdAtCalibration= 
+			m_fVirtuallyRotateController = LoadBool(pSettings, "psmove_settings", "psmove_rotate", false);
+			m_fControllerMetersInFrontOfHmdAtCalibration=
 				LoadFloat(pSettings, "psmove", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
 			m_bUseControllerOrientationInHMDAlignment= LoadBool(pSettings, "psmove_settings", "use_orientation_in_alignment", true);
 
@@ -1983,8 +1985,9 @@ void CPSMoveControllerLatest::UpdateControllerState()
             if (bStartRealignHMDTriggered)                
             {
 				PSMVector3f controllerBallPointedUpEuler = {(float)M_PI_2, 0.0f, 0.0f};
-				PSMQuatf controllerBallPointedUpQuat = PSM_QuatfCreateFromAngles(&controllerBallPointedUpEuler);
 
+				PSMQuatf controllerBallPointedUpQuat = PSM_QuatfCreateFromAngles(&controllerBallPointedUpEuler);
+				
 				#if LOG_REALIGN_TO_HMD != 0
 				DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
 				#endif
@@ -2666,13 +2669,13 @@ void CPSMoveControllerLatest::UpdateTrackingState()
             {
                 const PSMQuatf &orientation = view.Pose.Orientation;
 
-                m_Pose.qRotation.w = orientation.w;
+                m_Pose.qRotation.w = m_fVirtuallyRotateController ? -orientation.w : orientation.w;
                 m_Pose.qRotation.x = orientation.x;
                 m_Pose.qRotation.y = orientation.y;
-                m_Pose.qRotation.z = orientation.z;
+                m_Pose.qRotation.z = m_fVirtuallyRotateController ? -orientation.z : orientation.z;
             }
-
-            // Set the physics state of the controller
+			
+			// Set the physics state of the controller
             {
                 const PSMPhysicsData &physicsData= view.PhysicsData;
 
