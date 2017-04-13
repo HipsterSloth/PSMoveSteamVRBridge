@@ -2045,8 +2045,9 @@ void CPSMoveControllerLatest::UpdateControllerState()
 					if (bHasChildNavi)
 					{
 						const PSMPSNavi &naviClientView = m_PSMChildControllerView->ControllerState.PSNaviState;
-						const float thumbStickX = naviClientView.Stick_XAxis;
-						const float thumbStickY = naviClientView.Stick_YAxis;
+						const float thumbStickX = (naviClientView.Stick_XAxis / 128.f) - 1.f;
+						const float thumbStickY = (naviClientView.Stick_YAxis / 128.f) - 1.f;
+						const float thumbStickAngle = atanf(abs(thumbStickY / thumbStickX));
 						const float thumbStickRadialDist= sqrtf(thumbStickX*thumbStickX + thumbStickY*thumbStickY);
 
 						if (thumbStickRadialDist >= m_thumbstickDeadzone)
@@ -2055,8 +2056,8 @@ void CPSMoveControllerLatest::UpdateControllerState()
 							const float rescaledRadius= (thumbStickRadialDist - m_thumbstickDeadzone) / (1.f - m_thumbstickDeadzone);
 
 							// Set the thumbstick axis
-							NewState.rAxis[0].x = (rescaledRadius / thumbStickRadialDist) * thumbStickX;
-							NewState.rAxis[0].y = (rescaledRadius / thumbStickRadialDist) * thumbStickY;
+							NewState.rAxis[0].x = (rescaledRadius / thumbStickRadialDist) * thumbStickX * abs(cosf(thumbStickAngle));
+							NewState.rAxis[0].y = (rescaledRadius / thumbStickRadialDist) * thumbStickY * abs(sinf(thumbStickAngle));
 
 							// Also make sure the touchpad is considered "touched" 
 							// if the thumbstick is outside of the deadzone
