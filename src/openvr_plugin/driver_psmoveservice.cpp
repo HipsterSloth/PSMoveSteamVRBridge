@@ -1404,6 +1404,8 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 	, m_triggerAxisIndex(1)
 	, m_thumbstickDeadzone(k_defaultThumbstickDeadZoneRadius)
 	, m_bThumbstickTouchAsPress(true)
+	, m_fLinearVelocityMultiplier(1.f)
+	, m_fLinearVelocityExponent(0.f)
 {
     char svrIdentifier[256];
     GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerId);
@@ -1471,6 +1473,12 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 				LoadBool(pSettings, "psmove", "use_spatial_offset_after_touchpad_press_as_touchpad_axis", false);
 			m_fMetersPerTouchpadAxisUnits= 
 				LoadFloat(pSettings, "psmove", "meters_per_touchpad_units", .075f);
+
+			// Throwing power settings
+			m_fLinearVelocityMultiplier =
+				LoadFloat(pSettings, "psmove_settings", "linear_velocity_multiplier", 1.f);
+			m_fLinearVelocityExponent =
+				LoadFloat(pSettings, "psmove_settings", "linear_velocity_exponent", 0.f);
 
 			// Chack for PSNavi up/down mappings
 			char remapButtonToButtonString[32];
@@ -2676,9 +2684,15 @@ void CPSMoveControllerLatest::UpdateTrackingState()
             {
                 const PSMPhysicsData &physicsData= view.PhysicsData;
 
-                m_Pose.vecVelocity[0] = physicsData.LinearVelocityCmPerSec.x * k_fScalePSMoveAPIToMeters;
-                m_Pose.vecVelocity[1] = physicsData.LinearVelocityCmPerSec.y * k_fScalePSMoveAPIToMeters;
-                m_Pose.vecVelocity[2] = physicsData.LinearVelocityCmPerSec.z * k_fScalePSMoveAPIToMeters;
+				m_Pose.vecVelocity[0] = physicsData.LinearVelocityCmPerSec.x
+					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.x), m_fLinearVelocityExponent))
+					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
+				m_Pose.vecVelocity[1] = physicsData.LinearVelocityCmPerSec.y
+					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.y), m_fLinearVelocityExponent))
+					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
+				m_Pose.vecVelocity[2] = physicsData.LinearVelocityCmPerSec.z
+					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.z), m_fLinearVelocityExponent))
+					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
 
                 m_Pose.vecAcceleration[0] = physicsData.LinearAccelerationCmPerSecSqr.x * k_fScalePSMoveAPIToMeters;
                 m_Pose.vecAcceleration[1] = physicsData.LinearAccelerationCmPerSecSqr.y * k_fScalePSMoveAPIToMeters;

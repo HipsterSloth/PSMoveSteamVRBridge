@@ -340,6 +340,10 @@ private:
 	// Treat a thumbstick touch also as a press
 	bool m_bThumbstickTouchAsPress;
 
+	// Settings values. Used to adjust throwing power using linear velocity and acceleration.
+	float m_fLinearVelocityMultiplier;
+	float m_fLinearVelocityExponent;
+
     // Callbacks
     static void start_controller_response_callback(const PSMResponseMessage *response, void *userdata);
 };
