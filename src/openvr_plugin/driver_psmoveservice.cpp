@@ -1467,7 +1467,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 
 			// Trigger mapping
 			m_triggerAxisIndex = LoadInt(pSettings, "psmove", "trigger_axis_index", 1);
-			m_navitriggerAxisIndex = LoadInt(pSettings, "psnavi_settings", "trigger_axis_index", m_triggerAxisIndex);
+			m_navitriggerAxisIndex = LoadInt(pSettings, "psnavi_button", "trigger_axis_index", m_triggerAxisIndex);
 
 			// Touch pad settings
 			m_bDelayAfterTouchpadPress = 
@@ -2165,6 +2165,20 @@ void CPSMoveControllerLatest::UpdateControllerState()
 				NewState.rAxis[m_triggerAxisIndex].x = clientView.TriggerValue / 255.f;
 				NewState.rAxis[m_triggerAxisIndex].y = 0.f;
 
+				if (m_triggerAxisIndex != 1)
+				{
+					static const uint64_t s_kTriggerButtonMask = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger);
+					if ((NewState.ulButtonPressed & s_kTriggerButtonMask) || (NewState.ulButtonTouched & s_kTriggerButtonMask))
+					{
+						NewState.rAxis[1].x = 1.f;
+					}
+					else
+					{
+						NewState.rAxis[1].x = 0.f;
+					}
+					NewState.rAxis[1].y = 0.f;
+				}
+
 				// Attached PSNavi Trigger handling
 				if (bHasChildNavi)
 				{
@@ -2189,6 +2203,20 @@ void CPSMoveControllerLatest::UpdateControllerState()
 					}
 
 					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_triggerAxisIndex, NewState.rAxis[m_triggerAxisIndex]);
+				}
+				if (m_triggerAxisIndex != 1 && NewState.rAxis[1].x != m_ControllerState.rAxis[1].x)
+				{
+					if (NewState.rAxis[1].x > 0.1f)
+					{
+						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + 1));
+					}
+
+					if (NewState.rAxis[1].x > 0.8f)
+					{
+						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + 1));
+					}
+
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
 				}
 				if (m_navitriggerAxisIndex != m_triggerAxisIndex && (NewState.rAxis[m_navitriggerAxisIndex].x != m_ControllerState.rAxis[m_navitriggerAxisIndex].x))
 				{
