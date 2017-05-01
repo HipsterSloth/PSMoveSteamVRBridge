@@ -336,6 +336,7 @@ private:
 
 	// The axis to use for trigger input
 	int m_triggerAxisIndex;
+	int m_navitriggerAxisIndex;
 
 	// The size of the deadzone for the controller's thumbstick
 	float m_thumbstickDeadzone;
