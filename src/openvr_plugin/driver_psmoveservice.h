@@ -267,6 +267,9 @@ private:
 	float m_fVirtuallExtendControllersYMeters;
 	float m_fVirtuallExtendControllersZMeters;
 
+	// virtually rotate controller
+	bool m_fVirtuallyRotateController;
+
 	// delay in resetting touchpad position after touchpad press
 	bool m_bDelayAfterTouchpadPress;
 
@@ -321,12 +324,17 @@ private:
 
 	// The axis to use for trigger input
 	int m_triggerAxisIndex;
+	int m_navitriggerAxisIndex;
 
 	// The size of the deadzone for the controller's thumbstick
 	float m_thumbstickDeadzone;
 
 	// Treat a thumbstick touch also as a press
 	bool m_bThumbstickTouchAsPress;
+
+	// Settings values. Used to adjust throwing power using linear velocity and acceleration.
+	float m_fLinearVelocityMultiplier;
+	float m_fLinearVelocityExponent;
 
     // Callbacks
     static void start_controller_response_callback(const PSMResponseMessage *response, void *userdata);

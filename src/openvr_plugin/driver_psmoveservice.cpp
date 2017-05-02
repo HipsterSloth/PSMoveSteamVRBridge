@@ -1379,6 +1379,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 	, m_bUsePSNaviDPadRealign(false)
 	, m_fVirtuallExtendControllersZMeters(0.0f)
 	, m_fVirtuallExtendControllersYMeters(0.0f)
+	, m_fVirtuallyRotateController(false)
 	, m_bDelayAfterTouchpadPress(false)
 	, m_bTouchpadWasActive(false)
 	, m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis(false)
@@ -1388,8 +1389,11 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 	, m_driverSpaceRotationAtTouchpadPressTime(*k_psm_quaternion_identity)
 	, m_bUseControllerOrientationInHMDAlignment(false)
 	, m_triggerAxisIndex(1)
+	, m_navitriggerAxisIndex(1)
 	, m_thumbstickDeadzone(k_defaultThumbstickDeadZoneRadius)
 	, m_bThumbstickTouchAsPress(true)
+	, m_fLinearVelocityMultiplier(1.f)
+	, m_fLinearVelocityExponent(0.f)
 {
     char svrIdentifier[256];
     GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerId);
@@ -1449,6 +1453,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 
 			// Trigger mapping
 			m_triggerAxisIndex = LoadInt(pSettings, "psmove", "trigger_axis_index", 1);
+			m_navitriggerAxisIndex = LoadInt(pSettings, "psnavi_button", "trigger_axis_index", m_triggerAxisIndex);
 
 			// Touch pad settings
 			m_bDelayAfterTouchpadPress = 
@@ -1457,6 +1462,12 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 				LoadBool(pSettings, "psmove", "use_spatial_offset_after_touchpad_press_as_touchpad_axis", false);
 			m_fMetersPerTouchpadAxisUnits= 
 				LoadFloat(pSettings, "psmove", "meters_per_touchpad_units", .075f);
+
+			// Throwing power settings
+			m_fLinearVelocityMultiplier =
+				LoadFloat(pSettings, "psmove_settings", "linear_velocity_multiplier", 1.f);
+			m_fLinearVelocityExponent =
+				LoadFloat(pSettings, "psmove_settings", "linear_velocity_exponent", 0.f);
 
 			// Chack for PSNavi up/down mappings
 			char remapButtonToButtonString[32];
@@ -1486,6 +1497,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 			m_bRumbleSuppressed= LoadBool(pSettings, "psmove_settings", "rumble_suppressed", m_bRumbleSuppressed);
 			m_fVirtuallExtendControllersYMeters = LoadFloat(pSettings, "psmove_settings", "psmove_extend_y", 0.0f);
 			m_fVirtuallExtendControllersZMeters = LoadFloat(pSettings, "psmove_settings", "psmove_extend_z", 0.0f);
+			m_fVirtuallyRotateController = LoadBool(pSettings, "psmove_settings", "psmove_rotate", false);
 			m_fControllerMetersInFrontOfHmdAtCalibration= 
 				LoadFloat(pSettings, "psmove", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
 			m_bUseControllerOrientationInHMDAlignment= LoadBool(pSettings, "psmove_settings", "use_orientation_in_alignment", true);
@@ -1965,6 +1977,7 @@ void CPSMoveControllerLatest::UpdateControllerState()
             if (bStartRealignHMDTriggered)                
             {
 				PSMVector3f controllerBallPointedUpEuler = {(float)M_PI_2, 0.0f, 0.0f};
+
 				PSMQuatf controllerBallPointedUpQuat = PSM_QuatfCreateFromAngles(&controllerBallPointedUpEuler);
 
 				DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
@@ -2025,8 +2038,9 @@ void CPSMoveControllerLatest::UpdateControllerState()
 					if (bHasChildNavi)
 					{
 						const PSMPSNavi &naviClientView = m_PSMChildControllerView->ControllerState.PSNaviState;
-						const float thumbStickX = naviClientView.Stick_XAxis;
-						const float thumbStickY = naviClientView.Stick_YAxis;
+						const float thumbStickX = (naviClientView.Stick_XAxis / 128.f) - 1.f;
+						const float thumbStickY = (naviClientView.Stick_YAxis / 128.f) - 1.f;
+						const float thumbStickAngle = atanf(abs(thumbStickY / thumbStickX));
 						const float thumbStickRadialDist= sqrtf(thumbStickX*thumbStickX + thumbStickY*thumbStickY);
 
 						if (thumbStickRadialDist >= m_thumbstickDeadzone)
@@ -2035,8 +2049,8 @@ void CPSMoveControllerLatest::UpdateControllerState()
 							const float rescaledRadius= (thumbStickRadialDist - m_thumbstickDeadzone) / (1.f - m_thumbstickDeadzone);
 
 							// Set the thumbstick axis
-							NewState.rAxis[0].x = (rescaledRadius / thumbStickRadialDist) * thumbStickX;
-							NewState.rAxis[0].y = (rescaledRadius / thumbStickRadialDist) * thumbStickY;
+							NewState.rAxis[0].x = (rescaledRadius / thumbStickRadialDist) * thumbStickX * abs(cosf(thumbStickAngle));
+							NewState.rAxis[0].y = (rescaledRadius / thumbStickRadialDist) * thumbStickY * abs(sinf(thumbStickAngle));
 
 							// Also make sure the touchpad is considered "touched" 
 							// if the thumbstick is outside of the deadzone
@@ -2131,12 +2145,28 @@ void CPSMoveControllerLatest::UpdateControllerState()
 				NewState.rAxis[m_triggerAxisIndex].x = clientView.TriggerValue / 255.f;
 				NewState.rAxis[m_triggerAxisIndex].y = 0.f;
 
+				if (m_triggerAxisIndex != 1)
+				{
+					static const uint64_t s_kTriggerButtonMask = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger);
+					if ((NewState.ulButtonPressed & s_kTriggerButtonMask) || (NewState.ulButtonTouched & s_kTriggerButtonMask))
+					{
+						NewState.rAxis[1].x = 1.f;
+					}
+					else
+					{
+						NewState.rAxis[1].x = 0.f;
+					}
+					NewState.rAxis[1].y = 0.f;
+				}
+
 				// Attached PSNavi Trigger handling
 				if (bHasChildNavi)
 				{
 					const PSMPSNavi &naviClientView = m_PSMChildControllerView->ControllerState.PSNaviState;
 
-					NewState.rAxis[m_triggerAxisIndex].x = fmaxf(NewState.rAxis[m_triggerAxisIndex].x, naviClientView.TriggerValue / 255.f);
+					NewState.rAxis[m_navitriggerAxisIndex].x = fmaxf(NewState.rAxis[m_navitriggerAxisIndex].x, naviClientView.TriggerValue / 255.f);
+					if (m_navitriggerAxisIndex != m_triggerAxisIndex)
+						NewState.rAxis[m_navitriggerAxisIndex].y = 0.f;
 				}
 
 				// Trigger SteamVR Events
@@ -2153,6 +2183,34 @@ void CPSMoveControllerLatest::UpdateControllerState()
 					}
 
 					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_triggerAxisIndex, NewState.rAxis[m_triggerAxisIndex]);
+				}
+				if (m_triggerAxisIndex != 1 && NewState.rAxis[1].x != m_ControllerState.rAxis[1].x)
+				{
+					if (NewState.rAxis[1].x > 0.1f)
+					{
+						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + 1));
+					}
+
+					if (NewState.rAxis[1].x > 0.8f)
+					{
+						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + 1));
+					}
+
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+				}
+				if (m_navitriggerAxisIndex != m_triggerAxisIndex && (NewState.rAxis[m_navitriggerAxisIndex].x != m_ControllerState.rAxis[m_navitriggerAxisIndex].x))
+				{
+					if (NewState.rAxis[m_navitriggerAxisIndex].x > 0.1f)
+					{
+						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_navitriggerAxisIndex));
+					}
+
+					if (NewState.rAxis[m_navitriggerAxisIndex].x > 0.8f)
+					{
+						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_navitriggerAxisIndex));
+					}
+
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_navitriggerAxisIndex, NewState.rAxis[m_navitriggerAxisIndex]);
 				}
 
 				// Update the battery charge state
@@ -2642,19 +2700,25 @@ void CPSMoveControllerLatest::UpdateTrackingState()
             {
                 const PSMQuatf &orientation = view.Pose.Orientation;
 
-                m_Pose.qRotation.w = orientation.w;
+                m_Pose.qRotation.w = m_fVirtuallyRotateController ? -orientation.w : orientation.w;
                 m_Pose.qRotation.x = orientation.x;
                 m_Pose.qRotation.y = orientation.y;
-                m_Pose.qRotation.z = orientation.z;
+                m_Pose.qRotation.z = m_fVirtuallyRotateController ? -orientation.z : orientation.z;
             }
 
             // Set the physics state of the controller
             {
                 const PSMPhysicsData &physicsData= view.PhysicsData;
 
-                m_Pose.vecVelocity[0] = physicsData.LinearVelocityCmPerSec.x * k_fScalePSMoveAPIToMeters;
-                m_Pose.vecVelocity[1] = physicsData.LinearVelocityCmPerSec.y * k_fScalePSMoveAPIToMeters;
-                m_Pose.vecVelocity[2] = physicsData.LinearVelocityCmPerSec.z * k_fScalePSMoveAPIToMeters;
+				m_Pose.vecVelocity[0] = physicsData.LinearVelocityCmPerSec.x
+					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.x), m_fLinearVelocityExponent))
+					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
+				m_Pose.vecVelocity[1] = physicsData.LinearVelocityCmPerSec.y
+					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.y), m_fLinearVelocityExponent))
+					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
+				m_Pose.vecVelocity[2] = physicsData.LinearVelocityCmPerSec.z
+					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.z), m_fLinearVelocityExponent))
+					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
 
                 m_Pose.vecAcceleration[0] = physicsData.LinearAccelerationCmPerSecSqr.x * k_fScalePSMoveAPIToMeters;
                 m_Pose.vecAcceleration[1] = physicsData.LinearAccelerationCmPerSecSqr.y * k_fScalePSMoveAPIToMeters;
