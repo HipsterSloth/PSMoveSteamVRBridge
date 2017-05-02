@@ -121,9 +121,6 @@ public:
     virtual void RefreshWorldFromDriverPose();
     virtual const char *GetSteamVRIdentifier() const;
 
-	typedef void(*t_hmd_request_callback)(const PSMPosef &hmd_pose_meters, void *userdata);
-	void RequestLatestHMDPose(float maxPoseAgeMilliseconds = 0.f, t_hmd_request_callback callback = nullptr, void *userdata = nullptr);
-
 protected:
 	vr::PropertyContainerHandle_t m_ulPropertyContainer;
 
@@ -137,14 +134,6 @@ protected:
     vr::DriverPose_t m_Pose;
     unsigned short m_firmware_revision;
     unsigned short m_hardware_revision;
-
-	// Cached HMD pose received from the monitor_psmove app
-	PSMPosef m_lastHMDPoseInMeters;
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastHMDPoseTime;
-	bool m_bIsLastHMDPoseValid;
-
-	t_hmd_request_callback m_hmdResultCallback;
-	void *m_hmdResultUserData;
 };
 
 class CPSMoveControllerLatest : public CPSMoveTrackedDeviceLatest, public vr::IVRControllerComponent
@@ -235,8 +224,7 @@ private:
     typedef void ( vr::IVRServerDriverHost::*ButtonUpdate )( uint32_t unWhichDevice, vr::EVRButtonId eButtonId, double eventTimeOffset );
 
     void SendButtonUpdates( ButtonUpdate ButtonEvent, uint64_t ulMask );
-	void StartRealignHMDTrackingSpace();
-	static void FinishRealignHMDTrackingSpace(const PSMPosef &hmd_pose_meters, void *userdata);
+	void RealignHMDTrackingSpace();
     void UpdateControllerState();
 	void UpdateControllerStateFromPsMoveButtonState(ePSControllerType controllerType, ePSButtonID buttonId, PSMButtonState buttonState, vr::VRControllerState_t* pControllerStateToUpdate);
 	void GetMetersPosInRotSpace(const PSMQuatf *rotation, PSMVector3f* outPosition);

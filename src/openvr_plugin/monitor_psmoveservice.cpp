@@ -101,12 +101,6 @@ protected:
 					break;
 
 				case vr::VREvent_VendorSpecific_Reserved_Start + 0:
-					// Driver has requested HMD pose.  
-                    // The driver can't see the HMD coordinates, so we forward those from our client view.
-					if ( IsPSController( Event.trackedDeviceIndex ) )
-					{
-						SendHMDPose( Event );
-					}
 					break;
 				}
 			}
@@ -179,29 +173,6 @@ protected:
 		vr::VROverlay()->HideOverlay( m_OverlayHandle );
 		vr::VROverlay()->DestroyOverlay( m_OverlayHandle );
 		m_OverlayHandle = vr::k_ulOverlayHandleInvalid;
-	}
-
-	/** Send a message to the driver with the HMD coordinates (which are not available to the server side) */
-	bool SendHMDPose( const vr::VREvent_t & Event )
-	{
-		vr::TrackedDevicePose_t hmdPose;
-		vr::VRSystem()->GetDeviceToAbsoluteTrackingPose( vr::TrackingUniverseRawAndUncalibrated, 0.f, &hmdPose, 1 );
-		if ( !hmdPose.bPoseIsValid )
-			return false;
-
-		std::ostringstream ss;
-		char rgchReplyBuf[256];
-
-		ss << "psmove:hmd_pose";
-		for ( int i = 0; i < 3; ++i )
-		{
-			for ( int j = 0; j < 4; ++j )
-			{
-				ss << " " << hmdPose.mDeviceToAbsoluteTracking.m[i][j];
-			}
-		}
-		vr::VRSystem()->DriverDebugRequest( Event.trackedDeviceIndex, ss.str().c_str(), rgchReplyBuf, sizeof( rgchReplyBuf ) );
-		return true;
 	}
 
 	void Shutdown()

@@ -47,7 +47,6 @@
 #endif
 
 #define LOG_TOUCHPAD_EMULATION 0
-#define LOG_REALIGN_TO_HMD 1
 
 //==================================================================================================
 // Constants
@@ -190,7 +189,6 @@ static void DriverLog( const char *pMsgFormat, ... )
     va_end( args );
 }
 
-
 static std::string PSMVector3fToString( const PSMVector3f& position )
 {
 	std::ostringstream stringBuilder;
@@ -213,7 +211,6 @@ static std::string PSMPosefToString(const PSMPosef& pose)
 	stringBuilder << "[Pos: " << PSMVector3fToString(pose.Position) << ", Rot:" << PSMQuatfToString(pose.Orientation) << "]";
 	return stringBuilder.str();
 }
-
 
 //==================================================================================================
 // Math Helpers
@@ -284,6 +281,119 @@ static PSMPosef openvrMatrixExtractPSMPosef(const vr::HmdMatrix34_t &openVRTrans
 	pose.Position = openvrMatrixExtractPSMVector3f(openVRTransform);
 
 	return pose;
+}
+
+//==================================================================================================
+// HMD Helpers
+//==================================================================================================
+bool GetHMDDeviceIndex(vr::TrackedDeviceIndex_t *out_hmd_device_index)
+{
+    bool bSuccess= false;
+    vr::CVRPropertyHelpers *properties_interface= vr::VRProperties();
+
+    if (properties_interface != nullptr)
+    {
+        for (vr::TrackedDeviceIndex_t nDeviceIndex= 0; nDeviceIndex < vr::k_unMaxTrackedDeviceCount; ++nDeviceIndex)
+        {
+            vr::PropertyContainerHandle_t container_handle= properties_interface->TrackedDeviceToPropertyContainer(nDeviceIndex);
+
+            if (container_handle != vr::k_ulInvalidPropertyContainer)
+            {
+                vr::ETrackedPropertyError error_code;
+                bool bHasDisplayComponent= properties_interface->GetBoolProperty(container_handle, vr::Prop_HasDisplayComponent_Bool, &error_code);
+
+                if (error_code == vr::TrackedProp_Success && bHasDisplayComponent)
+                {
+                    *out_hmd_device_index= nDeviceIndex;
+                    bSuccess= true;
+                    break;
+                }
+            }
+        }
+    }
+
+    return bSuccess;
+}
+
+bool GetTrackedDevicePose(const vr::TrackedDeviceIndex_t device_index, PSMPosef *out_device_pose)
+{
+    bool bSuccess= false;
+    vr::IVRServerDriverHost *driver_host_interface= vr::VRServerDriverHost();
+
+    if (driver_host_interface != nullptr && device_index != vr::k_unTrackedDeviceIndexInvalid)
+    {
+        vr::TrackedDevicePose_t trackedDevicePoses[vr::k_unMaxTrackedDeviceCount];
+        vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, trackedDevicePoses, vr::k_unMaxTrackedDeviceCount);
+
+        const vr::TrackedDevicePose_t &device_pose= trackedDevicePoses[device_index];
+        if (device_pose.bDeviceIsConnected && device_pose.bPoseIsValid)
+        {
+            *out_device_pose= openvrMatrixExtractPSMPosef(device_pose.mDeviceToAbsoluteTracking);
+            bSuccess= true;
+        }
+    }
+
+    return bSuccess;
+}
+
+//==================================================================================================
+// Path Helpers
+//==================================================================================================
+#ifndef MAX_UNICODE_PATH
+	#define MAX_UNICODE_PATH 32767
+#endif
+
+#ifndef MAX_UNICODE_PATH_IN_UTF8
+	#define MAX_UNICODE_PATH_IN_UTF8 (MAX_UNICODE_PATH * 4)
+#endif
+
+char Path_GetSlash()
+{
+#if defined(_WIN32)
+	return '\\';
+#else
+	return '/';
+#endif
+}
+
+/** Returns the specified path without its filename */
+std::string Path_StripFilename( const std::string & sPath, char slash )
+{
+	if( slash == 0 )
+		slash = Path_GetSlash();
+
+	std::string::size_type n = sPath.find_last_of( slash );
+	if( n == std::string::npos )
+		return sPath;
+	else
+		return std::string( sPath.begin(), sPath.begin() + n );
+}
+
+std::string Path_GetThisModulePath()
+{
+	// gets the path of vrclient.dll itself
+#ifdef WIN32
+	HMODULE hmodule = NULL;
+
+	::GetModuleHandleEx( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, reinterpret_cast<LPCTSTR>(Path_GetThisModulePath), &hmodule );
+
+	wchar_t *pwchPath = new wchar_t[MAX_UNICODE_PATH];
+	char *pchPath = new char[ MAX_UNICODE_PATH_IN_UTF8 ];
+	::GetModuleFileNameW( hmodule, pwchPath, MAX_UNICODE_PATH );
+	WideCharToMultiByte( CP_UTF8, 0, pwchPath, -1, pchPath, MAX_UNICODE_PATH_IN_UTF8, NULL, NULL );
+	delete[] pwchPath;
+
+	std::string sPath = pchPath;
+	delete [] pchPath;
+	return sPath;
+
+#elif defined( OSX ) || defined( LINUX )
+	// get the addr of a function in vrclient.so and then ask the dlopen system about it
+	Dl_info info;
+	dladdr( (void *)Path_GetThisModulePath, &info );
+	return info.dli_fname;
+#endif
+
 }
 
 //==================================================================================================
@@ -874,9 +984,7 @@ void CServerDriver_PSMoveService::HandleTrackerListReponse(
 void CServerDriver_PSMoveService::SetHMDTrackingSpace(
     const PSMPosef &origin_pose)
 {
-	#if LOG_REALIGN_TO_HMD != 0
-		DriverLog("Begin CServerDriver_PSMoveService::SetHMDTrackingSpace()\n");
-	#endif
+	DriverLog("Begin CServerDriver_PSMoveService::SetHMDTrackingSpace()\n");
 
     m_worldFromDriverPose = origin_pose;
 
@@ -1024,9 +1132,7 @@ void CServerDriver_PSMoveService::AllocateUniquePSMoveTracker(const PSMClientTra
 // and tell us the pose of the HMD at the moment we want to calibrate.
 void CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal( const char * pchDriverInstallDir )
 {
-#if LOG_REALIGN_TO_HMD != 0
 	DriverLog("Entered CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal(%s)\n", pchDriverInstallDir);
-#endif
 
     m_bLaunchedPSMoveMonitor = true;
 
@@ -1056,10 +1162,8 @@ void CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal( const char * pch
 	strncpy_s(monitor_args_cstr, monitor_args.c_str(), sizeof(monitor_args_cstr) - 1);
 	monitor_args_cstr[sizeof(monitor_args_cstr) - 1] = '\0';
 
-	#if LOG_REALIGN_TO_HMD != 0
-		DriverLog("CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal() monitor_psmove windows full path: %s\n", monitor_path_and_exe.c_str());
-		DriverLog("CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal() monitor_psmove windows args: %s\n", monitor_args_cstr);
-	#endif
+	DriverLog("CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal() monitor_psmove windows full path: %s\n", monitor_path_and_exe.c_str());
+	DriverLog("CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal() monitor_psmove windows args: %s\n", monitor_args_cstr);
 
 	STARTUPINFOA sInfoProcess = { 0 };
 	sInfoProcess.cb = sizeof(STARTUPINFOW);
@@ -1101,26 +1205,24 @@ void CServerDriver_PSMoveService::LaunchPSMoveMonitor()
         return;
 	}
 
-	#if LOG_REALIGN_TO_HMD != 0
 	DriverLog("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - Called\n");
-	#endif
 
     //###HipsterSloth $TODO - Ideally we would get the install path as a property, but this property fetch doesn't seem to work...
 	//vr::ETrackedPropertyError errorCode;
 	//std::string driverInstallDir= vr::VRProperties()->GetStringProperty(requestingDevicePropertyHandle, vr::Prop_InstallPath_String, &errorCode);
 
     //...so for now, just assume that we're running out of the steamvr folder
-    char szCurrentDirectory[MAX_PATH];
-    if (getcwd(szCurrentDirectory, MAX_PATH - 1) != 0)
+    std::string driver_dll_path= Path_StripFilename(Path_GetThisModulePath(), 0);
+    if (driver_dll_path.length() > 0)
     {
-        DriverLog("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - vrserver working directory: %s\n", szCurrentDirectory);
+        DriverLog("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - driver dll directory: %s\n", driver_dll_path);
 
 	    std::ostringstream driverInstallDirBuilder;
-        driverInstallDirBuilder << szCurrentDirectory;
+        driverInstallDirBuilder << driver_dll_path;
         #if defined( _WIN64 ) || defined( _WIN32 )
-            driverInstallDirBuilder << "\\drivers\\psmove";
+            driverInstallDirBuilder << "\\..\\..";
         #else
-            driverInstallDirBuilder << "/drivers/psmove";
+            driverInstallDirBuilder << "/../..";
         #endif
 	    const std::string driverInstallDir = driverInstallDirBuilder.str();
 
@@ -1154,12 +1256,6 @@ CPSMoveTrackedDeviceLatest::CPSMoveTrackedDeviceLatest()
 
     m_firmware_revision = 0x0001;
     m_hardware_revision = 0x0001;
-
-	m_lastHMDPoseInMeters= *k_psm_pose_identity;
-	m_lastHMDPoseTime= std::chrono::time_point<std::chrono::high_resolution_clock>();
-	m_bIsLastHMDPoseValid= false;
-	m_hmdResultCallback = nullptr;
-	m_hmdResultUserData = nullptr;
 }
 
 CPSMoveTrackedDeviceLatest::~CPSMoveTrackedDeviceLatest()
@@ -1203,115 +1299,9 @@ void *CPSMoveTrackedDeviceLatest::GetComponent(const char *pchComponentNameAndVe
     return NULL;
 }
 
-void CPSMoveTrackedDeviceLatest::DebugRequest(
-    const char * pchRequest,
-    char * pchResponseBuffer,
-    uint32_t unResponseBufferSize)
+void CPSMoveTrackedDeviceLatest::DebugRequest(const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize)
 {
-	std::istringstream ss( pchRequest );
-	std::string strCmd;
 
-	ss >> strCmd;
-	if (strCmd == "psmove:hmd_pose")
-	{
-		#if LOG_REALIGN_TO_HMD != 0
-			DriverLog( "CPSMoveTrackedDeviceLatest::DebugRequest(): %s\n", strCmd.c_str() );
-		#endif
-
-		// monitor_psmove is calling us back with HMD tracking information
-		vr::HmdMatrix34_t hmdTransform;
-
-
-		#if LOG_REALIGN_TO_HMD != 0
-			std::ostringstream matrixStringBuilder;
-			matrixStringBuilder << "hmdTransform.m:\n\t";
-		#endif
-
-		for (int i = 0; i < 3; ++i)
-		{
-			for (int j = 0; j < 4; ++j)
-			{
-				ss >> hmdTransform.m[i][j];
-				#if LOG_REALIGN_TO_HMD != 0
-					matrixStringBuilder << "[" << hmdTransform.m[i][j] << "] ";
-				#endif
-			}
-			#if LOG_REALIGN_TO_HMD != 0
-				matrixStringBuilder << "\n\t";
-			#endif
-		}
-
-		m_lastHMDPoseInMeters = openvrMatrixExtractPSMPosef(hmdTransform);
-
-		#if LOG_REALIGN_TO_HMD != 0
-			matrixStringBuilder << "\n";
-			DriverLog(matrixStringBuilder.str().c_str());
-
-			DriverLog("Extracted pose: %s \n", PSMPosefToString(m_lastHMDPoseInMeters).c_str() );
-		#endif
-
-		m_lastHMDPoseTime = std::chrono::high_resolution_clock::now();
-
-		if (m_hmdResultCallback != nullptr)
-		{
-			m_hmdResultCallback(m_lastHMDPoseInMeters, m_hmdResultUserData);
-			m_hmdResultCallback = nullptr;
-			m_hmdResultUserData = nullptr;
-		}
-	}
-}
-
-void CPSMoveTrackedDeviceLatest::RequestLatestHMDPose(
-	float maxPoseAgeMilliseconds,
-	CPSMoveTrackedDeviceLatest::t_hmd_request_callback callback,
-	void *userdata)
-{
-	#if LOG_REALIGN_TO_HMD != 0
-		DriverLog("Begin CPSMoveTrackedDeviceLatest::RequestLatestHMDPose()\n");
-	#endif
-
-	assert(m_hmdResultCallback == nullptr || m_hmdResultCallback == callback);
-
-	if (m_hmdResultCallback == nullptr)
-	{
-		bool bUsedCachedHMDPose;
-
-		if (m_bIsLastHMDPoseValid)
-		{
-			std::chrono::duration<float, std::milli> hmdPoseAge =
-				std::chrono::high_resolution_clock::now() - m_lastHMDPoseTime;
-
-			bUsedCachedHMDPose = hmdPoseAge.count() < maxPoseAgeMilliseconds;
-		}
-		else
-		{
-			bUsedCachedHMDPose = false;
-		}
-
-		if (bUsedCachedHMDPose)
-		{
-			// Give the callback the cached pose immediately
-			if (callback != nullptr)
-			{
-				callback(m_lastHMDPoseInMeters, userdata);
-			}
-		}
-		else
-		{
-			static vr::VREvent_Data_t nodata = { 0 };
-
-			// Register the callback
-			m_hmdResultCallback = callback;
-			m_hmdResultUserData = userdata;
-
-			// Ask monitor_psmove to tell us the latest HMD pose
-			vr::VRServerDriverHost()->VendorSpecificEvent(
-				m_unSteamVRTrackedDeviceId,
-				(vr::EVREventType) (vr::VREvent_VendorSpecific_Reserved_Start + 0),
-				nodata,
-				0);
-		}
-	}
 }
 
 vr::DriverPose_t CPSMoveTrackedDeviceLatest::GetPose()
@@ -1338,15 +1328,11 @@ void CPSMoveTrackedDeviceLatest::Update()
 
 void CPSMoveTrackedDeviceLatest::RefreshWorldFromDriverPose()
 {
-	#if LOG_REALIGN_TO_HMD != 0
-		DriverLog( "Begin CServerDriver_PSMoveService::RefreshWorldFromDriverPose() for device %s\n", GetSteamVRIdentifier() );
-	#endif
+	DriverLog( "Begin CServerDriver_PSMoveService::RefreshWorldFromDriverPose() for device %s\n", GetSteamVRIdentifier() );
 
     const PSMPosef worldFromDriverPose = g_ServerTrackedDeviceProvider.GetWorldFromDriverPose();
 
-	#if LOG_REALIGN_TO_HMD != 0
-		DriverLog("worldFromDriverPose: %s \n", PSMPosefToString(worldFromDriverPose).c_str());
-	#endif
+	DriverLog("worldFromDriverPose: %s \n", PSMPosefToString(worldFromDriverPose).c_str());
 
     // Transform used to convert from PSMove Tracking space to OpenVR Tracking Space
     m_Pose.qWorldFromDriverRotation.w = worldFromDriverPose.Orientation.w;
@@ -1513,9 +1499,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 			DriverLog("meters_per_touchpad_units: %f\n", m_fMetersPerTouchpadAxisUnits);
 			#endif
 
-			#if LOG_REALIGN_TO_HMD != 0
 			DriverLog("m_fControllerMetersInFrontOfHmdAtCalibration(psmove): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
-			#endif
 		}
 		else if (psmControllerType == PSMController_DualShock4)
 		{
@@ -1543,9 +1527,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 			m_fControllerMetersInFrontOfHmdAtCalibration= 
 				LoadFloat(pSettings, "dualshock4_settings", "cm_in_front_of_hmd_at_calibration", 16.f) / 100.f;
 
-			#if LOG_REALIGN_TO_HMD != 0
 			DriverLog("m_fControllerMetersInFrontOfHmdAtCalibration(ds4): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
-			#endif
 		}
 	}
 }
@@ -1985,14 +1967,12 @@ void CPSMoveControllerLatest::UpdateControllerState()
 				PSMVector3f controllerBallPointedUpEuler = {(float)M_PI_2, 0.0f, 0.0f};
 				PSMQuatf controllerBallPointedUpQuat = PSM_QuatfCreateFromAngles(&controllerBallPointedUpEuler);
 
-				#if LOG_REALIGN_TO_HMD != 0
 				DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
-				#endif
 
 				PSM_ResetControllerOrientationAsync(m_PSMControllerView->ControllerID, &controllerBallPointedUpQuat, nullptr);
 				m_bResetPoseRequestSent = true;
 
-				StartRealignHMDTrackingSpace();
+				RealignHMDTrackingSpace();
 				m_bResetAlignRequestSent = true;
             }
 			else if (bRecenterRequestTriggered)
@@ -2224,14 +2204,12 @@ void CPSMoveControllerLatest::UpdateControllerState()
 			// recenter the controller orientation pose and start the realignment of the controller to HMD tracking space.
 			if (bStartRealignHMDTriggered)
 			{
-				#if LOG_REALIGN_TO_HMD != 0
 				DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
-				#endif
 
 				PSM_ResetControllerOrientationAsync(m_PSMControllerView->ControllerID, k_psm_quaternion_identity, nullptr);
 				m_bResetPoseRequestSent = true;
 
-				StartRealignHMDTrackingSpace();
+				RealignHMDTrackingSpace();
 			}
 			else if (bRecenterRequestTriggered)
 			{
@@ -2469,124 +2447,123 @@ void CPSMoveControllerLatest::GetMetersPosInRotSpace(const PSMQuatf *rotation, P
 	*out_position = PSM_QuatfRotateVector(&viewOrientationInverse, &unrotatedPositionMeters);
 }
 
-void CPSMoveControllerLatest::StartRealignHMDTrackingSpace()
+void CPSMoveControllerLatest::RealignHMDTrackingSpace()
 {
-	#if LOG_REALIGN_TO_HMD != 0
-		DriverLog( "Begin CPSMoveControllerLatest::StartRealignHMDTrackingSpace()\n" );
-	#endif
+	DriverLog( "Begin CPSMoveControllerLatest::RealignHMDTrackingSpace()\n" );
 
-	if (m_trackingStatus != vr::TrackingResult_Calibrating_InProgress)
-	{
-		m_trackingStatus = vr::TrackingResult_Calibrating_InProgress;
-		RequestLatestHMDPose(0.f, CPSMoveControllerLatest::FinishRealignHMDTrackingSpace, this);
-	}
-}
+    vr::TrackedDeviceIndex_t hmd_device_index= vr::k_unTrackedDeviceIndexInvalid;
+    if (GetHMDDeviceIndex(&hmd_device_index))
+    {
+        DriverLog( "CPSMoveControllerLatest::RealignHMDTrackingSpace() - HMD Device Index= %u\n", hmd_device_index);
+    }
+    else
+    {
+        DriverLog( "CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Device Index\n" );
+        return;
+    }
 
-void CPSMoveControllerLatest::FinishRealignHMDTrackingSpace(
-	const PSMPosef &hmd_pose_raw_meters, 
-	void *userdata)
-{
-
-	CPSMoveControllerLatest* pThis = (CPSMoveControllerLatest*)userdata;
-
-	#if LOG_REALIGN_TO_HMD != 0
-		DriverLog("Begin CPSMoveControllerLatest::FinishRealignHMDTrackingSpace()\n");
-	#endif
-
-	PSMPosef hmd_pose_meters = hmd_pose_raw_meters;
-	DriverLog("hmd_pose_meters(raw): %s \n", PSMPosefToString(hmd_pose_meters).c_str());
+    PSMPosef hmd_pose_meters;
+    if (GetTrackedDevicePose(hmd_device_index, &hmd_pose_meters))
+    {
+        DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - hmd_pose_meters: %s \n", PSMPosefToString(hmd_pose_meters).c_str());
+    }
+    else
+    {
+        DriverLog( "CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Pose\n" );
+        return;
+    }
 
 	// Make the HMD orientation only contain a yaw
-	hmd_pose_meters.Orientation = ExtractHMDYawQuaternion(hmd_pose_raw_meters.Orientation);
+	hmd_pose_meters.Orientation = ExtractHMDYawQuaternion(hmd_pose_meters.Orientation);
 	DriverLog("hmd_pose_meters(yaw-only): %s \n", PSMPosefToString(hmd_pose_meters).c_str());
 
 	// We have the transform of the HMD in world space. 
 	// However the HMD and the controller aren't quite aligned depending on the controller type:
 	PSMQuatf controllerOrientationInHmdSpaceQuat= *k_psm_quaternion_identity;
 	PSMVector3f controllerLocalOffsetFromHmdPosition= *k_psm_float_vector3_zero;
-	if (pThis->m_PSMControllerType == PSMControllerType::PSMController_Move)
+	if (m_PSMControllerType == PSMControllerType::PSMController_Move)
 	{
 		// Rotation) The controller's local -Z axis (from the center to the glowing ball) is currently pointed 
 		//    in the direction of the HMD's local +Y axis, 
 		// Translation) The controller's position is a few inches ahead of the HMD's on the HMD's local -Z axis. 
 		PSMVector3f eulerPitch= {(float)M_PI_2, 0.0f, 0.0f};
 		controllerOrientationInHmdSpaceQuat = PSM_QuatfCreateFromAngles(&eulerPitch);
-		controllerLocalOffsetFromHmdPosition = {0.0f, 0.0f, -1.0f * pThis->m_fControllerMetersInFrontOfHmdAtCalibration};
+		controllerLocalOffsetFromHmdPosition = {0.0f, 0.0f, -1.0f * m_fControllerMetersInFrontOfHmdAtCalibration};
 	}
-	else if (pThis->m_PSMControllerType == PSMControllerType::PSMController_DualShock4)
+	else if (m_PSMControllerType == PSMControllerType::PSMController_DualShock4)
 	{
 		// Translation) The controller's position is a few inches ahead of the HMD's on the HMD's local -Z axis. 
-		controllerLocalOffsetFromHmdPosition = {0.0f, 0.0f, -1.0f * pThis->m_fControllerMetersInFrontOfHmdAtCalibration};
+		controllerLocalOffsetFromHmdPosition = {0.0f, 0.0f, -1.0f * m_fControllerMetersInFrontOfHmdAtCalibration};
 	}
 
 	// Transform the HMD's world space transform to where we expect the controller's world space transform to be.
 	PSMPosef controllerPoseRelativeToHMD =
 		PSM_PosefCreate(&controllerLocalOffsetFromHmdPosition, &controllerOrientationInHmdSpaceQuat);
 
-	DriverLog("controllerPoseRelativeToHMD: %s \n", PSMPosefToString(controllerPoseRelativeToHMD).c_str());
+	DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controllerPoseRelativeToHMD: %s \n", PSMPosefToString(controllerPoseRelativeToHMD).c_str());
 
 	// Compute the expected controller pose in HMD tracking space (i.e. "World Space")
 	PSMPosef controller_world_space_pose = PSM_PosefConcat(&controllerPoseRelativeToHMD, &hmd_pose_meters);
-	DriverLog("controller_world_space_pose: %s \n", PSMPosefToString(controller_world_space_pose).c_str());
+	DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_world_space_pose: %s \n", PSMPosefToString(controller_world_space_pose).c_str());
 
+    /*
+        We now have the transform of the controller in world space -- controller_world_space_pose
 
-	// We now have the transform of the controller in world space -- controller_world_space_pose
+        We also have the transform of the controller in driver space -- psmove_pose_meters
 
-	// We also have the transform of the controller in driver space -- psmove_pose_meters
-
-	// We need the transform that goes from driver space to world space -- driver_pose_to_world_pose
-	// psmove_pose_meters * driver_pose_to_world_pose = controller_world_space_pose
-	// psmove_pose_meters.inverse() * psmove_pose_meters * driver_pose_to_world_pose = psmove_pose_meters.inverse() * controller_world_space_pose
-	// driver_pose_to_world_pose = psmove_pose_meters.inverse() * controller_world_space_pose
-	CPSMoveControllerLatest *controller = reinterpret_cast<CPSMoveControllerLatest *>(userdata);
+        We need the transform that goes from driver space to world space -- driver_pose_to_world_pose
+        psmove_pose_meters * driver_pose_to_world_pose = controller_world_space_pose
+        psmove_pose_meters.inverse() * psmove_pose_meters * driver_pose_to_world_pose = psmove_pose_meters.inverse() * controller_world_space_pose
+        driver_pose_to_world_pose = psmove_pose_meters.inverse() * controller_world_space_pose
+    */
 
 	// Get the current pose from the controller view instead of using the driver's cached
 	// value because the user may have triggered a pose reset, in which case the driver's
 	// cached pose might not yet be up to date by the time this callback is triggered.
 	PSMPosef controller_pose_meters = *k_psm_pose_identity;
-	if (pThis->m_PSMControllerType == PSMControllerType::PSMController_Move)
+	if (m_PSMControllerType == PSMControllerType::PSMController_Move)
 	{
-		controller_pose_meters = controller->m_PSMControllerView->ControllerState.PSMoveState.Pose;
+		controller_pose_meters = m_PSMControllerView->ControllerState.PSMoveState.Pose;
 	}
-	else if (pThis->m_PSMControllerType == PSMControllerType::PSMController_DualShock4)
+	else if (m_PSMControllerType == PSMControllerType::PSMController_DualShock4)
 	{
-		controller_pose_meters = controller->m_PSMControllerView->ControllerState.PSDS4State.Pose;
+		controller_pose_meters = m_PSMControllerView->ControllerState.PSDS4State.Pose;
 	}
-	DriverLog("controller_pose_meters(raw): %s \n", PSMPosefToString(controller_pose_meters).c_str());
+	DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(raw): %s \n", PSMPosefToString(controller_pose_meters).c_str());
 
 	// PSMove Position is in cm, but OpenVR stores position in meters
 	controller_pose_meters.Position= PSM_Vector3fScale(&controller_pose_meters.Position, k_fScalePSMoveAPIToMeters);
 
-	if (pThis->m_PSMControllerType == PSMControllerType::PSMController_Move)
+	if (m_PSMControllerType == PSMControllerType::PSMController_Move)
 	{
-		if (pThis->m_bUseControllerOrientationInHMDAlignment)
+		if (m_bUseControllerOrientationInHMDAlignment)
 		{
 			// Extract only the yaw from the controller orientation (assume it's mostly held upright)
 			controller_pose_meters.Orientation = ExtractPSMoveYawQuaternion(controller_pose_meters.Orientation);
-			DriverLog("controller_pose_meters(yaw-only): %s \n", PSMPosefToString(controller_pose_meters).c_str());
+			DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(yaw-only): %s \n", PSMPosefToString(controller_pose_meters).c_str());
 		}
 		else
 		{
 			const PSMVector3f eulerPitch= {(float)M_PI_2, 0.0f, 0.0f};
 
 			controller_pose_meters.Orientation = PSM_QuatfCreateFromAngles(&eulerPitch);
-			DriverLog("controller_pose_meters(no-rotation): %s \n", PSMPosefToString(controller_pose_meters).c_str());
+			DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", PSMPosefToString(controller_pose_meters).c_str());
 		}
 	}
-	else if (pThis->m_PSMControllerType == PSMControllerType::PSMController_DualShock4)
+	else if (m_PSMControllerType == PSMControllerType::PSMController_DualShock4)
 	{
 		controller_pose_meters.Orientation = *k_psm_quaternion_identity;
-		DriverLog("controller_pose_meters(no-rotation): %s \n", PSMPosefToString(controller_pose_meters).c_str());
+		DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", PSMPosefToString(controller_pose_meters).c_str());
 	}	
 
 	PSMPosef controller_pose_inv = PSM_PosefInverse(&controller_pose_meters);
-	DriverLog("controller_pose_inv: %s \n", PSMPosefToString(controller_pose_inv).c_str());
+	DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_inv: %s \n", PSMPosefToString(controller_pose_inv).c_str());
 
 	PSMPosef driver_pose_to_world_pose = PSM_PosefConcat(&controller_pose_inv, &controller_world_space_pose);
-	DriverLog("driver_pose_to_world_pose: %s \n", PSMPosefToString(driver_pose_to_world_pose).c_str());
+	DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - driver_pose_to_world_pose: %s \n", PSMPosefToString(driver_pose_to_world_pose).c_str());
 
 	PSMPosef test_composed_controller_world_space = PSM_PosefConcat(&controller_pose_meters, &driver_pose_to_world_pose);
-	DriverLog("test_composed_controller_world_space: %s \n", PSMPosefToString(test_composed_controller_world_space).c_str());
+	DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - test_composed_controller_world_space: %s \n", PSMPosefToString(test_composed_controller_world_space).c_str());
 
 	g_ServerTrackedDeviceProvider.SetHMDTrackingSpace(driver_pose_to_world_pose);
 }
@@ -3016,8 +2993,6 @@ void CPSMoveTrackerLatest::SetClientTrackerInfo(
 {
     m_tracker_info = *trackerInfo;
 
-    //### HipsterSloth $TODO expose on the pose state if calibration is currently active
-    //m_Pose.result = vr::TrackingResult_Calibrating_InProgress;
     m_Pose.result = vr::TrackingResult_Running_OK;
 
     m_Pose.deviceIsConnected = true;
