@@ -9,7 +9,7 @@
 #endif
 
 #define PSM_DRIVER_VERSION_MAJOR   1
-#define PSM_DRIVER_VERSION_MINOR   0
+#define PSM_DRIVER_VERSION_MINOR   1
 #define PSM_DRIVER_VERSION_HOTFIX  0
 
 /// "Major.Minor"
