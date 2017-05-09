@@ -1366,7 +1366,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
     , m_PSMChildControllerView(nullptr)
     , m_nPoseSequenceNumber(0)
     , m_bIsBatteryCharging(false)
-    , m_fBatteryChargeFraction(1.f)
+    , m_fBatteryChargeFraction(0.f)
 	, m_bRumbleSuppressed(false)
     , m_pendingHapticPulseDuration(0)
     , m_lastTimeRumbleSent()
