@@ -79,7 +79,52 @@ static const char *k_PSButtonNames[CPSMoveControllerLatest::k_EPSButtonID_Count]
     "l3",
     "r1",
     "r2",
-    "r3"
+    "r3",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+};
+
+static const char *k_VirtualButtonNames[CPSMoveControllerLatest::k_EPSButtonID_Count] = {
+    "gamepad_button_0",
+    "gamepad_button_1",
+    "gamepad_button_2",
+    "gamepad_button_3",
+    "gamepad_button_4",
+    "gamepad_button_5",
+    "gamepad_button_6",
+    "gamepad_button_7",
+    "gamepad_button_8",
+    "gamepad_button_9",
+    "gamepad_button_10",
+    "gamepad_button_11",
+    "gamepad_button_12",
+    "gamepad_button_13",
+    "gamepad_button_14",
+    "gamepad_button_15",
+    "gamepad_button_16",
+    "gamepad_button_17",
+    "gamepad_button_18",
+    "gamepad_button_19",
+    "gamepad_button_20",
+    "gamepad_button_21",
+    "gamepad_button_22",
+    "gamepad_button_23",
+    "gamepad_button_24",
+    "gamepad_button_25",
+    "gamepad_button_26",
+    "gamepad_button_27",
+    "gamepad_button_28",
+    "gamepad_button_29",
+    "gamepad_button_30",
+    "gamepad_button_31"
 };
 
 static const int k_max_vr_buttons = 37;
@@ -263,7 +308,77 @@ static PSMQuatf openvrMatrixExtractPSMQuatf(const vr::HmdMatrix34_t &openVRTrans
 		}
 	}
 
+    q= PSM_QuatfNormalizeWithDefault(&q, k_psm_quaternion_identity);
+
 	return q;
+}
+
+static PSMQuatf psmMatrix3fToPSMQuatf(const PSMMatrix3f &psmMat)
+{
+	PSMQuatf q;
+
+	const float(&a)[3][3] = psmMat.m;
+	const float trace = a[0][0] + a[1][1] + a[2][2];
+
+	if (trace > 0)
+	{
+		const float s = 0.5f / sqrtf(trace + 1.0f);
+
+		q.w = 0.25f / s;
+		q.x = (a[2][1] - a[1][2]) * s;
+		q.y = (a[0][2] - a[2][0]) * s;
+		q.z = (a[1][0] - a[0][1]) * s;
+	}
+	else
+	{
+		if (a[0][0] > a[1][1] && a[0][0] > a[2][2])
+		{
+			const float s = 2.0f * sqrtf(1.0f + a[0][0] - a[1][1] - a[2][2]);
+
+			q.w = (a[2][1] - a[1][2]) / s;
+			q.x = 0.25f * s;
+			q.y = (a[0][1] + a[1][0]) / s;
+			q.z = (a[0][2] + a[2][0]) / s;
+		}
+		else if (a[1][1] > a[2][2])
+		{
+			const float s = 2.0f * sqrtf(1.0f + a[1][1] - a[0][0] - a[2][2]);
+
+			q.w = (a[0][2] - a[2][0]) / s;
+			q.x = (a[0][1] + a[1][0]) / s;
+			q.y = 0.25f * s;
+			q.z = (a[1][2] + a[2][1]) / s;
+		}
+		else
+		{
+			const float s = 2.0f * sqrtf(1.0f + a[2][2] - a[0][0] - a[1][1]);
+
+			q.w = (a[1][0] - a[0][1]) / s;
+			q.x = (a[0][2] + a[2][0]) / s;
+			q.y = (a[1][2] + a[2][1]) / s;
+			q.z = 0.25f * s;
+		}
+	}
+
+    q= PSM_QuatfNormalizeWithDefault(&q, k_psm_quaternion_identity);
+
+	return q;
+}
+
+static float psmVector3fDistance(const PSMVector3f &a, const PSMVector3f &b)
+{
+    const PSMVector3f diff= PSM_Vector3fSubtract(&a, &b);
+
+    return PSM_Vector3fLength(&diff);
+}
+
+static PSMVector3f psmVector3fLerp(const PSMVector3f &a, const PSMVector3f &b, float u)
+{
+    const PSMVector3f scaled_a= PSM_Vector3fScale(&a, 1.f - u);
+    const PSMVector3f scaled_b= PSM_Vector3fScale(&b, u);
+    const PSMVector3f result= PSM_Vector3fAdd(&scaled_a, &scaled_b);
+
+    return result;
 }
 
 static PSMVector3f openvrMatrixExtractPSMVector3f(const vr::HmdMatrix34_t &openVRTransform)
@@ -337,6 +452,238 @@ bool GetTrackedDevicePose(const vr::TrackedDeviceIndex_t device_index, PSMPosef 
 }
 
 //==================================================================================================
+// IK Model - Adapted from https://github.com/LastFreeUsername/qufIK/blob/master/cFABRIK.cpp
+//==================================================================================================
+class IHandOrientationSolver
+{
+public:
+    virtual PSMQuatf solveHandOrientation(const PSMPosef &hmdPose, const PSMVector3f &handLocation) = 0;
+};
+
+class CFacingHandOrientationSolver : public IHandOrientationSolver
+{
+public:
+    // right-handed system
+    // +y is up
+    // +x is to the right
+    // -z is going away from you
+    // Distance unit is  meters
+    CFacingHandOrientationSolver()
+    {
+    }
+
+    PSMQuatf solveHandOrientation(const PSMPosef &hmdPose, const PSMVector3f &handLocation) override
+    {
+        // Use the orientation of the HMD as the hand orientation
+        return hmdPose.Orientation;
+    }
+};
+
+// TODO - Doesn't work yet
+#if 0
+class CRadialHandOrientationSolver : public IHandOrientationSolver
+{
+public:
+    // right-handed system
+    // +y is up
+    // +x is to the right
+    // -z is going away from you
+    // Distance unit is  meters
+    CRadialHandOrientationSolver(vr::ETrackedControllerRole hand, float neckLength, float halfShoulderLength)
+        : m_hand(hand)
+        , m_neckLength(neckLength)
+        , m_halfShoulderLength(halfShoulderLength)
+    {
+    }
+
+    PSMQuatf solveHandOrientation(const PSMPosef &hmdPose, const PSMVector3f &handLocation) override
+    {
+        // Assume the left/right shoulder is always pointing perpendicular to HMD forward.
+        // This isn't always true, but it's generally the more comfortable default pose.
+        const PSMPosef shoulderPose= solveWorldShoulderPose(&hmdPose);
+        
+        // Compute the world space locations of the elbow and hand
+        const PSMVector3f shoulderToHand= PSM_Vector3fSubtract(&handLocation, &shoulderPose.Position);
+
+        // Create ortho-normal basis vectors (forward, up, and right) for the hand
+        // from the shoulder position and hand position
+        const PSMVector3f handForward= PSM_Vector3fNormalizeWithDefault(&shoulderToHand, k_psm_float_vector3_k);
+        const PSMVector3f up= *k_psm_float_vector3_j;
+        PSMVector3f handRight= PSM_Vector3fCross(&handForward, &up);
+        handRight= PSM_Vector3fNormalizeWithDefault(&handRight, k_psm_float_vector3_i);
+        const PSMVector3f handUp= PSM_Vector3fCross(&handRight, &handForward);
+
+        // Convert basis vectors into a 3x3 matrix
+        const PSMVector3f negatedHandForward= PSM_Vector3fScale(&handForward, -1.f);
+        const PSMMatrix3f handMat= PSM_Matrix3fCreate(&handRight, &handUp, &negatedHandForward);
+
+        // Convert the hand orientation into a quaternion
+        PSMQuatf handOrientation= psmMatrix3fToPSMQuatf(handMat);
+
+        return handOrientation;
+    }
+
+protected:
+    PSMPosef solveWorldShoulderPose(const PSMPosef *hmdPose)
+    {
+        PSMVector3f localShoulderOffset= {
+            (m_hand == vr::ETrackedControllerRole::TrackedControllerRole_RightHand) ? m_halfShoulderLength : -m_halfShoulderLength,
+            -m_neckLength,
+            0.f};
+        PSMPosef localShoulderPose= PSM_PosefCreate(&localShoulderOffset, k_psm_quaternion_identity);
+        PSMPosef worldShoulderPose= PSM_PosefConcat(&localShoulderPose, hmdPose);
+
+        return worldShoulderPose;
+    }
+
+private:
+    vr::ETrackedControllerRole m_hand;
+    float m_neckLength;
+    float m_halfShoulderLength;
+};
+#endif
+
+// TODO - Doesn't work yet
+#if 0
+class CFABRIKArmSolver : public CRadialHandOrientationSolver
+{
+public:
+    // right-handed system
+    // +y is up
+    // +x is to the right
+    // -z is going away from you
+    // Distance unit is  meters
+    CFABRIKArmSolver(vr::ETrackedControllerRole hand, float neckLength, float halfShoulderLength, float upperArmLength, float lowerArmLength)
+        : CRadialHandOrientationSolver(hand, neckLength, halfShoulderLength)
+        , m_upperArmLength(upperArmLength)
+        , m_lowerArmLength(lowerArmLength)
+        , m_totalArmLength(upperArmLength+lowerArmLength)
+    {
+        d[0]= upperArmLength;
+        d[1]= lowerArmLength;
+
+        ik_points[0]= {0.f, 0.f, 0.f};
+        ik_points[1]= {0.f, -upperArmLength, 0.f};
+        ik_points[2]= {0.f, -upperArmLength, -lowerArmLength};
+    }
+
+    PSMQuatf solveHandOrientation(const PSMPosef &hmdPose, const PSMVector3f &desiredHandLocation) override
+    {
+        // Assume the left/right shoulder is always pointing perpendicular to HMD forward.
+        // This isn't always true, but it's generally the more comfortable default pose.
+        const PSMPosef shoulderPose= solveWorldShoulderPose(&hmdPose);
+        
+        // Solve the end effector of the hand in the local space of the shoulder
+        const PSMVector3f desiredHandLocation_Local= PSM_PosefInverseTransformPoint(&shoulderPose, &desiredHandLocation);
+        solveLocalSpaceArmIK(desiredHandLocation_Local);
+
+        // Compute the world space locations of the elbow and hand
+        const PSMVector3f finalElbowLocation= PSM_PosefTransformPoint(&shoulderPose, &ik_points[1]);
+        const PSMVector3f finalHandLocation= PSM_PosefTransformPoint(&shoulderPose, &ik_points[2]);
+        const PSMVector3f shoulderToHand= PSM_Vector3fSubtract(&finalHandLocation, &shoulderPose.Position);
+
+        // Create ortho-normal basis vectors (forward, up, and right) for the hand
+        // from the 3 IK vertices of the arm (shoulder, elbow, and hand)
+        const PSMVector3f handForward= PSM_Vector3fSubtract(&finalHandLocation, &finalElbowLocation);
+        PSMVector3f up= PSM_Vector3fCross(&shoulderToHand, &handForward);
+        up= PSM_Vector3fNormalizeWithDefault(&up, k_psm_float_vector3_j);
+        PSMVector3f handRight= PSM_Vector3fCross(&handForward, &up);
+        handRight= PSM_Vector3fNormalizeWithDefault(&handRight, k_psm_float_vector3_i);
+        const PSMVector3f handUp= PSM_Vector3fCross(&handRight, &handForward);
+
+        // Convert basis vectors into a 3x3 matrix
+        // NOTE: This assumes identity pose points the controller down the -Z axis
+        const PSMVector3f &handX= handRight;
+        const PSMVector3f &handY= handUp;
+        const PSMVector3f handZ= PSM_Vector3fScale(&handForward, -1.f);
+        const PSMMatrix3f handMat= PSM_Matrix3fCreate(&handX, &handY, &handZ);
+
+        // Convert the hand orientation into a quaternion
+        PSMQuatf handOrientation= psmMatrix3fToPSMQuatf(handMat);
+
+        return handOrientation;
+    }
+
+protected:
+    int solveLocalSpaceArmIK(PSMVector3f target)
+	{
+        float r[ik_chain_size-1];
+        float l[ik_chain_size-1];
+		int count = 0;
+
+		// distance between root and target
+		if(psmVector3fDistance(ik_points[0], target) > m_totalArmLength)
+		{
+			// target is unreachable
+			for(int i=0; i<=ik_chain_size-2; i++)
+			{
+				// find the distance between the target and the joint position
+				r[i] = psmVector3fDistance(ik_points[i], target);
+				l[i]  = d[i] / r[i];
+
+				// find the new joint positions
+				ik_points[i+1] = psmVector3fLerp(ik_points[i], target, l[i]);
+			}
+		}
+		else
+		{
+			// target is reachable; thus, set b as the initial position of the joint pts[0]
+			PSMVector3f b = ik_points[0];
+
+			// check whether the distance between the end effector pts[ik_chain_size-1] and the target is greater than a tolerance
+			float EEdiff = psmVector3fDistance(ik_points[ik_chain_size-1], target);
+
+			while(EEdiff > 0.001f)
+			{
+				count++;
+
+				// STAGE 1: FORWARD REACHING
+				// Set the end effector pts[size-1] as target t
+				ik_points[ik_chain_size-1] = target;
+
+				for(int i=ik_chain_size-2; i>=0; i--)
+				{
+					// find the distance r_i between the new joint position pts_i+1 and the joints pts_i
+					r[i] = psmVector3fDistance(ik_points[i+1], ik_points[i]);
+					l[i]  = d[i] / r[i];
+
+					// find the new joint positions pts_i
+					ik_points[i] = psmVector3fLerp(ik_points[i+1], ik_points[i], l[i]);
+				}
+
+				// STAGE 2: BACKWARD REACHING
+				// set the root pts[0] its initial position
+				ik_points[0] = b;
+
+				for(int i=0; i<=ik_chain_size-2; i++)
+				{
+					// find the distance r_i between the new joint position pts_i and the joint pts_i+1
+					r[i] = psmVector3fDistance(ik_points[i+1], ik_points[i]);
+					l[i]  = d[i] / r[i];
+
+					// find the new joint positions pts_i
+					ik_points[i+1] = psmVector3fLerp(ik_points[i], ik_points[i+1], l[i]);
+				}
+
+				EEdiff = psmVector3fDistance(ik_points[ik_chain_size-1], target);
+			}
+		}
+
+        return count;
+    }
+
+protected:
+    float m_upperArmLength;
+    float m_lowerArmLength;
+    float m_totalArmLength;
+
+    static const int ik_chain_size = 3;
+    PSMVector3f ik_points[ik_chain_size];
+    float d[ik_chain_size-1];
+};
+#endif
+
+//==================================================================================================
 // Path Helpers
 //==================================================================================================
 #ifndef MAX_UNICODE_PATH
@@ -394,6 +741,27 @@ std::string Path_GetThisModulePath()
 	return info.dli_fname;
 #endif
 
+}
+
+//==================================================================================================
+// String Helpers
+//==================================================================================================
+int find_index_of_string_in_table(const char **string_table, const int string_table_count, const char *string)
+{
+    int result_index= -1;
+
+    for (int entry_index = 0; entry_index < string_table_count; ++entry_index)
+    {
+        const char *string_entry= string_table[entry_index];
+
+        if (stricmp(string_entry, string) == 0)
+        {
+            result_index= entry_index;
+            break;
+        }
+    }
+
+    return result_index;
 }
 
 //==================================================================================================
@@ -937,6 +1305,10 @@ void CServerDriver_PSMoveService::HandleControllerListReponse(
 			DriverLog("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate PSMove(%d)\n", psmControllerId);
             AllocateUniquePSMoveController(psmControllerId, psmControllerSerial);
             break;
+        case PSMControllerType::PSMController_Virtual:
+			DriverLog("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate VirtualController(%d)\n", psmControllerId);
+            AllocateUniqueVirtualController(psmControllerId, psmControllerSerial);
+            break;
         case PSMControllerType::PSMController_Navi:
 			// Take care of this is the second pass once all of the PSMove controllers have been setup
 			bAnyNaviControllers= true;
@@ -1033,6 +1405,28 @@ void CServerDriver_PSMoveService::AllocateUniquePSMoveController(PSMControllerID
     }
 }
 
+void CServerDriver_PSMoveService::AllocateUniqueVirtualController(PSMControllerID psmControllerID, const std::string &psmControllerSerial)
+{
+    char svrIdentifier[256];
+    GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerID);
+
+    if ( !FindTrackedDeviceDriver(svrIdentifier) )
+    {	
+		std::string psmSerialNo = psmControllerSerial;
+		std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
+
+		DriverLog( "added new virtual controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
+
+        CPSMoveControllerLatest *TrackedDevice= 
+            new CPSMoveControllerLatest( psmControllerID, PSMControllerType::PSMController_Virtual, psmSerialNo.c_str());
+		m_vecTrackedDevices.push_back(TrackedDevice);
+
+		if (vr::VRServerDriverHost())
+		{
+			vr::VRServerDriverHost()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
+		}
+    }
+}
 
 void CServerDriver_PSMoveService::AllocateUniqueDualShock4Controller(PSMControllerID psmControllerID, const std::string &psmControllerSerial)
 {
@@ -1077,7 +1471,8 @@ void CServerDriver_PSMoveService::AttachPSNaviToParentController(PSMControllerID
 			{
 				bFoundParent= true;
 
-				if (test_controller->getPSMControllerType() == PSMController_Move)
+				if (test_controller->getPSMControllerType() == PSMController_Move ||
+                    test_controller->getPSMControllerType() == PSMController_Virtual)
 				{
 					if (test_controller->AttachChildPSMController(NaviControllerID, PSMController_Navi, naviSerialNo))
 					{
@@ -1344,6 +1739,22 @@ void CPSMoveTrackedDeviceLatest::RefreshWorldFromDriverPose()
     m_Pose.vecWorldFromDriverTranslation[2] = worldFromDriverPose.Position.z;
 }
 
+PSMPosef CPSMoveTrackedDeviceLatest::GetWorldFromDriverPose()
+{
+    PSMVector3f psmToOpenVRTranslation= {
+        (float)m_Pose.vecWorldFromDriverTranslation[0], 
+        (float)m_Pose.vecWorldFromDriverTranslation[1], 
+        (float)m_Pose.vecWorldFromDriverTranslation[2]};
+    PSMQuatf psmToOpenVRRotation = PSM_QuatfCreate(
+        (float)m_Pose.qWorldFromDriverRotation.w,
+        (float)m_Pose.qWorldFromDriverRotation.x,
+        (float)m_Pose.qWorldFromDriverRotation.y,
+        (float)m_Pose.qWorldFromDriverRotation.x);
+    PSMPosef psmToOpenVRPose= PSM_PosefCreate(&psmToOpenVRTranslation, &psmToOpenVRRotation);
+
+    return psmToOpenVRPose;
+}
+
 const char *CPSMoveTrackedDeviceLatest::GetSteamVRIdentifier() const
 {
     return m_strSteamVRSerialNo.c_str();
@@ -1388,12 +1799,18 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 	, m_posMetersAtTouchpadPressTime(*k_psm_float_vector3_zero)
 	, m_driverSpaceRotationAtTouchpadPressTime(*k_psm_quaternion_identity)
 	, m_bUseControllerOrientationInHMDAlignment(false)
-	, m_triggerAxisIndex(1)
-	, m_navitriggerAxisIndex(1)
+	, m_steamVRTriggerAxisIndex(1)
+	, m_steamVRNaviTriggerAxisIndex(1)
+    , m_virtualTriggerAxisIndex(-1)
+	, m_virtualTouchpadXAxisIndex(-1)
+    , m_virtualTouchpadYAxisIndex(-1)
 	, m_thumbstickDeadzone(k_defaultThumbstickDeadZoneRadius)
 	, m_bThumbstickTouchAsPress(true)
 	, m_fLinearVelocityMultiplier(1.f)
 	, m_fLinearVelocityExponent(0.f)
+    , m_hmdAlignPSButtonID(k_EPSButtonID_Select)
+    , m_overrideModel("")
+    , m_orientationSolver(nullptr)
 {
     char svrIdentifier[256];
     GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerId);
@@ -1452,8 +1869,8 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 			LoadButtonMapping(pSettings, k_EPSControllerType_Navi, k_EPSButtonID_L3, vr::k_EButton_Grip, k_EVRTouchpadDirection_None);
 
 			// Trigger mapping
-			m_triggerAxisIndex = LoadInt(pSettings, "psmove", "trigger_axis_index", 1);
-			m_navitriggerAxisIndex = LoadInt(pSettings, "psnavi_button", "trigger_axis_index", m_triggerAxisIndex);
+			m_steamVRTriggerAxisIndex = LoadInt(pSettings, "psmove", "trigger_axis_index", 1);
+			m_steamVRNaviTriggerAxisIndex = LoadInt(pSettings, "psnavi_button", "trigger_axis_index", m_steamVRTriggerAxisIndex);
 
 			// Touch pad settings
 			m_bDelayAfterTouchpadPress = 
@@ -1469,7 +1886,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 			m_fLinearVelocityExponent =
 				LoadFloat(pSettings, "psmove_settings", "linear_velocity_exponent", 0.f);
 
-			// Chack for PSNavi up/down mappings
+			// Check for PSNavi up/down mappings
 			char remapButtonToButtonString[32];
 			vr::EVRSettingsError fetchError;
 
@@ -1541,6 +1958,130 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 
 			DriverLog("m_fControllerMetersInFrontOfHmdAtCalibration(ds4): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
 		}
+		else if (psmControllerType == PSMController_Virtual)
+		{
+			// Controller button mappings
+            for (int button_index = 0; button_index < k_EPSButtonID_Count; ++button_index)
+            {
+			    LoadButtonMapping(
+                    pSettings, 
+                    k_EPSControllerType_Virtual, 
+                    (CPSMoveControllerLatest::ePSButtonID)button_index, 
+                    (vr::EVRButtonId)button_index, 
+                    k_EVRTouchpadDirection_None, 
+                    psmControllerId);
+            }
+
+			// Axis mapping
+            m_virtualTriggerAxisIndex = LoadInt(pSettings, "virtual_axis", "trigger_axis_index", -1);
+            m_virtualTouchpadXAxisIndex = LoadInt(pSettings, "virtual_axis", "touchpad_x_axis_index", -1);
+            m_virtualTouchpadYAxisIndex = LoadInt(pSettings, "virtual_axis", "touchpad_y_axis_index", -1);
+
+            // HMD align button mapping
+            {
+			    char alignButtonString[32];
+			    vr::EVRSettingsError fetchError;
+
+                m_hmdAlignPSButtonID= k_EPSButtonID_0;
+			    pSettings->GetString("virtual_controller", "hmd_align_button", alignButtonString, 32, &fetchError);
+
+			    if (fetchError == vr::VRSettingsError_None)
+                {
+                    int button_index= find_index_of_string_in_table(k_VirtualButtonNames, CPSMoveControllerLatest::k_EPSButtonID_Count, alignButtonString);
+                    if (button_index != -1)
+                    {
+                        m_hmdAlignPSButtonID= static_cast<CPSMoveControllerLatest::ePSButtonID>(button_index);
+                    }
+                    else
+                    {
+                        DriverLog("Invalid virtual controller hmd align button: %s\n", alignButtonString);
+                    }
+                }
+            }
+
+            // Get the controller override model to use, if any
+            {
+			    char modelString[64];
+			    vr::EVRSettingsError fetchError;
+
+			    pSettings->GetString("virtual_controller", "override_model", modelString, 64, &fetchError);
+			    if (fetchError == vr::VRSettingsError_None)
+                {
+                    m_overrideModel= modelString;
+                }
+            }
+
+			// Touch pad settings
+			m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis= 
+				LoadBool(pSettings, "virtual_controller", "use_spatial_offset_after_touchpad_press_as_touchpad_axis", false);
+			m_fMetersPerTouchpadAxisUnits= 
+				LoadFloat(pSettings, "virtual_controller", "meters_per_touchpad_units", .075f);
+
+			// Throwing power settings
+			m_fLinearVelocityMultiplier =
+				LoadFloat(pSettings, "virtual_controller_settings", "linear_velocity_multiplier", 1.f);
+			m_fLinearVelocityExponent =
+				LoadFloat(pSettings, "virtual_controller_settings", "linear_velocity_exponent", 0.f);
+
+			// General Settings
+			m_fVirtuallExtendControllersYMeters = LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_y", 0.0f);
+			m_fVirtuallExtendControllersZMeters = LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_z", 0.0f);
+			m_fControllerMetersInFrontOfHmdAtCalibration= 
+				LoadFloat(pSettings, "virtual_controller_settings", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
+
+			m_thumbstickDeadzone = 
+				fminf(fmaxf(LoadFloat(pSettings, "virtual_controller_settings", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
+			m_bThumbstickTouchAsPress= LoadBool(pSettings, "virtual_controller_settings", "thumbstick_touch_as_press", true);
+
+            // IK solver
+            if (LoadBool(pSettings, "virtual_controller_ik", "enable_ik", false))
+            {                
+			    char handString[16];
+			    vr::EVRSettingsError fetchError;
+                vr::ETrackedControllerRole hand;
+                
+                if ((int)psmControllerId % 2 == 0)
+                {
+                    hand= vr::TrackedControllerRole_RightHand;
+
+			        pSettings->GetString("virtual_controller_ik", "first_hand", handString, 16, &fetchError);
+			        if (fetchError == vr::VRSettingsError_None)
+                    {
+                        if (strcasecmp(handString, "left") == 0)
+                        {
+                            hand= vr::TrackedControllerRole_LeftHand;
+                        }
+                    }
+                }
+                else
+                {
+                    hand= vr::TrackedControllerRole_LeftHand;
+
+			        pSettings->GetString("virtual_controller_ik", "second_hand", handString, 16, &fetchError);
+			        if (fetchError == vr::VRSettingsError_None)
+                    {
+                        if (strcasecmp(handString, "right") == 0)
+                        {
+                            hand= vr::TrackedControllerRole_RightHand;
+                        }
+                    }
+                }
+
+                float neckLength= LoadFloat(pSettings, "virtual_controller_ik", "neck_length", 0.2f); // meters
+                float halfShoulderLength= LoadFloat(pSettings, "virtual_controller_ik", "half_shoulder_length", 0.22f); // meters
+                float upperArmLength= LoadFloat(pSettings, "virtual_controller_ik", "upper_arm_length", 0.3f); // meters
+                float lowerArmLength= LoadFloat(pSettings, "virtual_controller_ik", "lower_arm_length", 0.35f); // meters
+
+                //TODO: Select solver method
+                //m_orientationSolver = new CFABRIKArmSolver(hand, neckLength, halfShoulderLength, upperArmLength, lowerArmLength);
+                //m_orientationSolver = new CRadialHandOrientationSolver(hand, neckLength, halfShoulderLength);
+                m_orientationSolver = new CFacingHandOrientationSolver;
+            }
+            else
+            {
+                m_orientationSolver = new CFacingHandOrientationSolver;
+            }
+		}
 	}
 }
 
@@ -1554,6 +2095,12 @@ CPSMoveControllerLatest::~CPSMoveControllerLatest()
 
 	PSM_FreeControllerListener(m_PSMControllerView->ControllerID);
     m_PSMControllerView= nullptr;
+
+    if (m_orientationSolver != nullptr)
+    {
+        delete m_orientationSolver;
+        m_orientationSolver= nullptr;
+    }
 }
 
 void CPSMoveControllerLatest::LoadButtonMapping(
@@ -1570,25 +2117,33 @@ void CPSMoveControllerLatest::LoadButtonMapping(
 
     if (pSettings != nullptr)
     {
-        const char *szPSButtonName = k_PSButtonNames[psButtonID];
         char remapButtonToButtonString[32];
         vr::EVRSettingsError fetchError;
 
+        const char *szPSButtonName = "";
 		const char *szButtonSectionName= "";
 		const char *szTouchpadSectionName= "";
 		switch (controllerType)
 		{
 		case CPSMoveControllerLatest::k_EPSControllerType_Move:
+            szPSButtonName = k_PSButtonNames[psButtonID];
 			szButtonSectionName= "psmove";
 			szTouchpadSectionName= "psmove_touchpad_directions";
 			break;
 		case CPSMoveControllerLatest::k_EPSControllerType_DS4:
+            szPSButtonName = k_PSButtonNames[psButtonID];
 			szButtonSectionName= "dualshock4_button";
 			szTouchpadSectionName= "dualshock4_touchpad";
 			break;
 		case CPSMoveControllerLatest::k_EPSControllerType_Navi:
+            szPSButtonName = k_PSButtonNames[psButtonID];
 			szButtonSectionName= "psnavi_button";
 			szTouchpadSectionName= "psnavi_touchpad";
+			break;
+		case CPSMoveControllerLatest::k_EPSControllerType_Virtual:
+            szPSButtonName = k_VirtualButtonNames[psButtonID];
+			szButtonSectionName= "virtual_button";
+			szTouchpadSectionName= "virtual_touchpad";
 			break;
 		}
 
@@ -1796,16 +2351,33 @@ vr::EVRInitError CPSMoveControllerLatest::Activate(vr::TrackedDeviceIndex_t unOb
             switch(m_PSMControllerType)
 			{
 			case PSMController_Move:
-                snprintf(model_label, sizeof(model_label), "psmove_%d", m_PSMControllerView->ControllerID);
-                properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
-				break;
+                {                
+                    snprintf(model_label, sizeof(model_label), "psmove_%d", m_PSMControllerView->ControllerID);
+                    properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
+                } break;
 			case PSMController_DualShock4:
-                snprintf(model_label, sizeof(model_label), "dualshock4_%d", m_PSMControllerView->ControllerID);
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}dualshock4_controller");
-				break;
+                {
+                    snprintf(model_label, sizeof(model_label), "dualshock4_%d", m_PSMControllerView->ControllerID);
+				    properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}dualshock4_controller");
+
+                } break;
+			case PSMController_Virtual:
+                {
+                    snprintf(model_label, sizeof(model_label), "virtual_%d", m_PSMControllerView->ControllerID);
+                    if (m_overrideModel.length() > 0)
+                    {
+                        properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, m_overrideModel.c_str());
+                    }
+                    else
+                    {
+                        properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "vr_controller_01_mrhat");
+                    }
+                } break;
 			default:
-                snprintf(model_label, sizeof(model_label), "unknown");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "generic_controller");
+                {
+                    snprintf(model_label, sizeof(model_label), "unknown");
+				    properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "generic_controller");
+                }
 			}
             properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModeLabel_String, model_label);
 		}
@@ -1874,6 +2446,8 @@ void CPSMoveControllerLatest::SendButtonUpdates( ButtonUpdate ButtonEvent, uint6
 
 void CPSMoveControllerLatest::UpdateControllerState()
 {
+    static const uint64_t s_kTouchpadButtonMask = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad);
+
     assert(m_PSMControllerView != nullptr);
     assert(m_PSMControllerView->IsConnected);
 
@@ -2032,8 +2606,6 @@ void CPSMoveControllerLatest::UpdateControllerState()
 				// Touchpad handling
 				if (!m_touchpadDirectionsUsed)
 				{
-					static const uint64_t s_kTouchpadButtonMask = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad);
-
 					// PSNavi TouchPad Handling (i.e. thumbstick as touchpad)
 					if (bHasChildNavi)
 					{
@@ -2142,10 +2714,10 @@ void CPSMoveControllerLatest::UpdateControllerState()
 				}
 
 				// PSMove Trigger handling
-				NewState.rAxis[m_triggerAxisIndex].x = clientView.TriggerValue / 255.f;
-				NewState.rAxis[m_triggerAxisIndex].y = 0.f;
+				NewState.rAxis[m_steamVRTriggerAxisIndex].x = clientView.TriggerValue / 255.f;
+				NewState.rAxis[m_steamVRTriggerAxisIndex].y = 0.f;
 
-				if (m_triggerAxisIndex != 1)
+				if (m_steamVRTriggerAxisIndex != 1)
 				{
 					static const uint64_t s_kTriggerButtonMask = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger);
 					if ((NewState.ulButtonPressed & s_kTriggerButtonMask) || (NewState.ulButtonTouched & s_kTriggerButtonMask))
@@ -2164,27 +2736,27 @@ void CPSMoveControllerLatest::UpdateControllerState()
 				{
 					const PSMPSNavi &naviClientView = m_PSMChildControllerView->ControllerState.PSNaviState;
 
-					NewState.rAxis[m_navitriggerAxisIndex].x = fmaxf(NewState.rAxis[m_navitriggerAxisIndex].x, naviClientView.TriggerValue / 255.f);
-					if (m_navitriggerAxisIndex != m_triggerAxisIndex)
-						NewState.rAxis[m_navitriggerAxisIndex].y = 0.f;
+					NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x = fmaxf(NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x, naviClientView.TriggerValue / 255.f);
+					if (m_steamVRNaviTriggerAxisIndex != m_steamVRTriggerAxisIndex)
+						NewState.rAxis[m_steamVRNaviTriggerAxisIndex].y = 0.f;
 				}
 
 				// Trigger SteamVR Events
-				if (NewState.rAxis[m_triggerAxisIndex].x != m_ControllerState.rAxis[m_triggerAxisIndex].x)
+				if (NewState.rAxis[m_steamVRTriggerAxisIndex].x != m_ControllerState.rAxis[m_steamVRTriggerAxisIndex].x)
 				{
-					if (NewState.rAxis[m_triggerAxisIndex].x > 0.1f)
+					if (NewState.rAxis[m_steamVRTriggerAxisIndex].x > 0.1f)
 					{
-						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_triggerAxisIndex));
+						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRTriggerAxisIndex));
 					}
 
-					if (NewState.rAxis[m_triggerAxisIndex].x > 0.8f)
+					if (NewState.rAxis[m_steamVRTriggerAxisIndex].x > 0.8f)
 					{
-						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_triggerAxisIndex));
+						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRTriggerAxisIndex));
 					}
 
-					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_triggerAxisIndex, NewState.rAxis[m_triggerAxisIndex]);
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_steamVRTriggerAxisIndex, NewState.rAxis[m_steamVRTriggerAxisIndex]);
 				}
-				if (m_triggerAxisIndex != 1 && NewState.rAxis[1].x != m_ControllerState.rAxis[1].x)
+				if (m_steamVRTriggerAxisIndex != 1 && NewState.rAxis[1].x != m_ControllerState.rAxis[1].x)
 				{
 					if (NewState.rAxis[1].x > 0.1f)
 					{
@@ -2198,19 +2770,19 @@ void CPSMoveControllerLatest::UpdateControllerState()
 
 					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
 				}
-				if (m_navitriggerAxisIndex != m_triggerAxisIndex && (NewState.rAxis[m_navitriggerAxisIndex].x != m_ControllerState.rAxis[m_navitriggerAxisIndex].x))
+				if (m_steamVRNaviTriggerAxisIndex != m_steamVRTriggerAxisIndex && (NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x != m_ControllerState.rAxis[m_steamVRNaviTriggerAxisIndex].x))
 				{
-					if (NewState.rAxis[m_navitriggerAxisIndex].x > 0.1f)
+					if (NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x > 0.1f)
 					{
-						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_navitriggerAxisIndex));
+						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRNaviTriggerAxisIndex));
 					}
 
-					if (NewState.rAxis[m_navitriggerAxisIndex].x > 0.8f)
+					if (NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x > 0.8f)
 					{
-						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_navitriggerAxisIndex));
+						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRNaviTriggerAxisIndex));
 					}
 
-					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_navitriggerAxisIndex, NewState.rAxis[m_navitriggerAxisIndex]);
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_steamVRNaviTriggerAxisIndex, NewState.rAxis[m_steamVRNaviTriggerAxisIndex]);
 				}
 
 				// Update the battery charge state
@@ -2341,6 +2913,95 @@ void CPSMoveControllerLatest::UpdateControllerState()
 					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 3, NewState.rAxis[3]);
 			}
         } break;
+    case PSMController_Virtual:
+        {
+            const PSMVirtualController &clientView = m_PSMControllerView->ControllerState.VirtualController;
+
+			if (clientView.buttonStates[m_hmdAlignPSButtonID] == PSMButtonState_PRESSED)
+			{
+				DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
+
+				RealignHMDTrackingSpace();
+			}
+			else
+			{
+                int buttonCount= m_PSMControllerView->ControllerState.VirtualController.numButtons;
+                int axisCount= m_PSMControllerView->ControllerState.VirtualController.numAxes;
+
+                for (int buttonIndex = 0; buttonIndex < buttonCount; ++buttonIndex)
+                {
+                    if (m_PSMControllerView->ControllerState.VirtualController.buttonStates[buttonIndex])
+                    {
+                        NewState.ulButtonPressed |= vr::ButtonMaskFromId(psButtonIDToVRButtonID[k_EPSControllerType_Virtual][buttonIndex]);
+                    }
+                }
+
+				if (m_virtualTouchpadXAxisIndex >= 0 && m_virtualTouchpadXAxisIndex < axisCount &&
+                    m_virtualTouchpadYAxisIndex >= 0 && m_virtualTouchpadYAxisIndex < axisCount)
+				{
+                    const unsigned char rawThumbStickX= m_PSMControllerView->ControllerState.VirtualController.axisStates[m_virtualTouchpadXAxisIndex];
+                    const unsigned char rawThumbStickY= m_PSMControllerView->ControllerState.VirtualController.axisStates[m_virtualTouchpadYAxisIndex];
+                    float thumbStickX = ((float)rawThumbStickX - 127.f) / 127.f;
+					float thumbStickY = ((float)rawThumbStickY - 127.f) / 127.f;
+
+					const float thumbStickAngle = atanf(abs(thumbStickY / thumbStickX));
+					const float thumbStickRadialDist= sqrtf(thumbStickX*thumbStickX + thumbStickY*thumbStickY);
+
+                    bool bTouchpadTouched= false;
+                    bool bTouchpadPressed= false;
+
+                    // Moving a thumbstick outside of the deadzone is consider a touchpad touch
+					if (thumbStickRadialDist >= m_thumbstickDeadzone)
+					{
+						// Rescale the thumbstick position to hide the dead zone
+						const float rescaledRadius= (thumbStickRadialDist - m_thumbstickDeadzone) / (1.f - m_thumbstickDeadzone);
+
+						// Set the thumbstick axis
+						thumbStickX = (rescaledRadius / thumbStickRadialDist) * thumbStickX * abs(cosf(thumbStickAngle));
+						thumbStickY = (rescaledRadius / thumbStickRadialDist) * thumbStickY * abs(sinf(thumbStickAngle));
+
+						// Also make sure the touchpad is considered "touched" 
+						// if the thumbstick is outside of the deadzone
+						bTouchpadTouched= true;
+
+						// If desired, also treat the touch as a press
+						bTouchpadPressed= m_bThumbstickTouchAsPress;
+                    }
+
+                    if (bTouchpadTouched)
+                    {
+					    NewState.ulButtonTouched |= s_kTouchpadButtonMask;
+                    }
+
+					if (bTouchpadPressed)
+					{
+						NewState.ulButtonPressed |= s_kTouchpadButtonMask;
+					}
+
+                    NewState.rAxis[0].x = thumbStickX;
+				    NewState.rAxis[0].y = thumbStickY;
+
+                    if (NewState.rAxis[0].x != m_ControllerState.rAxis[0].x || NewState.rAxis[0].y != m_ControllerState.rAxis[0].y)
+                    {
+					    vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 0, NewState.rAxis[0]);
+                    }
+				}
+
+				if (m_virtualTriggerAxisIndex >= 0 && m_virtualTriggerAxisIndex < axisCount)
+				{
+                    // Remap trigger axis from [0, 255]
+                    const float triggerValue= (float)m_PSMControllerView->ControllerState.VirtualController.axisStates[m_virtualTriggerAxisIndex] / 255.f;
+
+				    NewState.rAxis[1].x = triggerValue;
+				    NewState.rAxis[1].y = 0.f;
+
+                    if (NewState.rAxis[1].x != m_ControllerState.rAxis[1].x)
+                    {
+					    vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+                    }
+				}
+			}
+        } break;
     }
 
     // All pressed buttons are touched
@@ -2356,7 +3017,6 @@ void CPSMoveControllerLatest::UpdateControllerState()
 
     m_ControllerState = NewState;
 }
-
 
 void CPSMoveControllerLatest::UpdateControllerStateFromPsMoveButtonState(
 	ePSControllerType controllerType,
@@ -2548,7 +3208,8 @@ void CPSMoveControllerLatest::RealignHMDTrackingSpace()
 		controllerOrientationInHmdSpaceQuat = PSM_QuatfCreateFromAngles(&eulerPitch);
 		controllerLocalOffsetFromHmdPosition = {0.0f, 0.0f, -1.0f * m_fControllerMetersInFrontOfHmdAtCalibration};
 	}
-	else if (m_PSMControllerType == PSMControllerType::PSMController_DualShock4)
+	else if (m_PSMControllerType == PSMControllerType::PSMController_DualShock4 || 
+            m_PSMControllerType == PSMControllerType::PSMController_Virtual)
 	{
 		// Translation) The controller's position is a few inches ahead of the HMD's on the HMD's local -Z axis. 
 		controllerLocalOffsetFromHmdPosition = {0.0f, 0.0f, -1.0f * m_fControllerMetersInFrontOfHmdAtCalibration};
@@ -2579,14 +3240,7 @@ void CPSMoveControllerLatest::RealignHMDTrackingSpace()
 	// value because the user may have triggered a pose reset, in which case the driver's
 	// cached pose might not yet be up to date by the time this callback is triggered.
 	PSMPosef controller_pose_meters = *k_psm_pose_identity;
-	if (m_PSMControllerType == PSMControllerType::PSMController_Move)
-	{
-		controller_pose_meters = m_PSMControllerView->ControllerState.PSMoveState.Pose;
-	}
-	else if (m_PSMControllerType == PSMControllerType::PSMController_DualShock4)
-	{
-		controller_pose_meters = m_PSMControllerView->ControllerState.PSDS4State.Pose;
-	}
+    PSM_GetControllerPose(m_PSMControllerView->ControllerID, &controller_pose_meters);
 	DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(raw): %s \n", PSMPosefToString(controller_pose_meters).c_str());
 
 	// PSMove Position is in cm, but OpenVR stores position in meters
@@ -2608,7 +3262,8 @@ void CPSMoveControllerLatest::RealignHMDTrackingSpace()
 			DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", PSMPosefToString(controller_pose_meters).c_str());
 		}
 	}
-	else if (m_PSMControllerType == PSMControllerType::PSMController_DualShock4)
+	else if (m_PSMControllerType == PSMControllerType::PSMController_DualShock4 ||
+            m_PSMControllerType == PSMControllerType::PSMController_Virtual)
 	{
 		controller_pose_meters.Orientation = *k_psm_quaternion_identity;
 		DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", PSMPosefToString(controller_pose_meters).c_str());
@@ -2801,6 +3456,118 @@ void CPSMoveControllerLatest::UpdateTrackingState()
             m_Pose.poseIsValid =
 				m_PSMControllerView->ControllerState.PSDS4State.bIsPositionValid && 
 				m_PSMControllerView->ControllerState.PSDS4State.bIsOrientationValid;
+
+            // This call posts this pose to shared memory, where all clients will have access to it the next
+            // moment they want to predict a pose.
+			vr::VRServerDriverHost()->TrackedDevicePoseUpdated( m_unSteamVRTrackedDeviceId, m_Pose, sizeof( vr::DriverPose_t ) );
+        } break;
+    case PSMControllerType::PSMController_Virtual:
+        {
+            const PSMVirtualController &view= m_PSMControllerView->ControllerState.VirtualController;
+
+            // No prediction since that's already handled in the psmove service
+            m_Pose.poseTimeOffset = 0.f;
+
+            // No transform due to the current HMD orientation
+            m_Pose.qDriverFromHeadRotation.w = 1.f;
+            m_Pose.qDriverFromHeadRotation.x = 0.0f;
+            m_Pose.qDriverFromHeadRotation.y = 0.0f;
+            m_Pose.qDriverFromHeadRotation.z = 0.0f;
+            m_Pose.vecDriverFromHeadTranslation[0] = 0.f;
+            m_Pose.vecDriverFromHeadTranslation[1] = 0.f;
+            m_Pose.vecDriverFromHeadTranslation[2] = 0.f;                 
+
+            // Set position
+            const PSMVector3f psm_hand_position_meters = PSM_Vector3fScale(&view.Pose.Position, k_fScalePSMoveAPIToMeters);
+
+            m_Pose.vecPosition[0] = psm_hand_position_meters.x;
+            m_Pose.vecPosition[1] = psm_hand_position_meters.y;
+            m_Pose.vecPosition[2] = psm_hand_position_meters.z;
+
+            // Compute the orientation of the controller
+            PSMQuatf orientation = view.Pose.Orientation;
+
+            if (m_orientationSolver != nullptr)
+            {
+                vr::TrackedDeviceIndex_t hmd_device_index= vr::k_unTrackedDeviceIndexInvalid;
+
+                if (GetHMDDeviceIndex(&hmd_device_index))
+                {
+                    PSMPosef openvr_hmd_pose_meters;
+
+                    if (GetTrackedDevicePose(hmd_device_index, &openvr_hmd_pose_meters))
+                    {
+                        // Convert the HMD pose that's in OpenVR tracking space into PSM tracking space.
+                        // The HMD alignment calibration already gave us the tracking space conversion.
+                        const PSMPosef psmToOpenVRPose= GetWorldFromDriverPose();
+                        const PSMPosef openVRToPsmPose= PSM_PosefInverse(&psmToOpenVRPose);
+                        PSMPosef psm_hmd_pose_meters= PSM_PosefConcat(&openvr_hmd_pose_meters, &openVRToPsmPose);
+                        
+                        orientation= m_orientationSolver->solveHandOrientation(psm_hmd_pose_meters, psm_hand_position_meters);
+                    }
+                }
+            }
+
+            // Set rotational coordinates
+            m_Pose.qRotation.w = m_fVirtuallyRotateController ? -orientation.w : orientation.w;
+            m_Pose.qRotation.x = orientation.x;
+            m_Pose.qRotation.y = orientation.y;
+            m_Pose.qRotation.z = m_fVirtuallyRotateController ? -orientation.z : orientation.z;
+
+			// virtual extend controller position
+			if (m_fVirtuallExtendControllersYMeters != 0.0f || m_fVirtuallExtendControllersZMeters != 0.0f)
+			{
+				PSMVector3f shift = {(float)m_Pose.vecPosition[0], (float)m_Pose.vecPosition[1], (float)m_Pose.vecPosition[2]};
+
+				if (m_fVirtuallExtendControllersZMeters != 0.0f) {
+
+					PSMVector3f local_forward = {0, 0, -1};
+					PSMVector3f global_forward = PSM_QuatfRotateVector(&orientation, &local_forward);
+
+					shift = PSM_Vector3fScaleAndAdd(&global_forward, m_fVirtuallExtendControllersZMeters, &shift);
+				}
+
+				if (m_fVirtuallExtendControllersYMeters != 0.0f) {
+
+					PSMVector3f local_forward = {0, -1, 0};
+					PSMVector3f global_forward = PSM_QuatfRotateVector(&orientation, &local_forward);
+
+					shift = PSM_Vector3fScaleAndAdd(&global_forward, m_fVirtuallExtendControllersYMeters, &shift);
+				}
+
+				m_Pose.vecPosition[0] = shift.x;
+				m_Pose.vecPosition[1] = shift.y;
+				m_Pose.vecPosition[2] = shift.z;
+			}
+
+            // Set the physics state of the controller
+            {
+                const PSMPhysicsData &physicsData= view.PhysicsData;
+
+				m_Pose.vecVelocity[0] = physicsData.LinearVelocityCmPerSec.x
+					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.x), m_fLinearVelocityExponent))
+					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
+				m_Pose.vecVelocity[1] = physicsData.LinearVelocityCmPerSec.y
+					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.y), m_fLinearVelocityExponent))
+					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
+				m_Pose.vecVelocity[2] = physicsData.LinearVelocityCmPerSec.z
+					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.z), m_fLinearVelocityExponent))
+					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
+
+                m_Pose.vecAcceleration[0] = physicsData.LinearAccelerationCmPerSecSqr.x * k_fScalePSMoveAPIToMeters;
+                m_Pose.vecAcceleration[1] = physicsData.LinearAccelerationCmPerSecSqr.y * k_fScalePSMoveAPIToMeters;
+                m_Pose.vecAcceleration[2] = physicsData.LinearAccelerationCmPerSecSqr.z * k_fScalePSMoveAPIToMeters;
+
+                m_Pose.vecAngularVelocity[0] = 0.f;
+                m_Pose.vecAngularVelocity[1] = 0.f;
+                m_Pose.vecAngularVelocity[2] = 0.f;
+
+                m_Pose.vecAngularAcceleration[0] = 0.f;
+                m_Pose.vecAngularAcceleration[1] = 0.f;
+                m_Pose.vecAngularAcceleration[2] = 0.f;
+            }
+
+            m_Pose.poseIsValid = m_PSMControllerView->ControllerState.VirtualController.bIsPositionValid;
 
             // This call posts this pose to shared memory, where all clients will have access to it the next
             // moment they want to predict a pose.

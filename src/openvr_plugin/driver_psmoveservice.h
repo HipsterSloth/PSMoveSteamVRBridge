@@ -66,6 +66,7 @@ public:
 private:
     vr::ITrackedDeviceServerDriver * FindTrackedDeviceDriver(const char * pchId);
     void AllocateUniquePSMoveController(PSMControllerID ControllerID, const std::string &ControllerSerial);
+    void AllocateUniqueVirtualController(PSMControllerID psmControllerID, const std::string &psmControllerSerial);
     void AttachPSNaviToParentController(PSMControllerID ControllerID, const std::string &ControllerSerial, const std::string &ParentControllerSerial);
     void AllocateUniqueDualShock4Controller(PSMControllerID ControllerID, const std::string &ControllerSerial);
     void AllocateUniquePSMoveTracker(const PSMClientTrackerInfo *trackerInfo);
@@ -119,6 +120,7 @@ public:
     virtual bool IsActivated() const;
     virtual void Update();
     virtual void RefreshWorldFromDriverPose();
+    PSMPosef GetWorldFromDriverPose();
     virtual const char *GetSteamVRIdentifier() const;
 
 protected:
@@ -145,36 +147,70 @@ public:
         k_EPSControllerType_Move,
         k_EPSControllerType_Navi,
         k_EPSControllerType_DS4,
+        k_EPSControllerType_Virtual,
 
 		k_EPSControllerType_Count
     };
 
     enum ePSButtonID
     {
-        k_EPSButtonID_PS,
-        k_EPSButtonID_Left,
-        k_EPSButtonID_Up,
-        k_EPSButtonID_Right,
-        k_EPSButtonID_Down,
-        k_EPSButtonID_Move,
-        k_EPSButtonID_Trackpad,
-        k_EPSButtonID_Trigger,
-        k_EPSButtonID_Triangle,
-        k_EPSButtonID_Square,
-        k_EPSButtonID_Circle,
-        k_EPSButtonID_Cross,
-        k_EPSButtonID_Select,
-        k_EPSButtonID_Share,
-        k_EPSButtonID_Start,
-        k_EPSButtonID_Options,
-        k_EPSButtonID_L1,
-        k_EPSButtonID_L2,
-        k_EPSButtonID_L3,
-        k_EPSButtonID_R1,
-        k_EPSButtonID_R2,
-        k_EPSButtonID_R3,
+        k_EPSButtonID_0,
+        k_EPSButtonID_1,
+        k_EPSButtonID_2,
+        k_EPSButtonID_3,
+        k_EPSButtonID_4,
+        k_EPSButtonID_5,
+        k_EPSButtonID_6,
+        k_EPSButtonID_7,
+        k_EPSButtonID_8,
+        k_EPSButtonID_9,
+        k_EPSButtonID_10,
+        k_EPSButtonID_11,
+        k_EPSButtonID_12,
+        k_EPSButtonID_13,
+        k_EPSButtonID_14,
+        k_EPSButtonID_15,
+        k_EPSButtonID_16,
+        k_EPSButtonID_17,
+        k_EPSButtonID_18,
+        k_EPSButtonID_19,
+        k_EPSButtonID_20,
+        k_EPSButtonID_21,
+        k_EPSButtonID_22,
+        k_EPSButtonID_23,
+        k_EPSButtonID_24,
+        k_EPSButtonID_25,
+        k_EPSButtonID_26,
+        k_EPSButtonID_27,
+        k_EPSButtonID_28,
+        k_EPSButtonID_29,
+        k_EPSButtonID_30,
+        k_EPSButtonID_31,
 
-        k_EPSButtonID_Count
+        k_EPSButtonID_Count,
+
+        k_EPSButtonID_PS= k_EPSButtonID_0,
+        k_EPSButtonID_Left= k_EPSButtonID_1,
+        k_EPSButtonID_Up= k_EPSButtonID_2,
+        k_EPSButtonID_Right= k_EPSButtonID_3,
+        k_EPSButtonID_Down= k_EPSButtonID_4,
+        k_EPSButtonID_Move= k_EPSButtonID_5,
+        k_EPSButtonID_Trackpad= k_EPSButtonID_6,
+        k_EPSButtonID_Trigger= k_EPSButtonID_7,
+        k_EPSButtonID_Triangle= k_EPSButtonID_8,
+        k_EPSButtonID_Square= k_EPSButtonID_9,
+        k_EPSButtonID_Circle= k_EPSButtonID_10,
+        k_EPSButtonID_Cross= k_EPSButtonID_11,
+        k_EPSButtonID_Select= k_EPSButtonID_12,
+        k_EPSButtonID_Share= k_EPSButtonID_13,
+        k_EPSButtonID_Start= k_EPSButtonID_14,
+        k_EPSButtonID_Options= k_EPSButtonID_15,
+        k_EPSButtonID_L1= k_EPSButtonID_16,
+        k_EPSButtonID_L2= k_EPSButtonID_17,
+        k_EPSButtonID_L3= k_EPSButtonID_18,
+        k_EPSButtonID_R1= k_EPSButtonID_19,
+        k_EPSButtonID_R2= k_EPSButtonID_20,
+        k_EPSButtonID_R3= k_EPSButtonID_21,
     };
 
 	enum eVRTouchpadDirection
@@ -323,8 +359,13 @@ private:
 	bool m_bUseControllerOrientationInHMDAlignment;
 
 	// The axis to use for trigger input
-	int m_triggerAxisIndex;
-	int m_navitriggerAxisIndex;
+	int m_steamVRTriggerAxisIndex;
+	int m_steamVRNaviTriggerAxisIndex;
+
+	// The axes to use for touchpad input (virtual controller only)
+    int m_virtualTriggerAxisIndex;
+	int m_virtualTouchpadXAxisIndex;
+    int m_virtualTouchpadYAxisIndex;
 
 	// The size of the deadzone for the controller's thumbstick
 	float m_thumbstickDeadzone;
@@ -335,6 +376,15 @@ private:
 	// Settings values. Used to adjust throwing power using linear velocity and acceleration.
 	float m_fLinearVelocityMultiplier;
 	float m_fLinearVelocityExponent;
+
+    // The button to use for controller hmd alignment
+    ePSButtonID m_hmdAlignPSButtonID;
+
+    // Override model to use for the controller
+    std::string m_overrideModel;
+
+    // Optional solver used to determine hand orientation
+    class IHandOrientationSolver *m_orientationSolver;
 
     // Callbacks
     static void start_controller_response_callback(const PSMResponseMessage *response, void *userdata);
