@@ -355,6 +355,9 @@ private:
 	// the touchpad was most recently pressed (after being up).
 	PSMQuatf m_driverSpaceRotationAtTouchpadPressTime;
 
+	// Flag used to completely disable the alignment gesture
+	bool m_bDisableHMDAlignmentGesture;
+
 	// Flag to tell if we should use the controller orientation as part of the controller alignment
 	bool m_bUseControllerOrientationInHMDAlignment;
 

@@ -1798,6 +1798,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 	, m_fControllerMetersInFrontOfHmdAtCalibration(0.f)
 	, m_posMetersAtTouchpadPressTime(*k_psm_float_vector3_zero)
 	, m_driverSpaceRotationAtTouchpadPressTime(*k_psm_quaternion_identity)
+    , m_bDisableHMDAlignmentGesture(false)
 	, m_bUseControllerOrientationInHMDAlignment(false)
 	, m_steamVRTriggerAxisIndex(1)
 	, m_steamVRNaviTriggerAxisIndex(1)
@@ -1825,9 +1826,6 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
     // Tell PSM Client API that we are listening to this controller id
 	PSM_AllocateControllerListener(psmControllerId);
     m_PSMControllerView = PSM_GetController(psmControllerId);
-
-    memset(&m_ControllerState, 0, sizeof(vr::VRControllerState_t));
-	m_trackingStatus = vr::TrackingResult_Uninitialized;
 
     // Load config from steamvr.vrsettings
     vr::IVRSettings *pSettings= vr::VRSettings();
@@ -1917,6 +1915,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 			m_fVirtuallyRotateController = LoadBool(pSettings, "psmove_settings", "psmove_rotate", false);
 			m_fControllerMetersInFrontOfHmdAtCalibration= 
 				LoadFloat(pSettings, "psmove", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
+            m_bDisableHMDAlignmentGesture= LoadBool(pSettings, "psmove_settings", "disable_alignment_gesture", false);
 			m_bUseControllerOrientationInHMDAlignment= LoadBool(pSettings, "psmove_settings", "use_orientation_in_alignment", true);
 
 			m_thumbstickDeadzone = 
@@ -1953,6 +1952,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 
 			// General Settings
 			m_bRumbleSuppressed= LoadBool(pSettings, "dualshock4_settings", "rumble_suppressed", m_bRumbleSuppressed);
+            m_bDisableHMDAlignmentGesture= LoadBool(pSettings, "dualshock4_settings", "disable_alignment_gesture", false);
 			m_fControllerMetersInFrontOfHmdAtCalibration= 
 				LoadFloat(pSettings, "dualshock4_settings", "cm_in_front_of_hmd_at_calibration", 16.f) / 100.f;
 
@@ -2024,6 +2024,7 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
 				LoadFloat(pSettings, "virtual_controller_settings", "linear_velocity_exponent", 0.f);
 
 			// General Settings
+            m_bDisableHMDAlignmentGesture= LoadBool(pSettings, "virtual_controller_settings", "disable_alignment_gesture", false);
 			m_fVirtuallExtendControllersYMeters = LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_y", 0.0f);
 			m_fVirtuallExtendControllersZMeters = LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_z", 0.0f);
 			m_fControllerMetersInFrontOfHmdAtCalibration= 
@@ -2083,6 +2084,9 @@ CPSMoveControllerLatest::CPSMoveControllerLatest(
             }
 		}
 	}
+
+    memset(&m_ControllerState, 0, sizeof(vr::VRControllerState_t));
+	m_trackingStatus = m_bDisableHMDAlignmentGesture ? vr::TrackingResult_Running_OK : vr::TrackingResult_Uninitialized;
 }
 
 CPSMoveControllerLatest::~CPSMoveControllerLatest()
@@ -3167,6 +3171,12 @@ void CPSMoveControllerLatest::GetMetersPosInRotSpace(const PSMQuatf *rotation, P
 
 void CPSMoveControllerLatest::RealignHMDTrackingSpace()
 {
+    if (m_bDisableHMDAlignmentGesture)
+    {
+        DriverLog( "Ignoring RealignHMDTrackingSpace request. Disabled.\n" );
+        return;
+    }    
+
 	DriverLog( "Begin CPSMoveControllerLatest::RealignHMDTrackingSpace()\n" );
 
     vr::TrackedDeviceIndex_t hmd_device_index= vr::k_unTrackedDeviceIndexInvalid;
