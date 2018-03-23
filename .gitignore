@@ -32,7 +32,7 @@ build*
 bin*
 
 # Third party submodules git repos
-thirdparty/*
+thirdparty*
 
 # Auto-downloaded Dependencies
 deps
