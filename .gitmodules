@@ -1,6 +1,6 @@
-[submodule "thirdparty/openvr"]
-	path = thirdparty/openvr
+[submodule "submodules/openvr"]
+	path = submodules/openvr
 	url = https://github.com/ValveSoftware/openvr.git
-[submodule "thirdparty/psmoveservice"]
-	path = thirdparty/psmoveservice
+[submodule "submodules/psmoveservice"]
+	path = submodules/psmoveservice
 	url = https://github.com/cboulay/PSMoveService
