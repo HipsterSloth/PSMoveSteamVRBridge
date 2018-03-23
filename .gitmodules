@@ -3,4 +3,4 @@
 	url = https://github.com/ValveSoftware/openvr.git
 [submodule "thirdparty/psmoveservice"]
 	path = thirdparty/psmoveservice
-	url = https://github.com/cboulay/PSMoveService.git
+	url = https://github.com/cboulay/PSMoveService
