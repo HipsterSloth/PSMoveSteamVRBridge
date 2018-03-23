@@ -31,8 +31,8 @@ add_executable(monitor_psmove monitor_psmoveservice.cpp)
 target_include_directories(monitor_psmove PUBLIC ${OPENVR_MONITOR_INCL_DIRS})
 target_link_libraries(monitor_psmove ${OPENVR_LIBRARIES})
 
-# Install    
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+# Install - check if the host system is Windows including 64-bit and MSYS
+IF(${CMAKE_HOST_WIN32})
 install(TARGETS driver_psmove
 	RUNTIME DESTINATION ${ROOT_DIR}/${PSM_DRIVER_PROJECT_NAME}/${ARCH_LABEL}/bin
 	LIBRARY DESTINATION ${ROOT_DIR}/${PSM_DRIVER_PROJECT_NAME}/${ARCH_LABEL}/lib
@@ -70,4 +70,5 @@ install(FILES ${PSMOVESERVICE_BIN_DIR}/PSMoveClient_CAPI.dll
     ${PSMOVESERVICE_BIN_DIR}/test_psmove_controller.exe
 	DESTINATION ${ROOT_DIR}/${PSM_DRIVER_PROJECT_NAME}/${ARCH_LABEL}/bin OPTIONAL)    
 ELSE() #Linux/Darwin
+# TODO
 ENDIF()

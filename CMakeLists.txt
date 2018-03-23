@@ -105,7 +105,9 @@ ExternalProject_Get_Property(PSMoveService source_dir)
 set(PSMOVESERVICE_BIN_DIR ${source_dir}/bin)
 set(PSMOVECLIENT_INCLUDE_DIR ${source_dir}/include)
 set(PSMOVECLIENT_LIB_DIR ${source_dir}/lib)
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+# Check if the host system is Windows including 64-bit and MSYS
+if(${CMAKE_HOST_WIN32})
   set(PSMOVECLIENT_LIB_FILE "PSMoveClient_CAPI.lib")
 else()
   set(PSMOVECLIENT_LIB_FILE "libPSMoveClient_CAPI.a")
