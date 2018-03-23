@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 //-- included -----
-#include <openvr_driver.h>
+#include <openvr_driver_compat.h>
 #include <string>
 #include <vector>
 #include <chrono>
