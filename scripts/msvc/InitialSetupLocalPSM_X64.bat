@@ -44,7 +44,7 @@ set PSM_ZIP_FILE_PATH=%PSM_ZIP_FILE_PATH:\=/%
 :: Write out build parameters config batch file
 del SetBuildVars.bat
 echo @echo off >> SetBuildVars.bat
-echo set BUILD_CONFIGURATION="Visual Studio 14 2015 Win64" >> SetBuildVars.bat
+echo set BUILD_CONFIGURATION="Visual Studio 15 2017 Win64" >> SetBuildVars.bat
 echo set PSM_ZIP_FILE_PATH=%PSM_ZIP_FILE_PATH% >> SetBuildVars.bat
 
 :: Generate the project files for PSMoveService
