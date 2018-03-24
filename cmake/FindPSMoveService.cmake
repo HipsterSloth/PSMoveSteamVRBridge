@@ -1,104 +1,104 @@
-# - try to find the OpenVR SDK - currently designed for the version on GitHub.
+# - try to find the PSMoveService SDK - currently designed for the version on GitHub.
 #
 # Cache Variables: (probably not for direct use in your scripts)
-#  OPENVR_INCLUDE_DIR
+#  PSM_INCLUDE_DIR
 #
 # Non-cache variables you might use in your CMakeLists.txt:
-#  OPENVR_FOUND
-#  OPENVR_INCLUDE_DIR
-#  OPENVR_BINARIES_DIR
-#  OPENVR_LIBRARIES
+#  PSM_FOUND
+#  PSM_INCLUDE_DIR
+#  PSM_BINARIES_DIR
+#  PSM_LIBRARIES
 #
 # Requires these CMake modules:
 #  FindPackageHandleStandardArgs (known included with CMake >=2.6.2)
 #
-# Adapted from the LibUSB cmake script
+# Adapted from the OpenVR cmake script which was adapter from the LibUSB cmake script
 #
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
-IF (OPENVR_INCLUDE_DIR AND OPENVR_LIBRARIES AND OPENVR_BINARIES_DIR)
+IF (PSM_INCLUDE_DIR AND PSM_LIBRARIES AND PSM_BINARIES_DIR)
     # in cache already
-    set(OPENVR_FOUND TRUE)
+    set(PSM_FOUND TRUE)
 
-ELSE (OPENVR_INCLUDE_DIR AND OPENVR_LIBRARIES AND OPENVR_BINARIES_DIR)
-    set(OPENVR_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../libs/openvr)
+ELSE (PSM_INCLUDE_DIR AND PSM_LIBRARIES AND PSM_BINARIES_DIR)
+    set(PSM_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../deps/PSMoveService/src/PSMoveService)
 
     # Find the include path
-    find_path(OPENVR_INCLUDE_DIR
+    find_path(PSM_INCLUDE_DIR
         NAMES
-            openvr.h
+            ClientConstants.h ClientGeometry_CAPI.h ProtocolVersion.h PSMoveClient_CAPI.h PSMoveClient_export.h SharedConstants.h
         PATHS 
-            ${OPENVR_ROOT_DIR}/headers
+            ${PSM_ROOT_DIR}/include
             /usr/local/include)
 
     # Find the libraries to include
-    set(OPENVR_LIB_SEARCH_PATH ${OPENVR_ROOT_DIR}/lib)
+    set(PSM_LIB_SEARCH_PATH ${PSM_ROOT_DIR}/lib)
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         IF (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
-            list(APPEND OPENVR_LIB_SEARCH_PATH
-                ${OPENVR_ROOT_DIR}/lib/win64)
+            list(APPEND PSM_LIB_SEARCH_PATH
+                ${PSM_ROOT_DIR}/lib/win64)
         ELSE()
-            list(APPEND OPENVR_LIB_SEARCH_PATH
-                ${OPENVR_ROOT_DIR}/lib/win32)
+            list(APPEND PSM_LIB_SEARCH_PATH
+                ${PSM_ROOT_DIR}/lib/win32)
         ENDIF()
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         IF (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
-            list(APPEND OPENVR_LIB_SEARCH_PATH
-                ${OPENVR_ROOT_DIR}/lib/linux64
+            list(APPEND PSM_LIB_SEARCH_PATH
+                ${PSM_ROOT_DIR}/lib/linux64
                 /usr/local/lib)
         ELSE()
-            list(APPEND OPENVR_LIB_SEARCH_PATH
-                ${OPENVR_ROOT_DIR}/lib/linux32
+            list(APPEND PSM_LIB_SEARCH_PATH
+                ${PSM_ROOT_DIR}/lib/linux32
                 /usr/local/lib)  
         ENDIF()      
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        list(APPEND OPENVR_LIB_SEARCH_PATH
-            ${OPENVR_ROOT_DIR}/lib/osx32
+        list(APPEND PSM_LIB_SEARCH_PATH
+            ${PSM_ROOT_DIR}/lib/osx32
             /usr/local/lib)
     ENDIF()
     
-    FIND_LIBRARY(OPENVR_LIBRARY
-            NAMES libopenvr_api.dylib libopenvr_api.so openvr_api.lib libopenvr_api openvr_api
-            PATHS ${OPENVR_LIB_SEARCH_PATH})
-    SET(OPENVR_LIBRARIES ${OPENVR_LIBRARY})
+    FIND_LIBRARY(PSM_LIBRARY
+            NAMES PSMoveClient_CAPI.dylib PSMoveClient_CAPI.so PSMoveClient_CAPI.lib PSMoveClient_CAPI
+            PATHS ${PSM_LIB_SEARCH_PATH})
+    SET(PSM_LIBRARIES ${PSM_LIBRARY})
     
     # Find the path to copy DLLs from
-    set(OPENVR_BIN_SEARCH_PATH ${OPENVR_ROOT_DIR}/bin)
+    set(PSM_BIN_SEARCH_PATH ${PSM_ROOT_DIR}/bin)
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         IF (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
-            list(APPEND OPENVR_BIN_SEARCH_PATH
-                ${OPENVR_ROOT_DIR}/bin/win64)
+            list(APPEND PSM_BIN_SEARCH_PATH
+                ${PSM_ROOT_DIR}/bin/win64)
         ELSE()
-            list(APPEND OPENVR_BIN_SEARCH_PATH
-                ${OPENVR_ROOT_DIR}/bin/win32)
+            list(APPEND PSM_BIN_SEARCH_PATH
+                ${PSM_ROOT_DIR}/bin/win32)
         ENDIF()
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         IF (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
-            list(APPEND OPENVR_BIN_SEARCH_PATH
-                ${OPENVR_ROOT_DIR}/bin/linux64
+            list(APPEND PSM_BIN_SEARCH_PATH
+                ${PSM_ROOT_DIR}/bin/linux64
                 /usr/local/bin)
         ELSE()
-            list(APPEND OPENVR_BIN_SEARCH_PATH
-                ${OPENVR_ROOT_DIR}/bin/linux32
+            list(APPEND PSM_BIN_SEARCH_PATH
+                ${PSM_ROOT_DIR}/bin/linux32
                 /usr/local/bin)  
         ENDIF()      
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        list(APPEND OPENVR_BIN_SEARCH_PATH
-            ${OPENVR_ROOT_DIR}/bin/osx32
+        list(APPEND PSM_BIN_SEARCH_PATH
+            ${PSM_ROOT_DIR}/bin/osx32
             /usr/local/bin)
     ENDIF()
 
-    find_path(OPENVR_BINARIES_DIR
+    find_path(PSM_BINARIES_DIR
         NAMES
-            libopenvr_api.so libopenvr_api.dylib openvr_api.dll
+            PSMoveClient_CAPI.so PSMoveClient_CAPI.dylib PSMoveClient_CAPI.dll
         PATHS 
-            ${OPENVR_BIN_SEARCH_PATH})    
+            ${PSM_BIN_SEARCH_PATH})    
 
-    # Register OPENVR_LIBRARIES, OPENVR_INCLUDE_DIR, OPENVR_BINARIES_DIR
+    # Register PSM_LIBRARIES, PSM_INCLUDE_DIR, PSM_BINARIES_DIR
     include(FindPackageHandleStandardArgs)
-    FIND_PACKAGE_HANDLE_STANDARD_ARGS(OPENVR DEFAULT_MSG OPENVR_LIBRARIES OPENVR_INCLUDE_DIR OPENVR_BINARIES_DIR)
+    FIND_PACKAGE_HANDLE_STANDARD_ARGS(PSM DEFAULT_MSG PSM_LIBRARIES PSM_INCLUDE_DIR PSM_BINARIES_DIR)
 
-    MARK_AS_ADVANCED(OPENVR_INCLUDE_DIR OPENVR_LIBRARIES)           
+    MARK_AS_ADVANCED(PSM_INCLUDE_DIR PSM_LIBRARIES)           
      
-ENDIF (OPENVR_INCLUDE_DIR AND OPENVR_LIBRARIES AND OPENVR_BINARIES_DIR)
+ENDIF (PSM_INCLUDE_DIR AND PSM_LIBRARIES AND PSM_BINARIES_DIR)

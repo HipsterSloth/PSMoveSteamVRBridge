@@ -2,7 +2,7 @@
 setlocal
 
 ::Initialise
-set PROJECT_ROOT=..\..\..\..\..
+set PROJECT_ROOT=..\..\..\..
 set BUILD_PROPS_FILE=%PROJECT_ROOT%\src\main\resources\configuration\build.properties
 
 ::Clean
@@ -16,10 +16,10 @@ call :loadBuildProperties || goto handleError
 call :setBuildVars || goto handleError
 
 ::Generate the project files for PSMoveService
-REM call GenerateProjectFiles.bat || goto handleError
+call GenerateProjectFiles.bat || goto handleError
 
 ::Exit batch script
-echo "MSVC solution generated successfully"
+echo "BUILD SUCCESSFUL"
 goto exit
 
 
@@ -38,21 +38,20 @@ goto:eof
 
 ::Clean up the old PSMoveSteamVRBridge deps folder
 :cleanDependencies
-IF EXIST %PROJECT_ROOT%\deps (
+IF EXIST %PROJECT_ROOT%\libs (
 echo "Cleaning old deps folder..."
-del /f /s /q %PROJECT_ROOT%\deps > nul
-rmdir /s /q %PROJECT_ROOT%\deps
+del /f /s /q %PROJECT_ROOT%\libs > nul
+rmdir /s /q %PROJECT_ROOT%\libs
 )
 goto:eof
-
 
 ::Function loads properties into the SetBuildVars batch file
 :loadBuildProperties
 echo Loading properties from %BUILD_PROPS_FILE%
-call :loadBuildProperty "psmoveservice.pacakge.url"  %BUILD_PROPS_FILE% PSM_PACKAGE_URL
-call :loadBuildProperty "openvr.pacakge.url" %BUILD_PROPS_FILE% OPENVR_PACAKGE_URL
-call :loadBuildProperty "psmovesteamvrbridge.version" %BUILD_PROPS_FILE% PSMOVESTEAMVRBRIDGE_VERSION
-call :loadBuildProperty "msbuild.parameters" %BUILD_PROPS_FILE% MSBUILD_PARAMS
+call :loadBuildProperty "psmoveservice.package.url"  %BUILD_PROPS_FILE% PSM_PACKAGE_URL
+call :loadBuildProperty "openvr.package.url" %BUILD_PROPS_FILE% OPENVR_PACKAGE_URL
+call :loadBuildProperty "driver.version" %BUILD_PROPS_FILE% DRIVER_VERSION
+call :loadBuildProperty "cmake.build.parameters" %BUILD_PROPS_FILE% BUILD_PARAMS
 echo Properties loaded into SetBuildVars.bat
 goto:eof
 
@@ -69,9 +68,9 @@ goto:eof
 del SetBuildVars.bat
 echo @echo off >> SetBuildVars.bat
 echo set PSM_PACKAGE_URL="%PSM_PACKAGE_URL%">> SetBuildVars.bat
-echo set OPENVR_PACAKGE_URL="%OPENVR_PACAKGE_URL%">> SetBuildVars.bat
-echo set PSMOVESTEAMVRBRIDGE_VERSION="%PSMOVESTEAMVRBRIDGE_VERSION%">> SetBuildVars.bat
-echo set MSBUILD_PARAMS="%MSBUILD_PARAMS%">> SetBuildVars.bat
+echo set OPENVR_PACKAGE_URL="%OPENVR_PACKAGE_URL%">> SetBuildVars.bat
+echo set DRIVER_VERSION="%DRIVER_VERSION%">> SetBuildVars.bat
+echo set BUILD_PARAMS="%BUILD_PARAMS%">> SetBuildVars.bat
 goto:eof
 
 :handleError
