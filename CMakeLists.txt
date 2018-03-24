@@ -43,37 +43,10 @@ else()
     endif()
 endif()
 
-#------------------------
-# Project Version
-#------------------------
 
-# Retrieve version from header file
-set(PSM_DRIVER_VERSION_HEADER_FILE "${ROOT_DIR}/src/openvr_plugin/driver_version.h")
+message(STATUS "Project version: ${PSMOVESTEAMVRBRIDGE_VERSION}")
 
-file(STRINGS ${PSM_DRIVER_VERSION_HEADER_FILE} PSM_DRIVER_VERSION_PARTS
-  REGEX "^#define[ \t]+PSM_DRIVER_VERSION_(MAJOR|MINOR|HOTFIX)[ \t]+[0-9]+$")
-  
-# Verify version parts
-string(REGEX MATCH "PSM_DRIVER_VERSION_MAJOR[ \t]+[0-9]+" PSM_DRIVER_VERSION_MAJOR  ${PSM_DRIVER_VERSION_PARTS})
-string(REGEX MATCH "PSM_DRIVER_VERSION_MINOR[ \t]+[0-9]+" PSM_DRIVER_VERSION_MINOR  ${PSM_DRIVER_VERSION_PARTS})
-string(REGEX MATCH "PSM_DRIVER_VERSION_HOTFIX[ \t]+[0-9]+" PSM_DRIVER_VERSION_HOTFIX  ${PSM_DRIVER_VERSION_PARTS})
-
-if(NOT PSM_DRIVER_VERSION_MAJOR 
-    OR NOT PSM_DRIVER_VERSION_MINOR 
-    OR NOT PSM_DRIVER_VERSION_HOTFIX)
-  message(FATAL_ERROR "Unable to retrieve project version from ${PSM_DRIVER_VERSION_HEADER_FILE}")
-endif()
-
-# Extract version numbers
-string(REGEX REPLACE "PSM_DRIVER_VERSION_MAJOR[ \t]+([0-9]+)" "\\1" PSM_DRIVER_VERSION_MAJOR  ${PSM_DRIVER_VERSION_MAJOR})
-string(REGEX REPLACE "PSM_DRIVER_VERSION_MINOR[ \t]+([0-9]+)" "\\1" PSM_DRIVER_VERSION_MINOR  ${PSM_DRIVER_VERSION_MINOR})
-string(REGEX REPLACE "PSM_DRIVER_VERSION_HOTFIX[ \t]+([0-9]+)" "\\1" PSM_DRIVER_VERSION_HOTFIX  ${PSM_DRIVER_VERSION_HOTFIX})
-
-set(PSM_DRIVER_VERSION_STRING "${PSM_DRIVER_VERSION_MAJOR}.${PSM_DRIVER_VERSION_MINOR}.${PSM_DRIVER_VERSION_HOTFIX}")
-
-message(STATUS "Project version: ${PSM_DRIVER_VERSION_STRING}")
-
-set(PSM_DRIVER_PROJECT_NAME "PSMoveSteamVRBridge_${PSM_DRIVER_VERSION_STRING}")
+set(PSM_DRIVER_PROJECT_NAME "PSMoveSteamVRBridge_${PSMOVESTEAMVRBRIDGE_VERSION}")
 
 # PSMoveService Build
 
@@ -86,7 +59,7 @@ ENDIF()
 
 ExternalProject_Add(
     PSMoveService
-    PREFIX ${ROOT_DIR}/deps/PSMoveService
+    PREFIX ${ROOT_DIR}/libs/PSMoveService
     URL ${PSMOVESERVICE_BUILD_URL}
     # Disable install step
     INSTALL_COMMAND ""
@@ -106,7 +79,7 @@ set(PSMOVESERVICE_BIN_DIR ${source_dir}/bin)
 set(PSMOVECLIENT_INCLUDE_DIR ${source_dir}/include)
 set(PSMOVECLIENT_LIB_DIR ${source_dir}/lib)
 
-# Check if the host system is Windows including 64-bit and MSYS
+# Check if the host system is Windows including 32/64-bit and MSYS
 if(${CMAKE_HOST_WIN32})
   set(PSMOVECLIENT_LIB_FILE "PSMoveClient_CAPI.lib")
 else()

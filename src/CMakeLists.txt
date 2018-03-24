@@ -11,6 +11,8 @@ list(APPEND OPENVR_PLUGIN_INCL_DIRS
     ${PSMOVECLIENT_INCLUDE_DIR}
 )
 
+message(STATUS "Running cmake in ${CMAKE_CURRENT_LIST_DIR}")
+
 #OpenVR
 FIND_PACKAGE(OpenVR REQUIRED)
 list(APPEND OPENVR_PLUGIN_INCL_DIRS ${OPENVR_INCLUDE_DIR})
@@ -31,7 +33,7 @@ add_executable(monitor_psmove monitor_psmoveservice.cpp)
 target_include_directories(monitor_psmove PUBLIC ${OPENVR_MONITOR_INCL_DIRS})
 target_link_libraries(monitor_psmove ${OPENVR_LIBRARIES})
 
-# Install - check if the host system is Windows including 64-bit and MSYS
+# Install - check if the host system is Windows including 32/64-bit and MSYS
 IF(${CMAKE_HOST_WIN32})
 install(TARGETS driver_psmove
 	RUNTIME DESTINATION ${ROOT_DIR}/${PSM_DRIVER_PROJECT_NAME}/${ARCH_LABEL}/bin
@@ -60,15 +62,7 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/configuration
 install(DIRECTORY ${PSMOVESERVICE_BIN_DIR}/assets
 	DESTINATION ${ROOT_DIR}/${PSM_DRIVER_PROJECT_NAME}/${ARCH_LABEL}/bin OPTIONAL)    
 install(FILES ${PSMOVESERVICE_BIN_DIR}/PSMoveClient_CAPI.dll
-    ${PSMOVESERVICE_BIN_DIR}/PSMoveConfigTool.exe
-    ${PSMOVESERVICE_BIN_DIR}/PSMoveService.exe
-    ${PSMOVESERVICE_BIN_DIR}/test_camera.exe
-    ${PSMOVESERVICE_BIN_DIR}/test_camera_parallel.exe
-    ${PSMOVESERVICE_BIN_DIR}/test_console_CAPI.exe
-    ${PSMOVESERVICE_BIN_DIR}/test_ds4_controller.exe
-    ${PSMOVESERVICE_BIN_DIR}/test_navi_controller.exe
-    ${PSMOVESERVICE_BIN_DIR}/test_psmove_controller.exe
-	DESTINATION ${ROOT_DIR}/${PSM_DRIVER_PROJECT_NAME}/${ARCH_LABEL}/bin OPTIONAL)    
+   DESTINATION ${ROOT_DIR}/${PSM_DRIVER_PROJECT_NAME}/${ARCH_LABEL}/bin OPTIONAL)    
 ELSE() #Linux/Darwin
 # TODO
 ENDIF()

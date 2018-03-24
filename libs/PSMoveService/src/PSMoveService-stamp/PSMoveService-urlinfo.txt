@@ -1,0 +1,3 @@
+repository='external project URL'
+module='https://github.com/cboulay/PSMoveService/releases/download/v0.9-alpha8.7.2/PSMoveService_0.9_alpha8.7.2.zip'
+tag=''
