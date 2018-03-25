@@ -28,7 +28,7 @@
 *.app
 
 # Build directories
-build*
+target*
 bin*
 
 # Project IDE dirs
