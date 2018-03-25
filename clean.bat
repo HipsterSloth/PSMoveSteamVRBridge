@@ -9,14 +9,9 @@ set BUILD_PROPS_FILE=%PROJECT_ROOT%\build.properties
 call :cleanProjectFolder || goto handleError
 call :cleanBuildFolder || goto handleError
 call :cleanDependencies || goto handleError
-echo "CLEAN SUCCESSFUL"
-
-::Generate the project files for PSMoveService
-call build.bat || goto handleError
 
 ::Exit batch script
 goto exit
-
 
 ::---------------------------
 ::|Function definitions below
@@ -50,10 +45,13 @@ rmdir /s /q %PROJECT_ROOT%\deps
 goto:eof
 
 :handleError
-pause
+echo "CLEAN FAILED"
 endlocal
 exit /b 1
+goto:eof
 
 :exit
+echo "CLEAN SUCCESSFUL"
 endlocal
 exit /b 0
+goto:eof

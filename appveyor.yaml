@@ -31,10 +31,9 @@ init:
 
 before_build:
 - cmd: |-
-    mkdir build
-    cd build
     cmake --version
-    cmake .. -G %generator%
+    clean.bat
+    generate.bat
 
 build:
   project: c:\projects\PSMoveSteamVR\ide\PSMoveSteamVRBridge.sln
