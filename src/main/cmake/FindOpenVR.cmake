@@ -17,14 +17,14 @@
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
-message(STATUS "Finding OpenVR, CMAKE_CURRENT_LIST_DIR=${CMAKE_CURRENT_LIST_DIR}/../libs/OpenVR/src/OpenVR")
+message(STATUS "Finding OpenVR, CMAKE_CURRENT_LIST_DIR=${CMAKE_CURRENT_LIST_DIR}/../../../deps/OpenVR/src/OpenVR")
 
 IF (OPENVR_INCLUDE_DIR AND OPENVR_LIBRARIES AND OPENVR_BINARIES_DIR)
     # in cache already
     set(OPENVR_FOUND TRUE)
 
 ELSE (OPENVR_INCLUDE_DIR AND OPENVR_LIBRARIES AND OPENVR_BINARIES_DIR)
-    set(OPENVR_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../deps/OpenVR/src/OpenVR)
+    set(OPENVR_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../deps/OpenVR/src/OpenVR)
 
     # Find the include path
     find_path(OPENVR_INCLUDE_DIR

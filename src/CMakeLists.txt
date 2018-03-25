@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.0)
 set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
 set(PROJECT_SRC_DIR ${ROOT_DIR}/src/main/cpp/driver)
 set(OPENVR_COMPAT_HEADERS ${ROOT_DIR}/src/main/cpp/openvr-driver-compat)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/main/cmake)
+message(STATUS "CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}")
 message(STATUS "Running cmake in ${CMAKE_CURRENT_LIST_DIR}")
 # Shared architecture label used for install folder locations
 if (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
@@ -51,20 +53,6 @@ list(APPEND PSM_PLUGIN_REQ_LIBS ${PSM_LIBRARIES})
 list(APPEND PSM_MONITOR_INCL_DIRS ${PSM_INCLUDE_DIR})
 list(APPEND PSM_MONITOR_REQ_LIBS ${PSM_LIBRARIES})   
 
-## enable for verbose logging
-#message(STATUS "OPENVR_PLUGIN_INCL_DIRS=${OPENVR_PLUGIN_INCL_DIRS}")
-#message(STATUS "OPENVR_PLUGIN_REQ_LIBS=${OPENVR_PLUGIN_REQ_LIBS}")
-#message(STATUS "OPENVR_MONITOR_INCL_DIRS=${OPENVR_MONITOR_INCL_DIRS}")
-#message(STATUS "OPENVR_MONITOR_REQ_LIBS=${OPENVR_MONITOR_REQ_LIBS}")
-#message(STATUS "PSM_PLUGIN_INCL_DIRS=${PSM_PLUGIN_INCL_DIRS}")
-#message(STATUS "PSM_PLUGIN_REQ_LIBS=${PSM_PLUGIN_REQ_LIBS}")
-#message(STATUS "PSM_MONITOR_INCL_DIRS=${PSM_MONITOR_INCL_DIRS}")
-message(STATUS "PSM_MONITOR_REQ_LIBS=${PSM_MONITOR_REQ_LIBS}")
-
-# Needed? platform independent include paths
-# list(APPEND OPENVR_PLUGIN_INCL_DIRS ${PSMOVECLIENT_INCLUDE_DIR})
-# list(APPEND OPENVR_PLUGIN_REQ_LIBS ${PSMOVECLIENT_LIB_DIR}/${PSMOVECLIENT_LIB_FILE})
-
 ##############################################################################################
 # This driver makes two build artifacts, the monitor app binary and the psmove driver library#
 ##############################################################################################
@@ -110,7 +98,7 @@ IF(${WIN32})
 		FILES_MATCHING PATTERN "*.vricons")
 	install(DIRECTORY ${PSM_BIN_DIR}/assets
 		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/bin OPTIONAL)
-	install(FILES ${PSMOVESERVICE_BIN_DIR}/PSMoveClient_CAPI.dll
+	install(FILES ${PSM_BIN_DIR}/PSMoveClient_CAPI.dll
 	   DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/bin OPTIONAL)
 ELSE() #Linux/Darwin
 	# TODO

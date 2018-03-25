@@ -17,12 +17,14 @@
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
+message(STATUS "Finding PSMoveService, CMAKE_CURRENT_LIST_DIR=${CMAKE_CURRENT_LIST_DIR}/../../../deps/PSMoveService/src/PSMoveService")
+
 IF (PSM_INCLUDE_DIR AND PSM_LIBRARIES AND PSM_BINARIES_DIR)
     # in cache already
     set(PSM_FOUND TRUE)
 
 ELSE (PSM_INCLUDE_DIR AND PSM_LIBRARIES AND PSM_BINARIES_DIR)
-    set(PSM_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../deps/PSMoveService/src/PSMoveService)
+    set(PSM_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../deps/PSMoveService/src/PSMoveService)
 
     # Find the include path
     find_path(PSM_INCLUDE_DIR
