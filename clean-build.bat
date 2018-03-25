@@ -6,6 +6,7 @@ set PROJECT_ROOT=%cd%
 set BUILD_PROPS_FILE=%PROJECT_ROOT%\build.properties
 
 ::Clean
+call :cleanProjectFolder || goto handleError
 call :cleanBuildFolder || goto handleError
 call :cleanDependencies || goto handleError
 echo "CLEAN SUCCESSFUL"
@@ -22,11 +23,20 @@ goto exit
 ::---------------------------
 
 ::Clean up the old PSMoveSteamVRBridge ide project folder
-:cleanBuildFolder
+:cleanProjectFolder
 IF EXIST %PROJECT_ROOT%\ide (
 echo "Cleaning old vs_project folder..."
 del /f /s /q %PROJECT_ROOT%\ide > nul
 rmdir /s /q %PROJECT_ROOT%\ide
+)
+goto:eof
+
+::Clean up the old PSMoveSteamVRBridge build project folder
+:cleanBuildFolder
+IF EXIST %PROJECT_ROOT%\build (
+echo "Cleaning old build folder..."
+del /f /s /q %PROJECT_ROOT%\build > nul
+rmdir /s /q %PROJECT_ROOT%\build
 )
 goto:eof
 

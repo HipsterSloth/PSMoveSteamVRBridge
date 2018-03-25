@@ -11,19 +11,22 @@ call :loadBuildProperties || goto handleError
 ::Generate the project files for PSMoveService
 call :generateProjectFiles || goto handleError
 
+::Build driver
+call :buildDriver || goto handleError
+
 ::Exit batch script
-echo "BUILD SUCCESSFUL"
 goto exit
 
 
-::Function loads properties into the SetBuildVars batch file
+::Function loads build properties into local variables
 :loadBuildProperties
 echo Loading properties from %BUILD_PROPS_FILE%
 call :loadBuildProperty "psmoveservice.package.url"  %BUILD_PROPS_FILE% PSM_PACKAGE_URL
 call :loadBuildProperty "openvr.package.url" %BUILD_PROPS_FILE% OPENVR_PACKAGE_URL
 call :loadBuildProperty "driver.version" %BUILD_PROPS_FILE% DRIVER_VERSION
 call :loadBuildProperty "cmake.build.parameters" %BUILD_PROPS_FILE% BUILD_PARAMS
-echo Properties loaded into SetBuildVars.bat
+call :loadBuildProperty "build.type" %BUILD_PROPS_FILE% BUILD_TYPE
+echo Properties loaded successfully
 goto:eof
 
 ::Fuction returns a configured build property value for the given key
@@ -32,16 +35,6 @@ set PROP_KEY=%1
 set FILE=%2
 echo "Loading %PROP_KEY% from %FILE%"
 for /f "tokens=2,2 delims==" %%i in ('findstr /i %PROP_KEY% %FILE%') do set %3=%%i
-goto:eof
-
-::Function sets the build variables in a batch file called SetBuildVars.bat
-:setBuildVars
-del SetBuildVars.bat
-echo @echo off >> SetBuildVars.bat
-echo set PSM_PACKAGE_URL="%PSM_PACKAGE_URL%">> SetBuildVars.bat
-echo set OPENVR_PACKAGE_URL="%OPENVR_PACKAGE_URL%">> SetBuildVars.bat
-echo set DRIVER_VERSION="%DRIVER_VERSION%">> SetBuildVars.bat
-echo set BUILD_PARAMS="%BUILD_PARAMS%">> SetBuildVars.bat
 goto:eof
 
 ::Function generates project files for the configured ide
@@ -55,11 +48,19 @@ cmake .. -G "%BUILD_PARAMS%" -DDRIVER_VERSION="%DRIVER_VERSION%" -DPSM_PACKAGE_U
 popd
 goto:eof
 
+::Function calls the INSTALL cmake target which will build the driver as either debug/release
+:buildDriver
+cmake --build ide --target INSTALL --config %BUILD_TYPE%
+goto:eof
+
 :handleError
-pause
+echo "BUILD FAILED"
 endlocal
 exit /b 1
+goto:eof
 
 :exit
+echo "BUILD SUCCESSFUL"
 endlocal
 exit /b 0
+goto:eof
