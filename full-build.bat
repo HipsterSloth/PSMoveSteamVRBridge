@@ -23,7 +23,6 @@ goto exit
 ::---------------------------
 
 :handleError
-pause
 endlocal
 exit /b 1
 goto:eof

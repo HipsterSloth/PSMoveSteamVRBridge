@@ -2,7 +2,7 @@
 
 
 ::Build driver
-call buildDriver || goto handleError
+call :buildDriver || goto handleError
 
 ::Exit batch script
 goto exit
