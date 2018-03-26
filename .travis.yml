@@ -1,0 +1,6 @@
+language: cpp
+addons:
+  apt:
+    packages: cmake
+before_install: generate.sh
+script: build.sh

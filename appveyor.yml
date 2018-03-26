@@ -34,12 +34,13 @@ before_build:
     clean.bat
     generate.bat
 
-build:
-  project: c:\projects\PSMoveSteamVR\ide\PSMoveSteamVRBridge.sln
-  verbosity: minimal
-  parallel: true
+build_script:
+  c:\projects\PSMoveSteamVR\build.bat
 only_commits:
   files:
     - CMakeLists.txt
     - appveyor.yml
+    - build.bat
+    - clean.bat
+    - generate.bat
     - src/
