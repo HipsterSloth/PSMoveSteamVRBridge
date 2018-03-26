@@ -32,7 +32,7 @@ build
 bin*
 
 # Project IDE dirs
-ide*
+generated*
 
 # Auto-downloaded Dependencies
 deps

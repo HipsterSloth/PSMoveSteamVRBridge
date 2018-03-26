@@ -21,7 +21,7 @@ echo Loading properties from %BUILD_PROPS_FILE%
 call :loadBuildProperty "psmoveservice.package.url"  %BUILD_PROPS_FILE% PSM_PACKAGE_URL
 call :loadBuildProperty "openvr.package.url" %BUILD_PROPS_FILE% OPENVR_PACKAGE_URL
 call :loadBuildProperty "driver.version" %BUILD_PROPS_FILE% DRIVER_VERSION
-call :loadBuildProperty "cmake.build.generator" %BUILD_PROPS_FILE% BUILD_GENERATOR
+call :loadBuildProperty "cmake.build.generator.windows" %BUILD_PROPS_FILE% BUILD_GENERATOR
 call :loadBuildProperty "build.type" %BUILD_PROPS_FILE% BUILD_TYPE
 echo Properties loaded successfully
 goto:eof
@@ -37,8 +37,8 @@ goto:eof
 ::Function generates project files for the configured ide
 :generateProjectFiles
 @echo off
-IF NOT EXIST %PROJECT_ROOT%\vs_project mkdir %PROJECT_ROOT%\ide
-pushd %PROJECT_ROOT%\ide
+IF NOT EXIST %PROJECT_ROOT%\vs_project mkdir %PROJECT_ROOT%\generated
+pushd %PROJECT_ROOT%\generated
 echo "Rebuilding PSMoveSteamVRBridge Project files..."
 echo "Running cmake in %PROJECT_ROOT%"
 cmake .. -G "%BUILD_GENERATOR%" -DDRIVER_VERSION="%DRIVER_VERSION%" -DPSM_PACKAGE_URL="%PSM_PACKAGE_URL%" -DOPENVR_PACKAGE_URL="%OPENVR_PACKAGE_URL%"

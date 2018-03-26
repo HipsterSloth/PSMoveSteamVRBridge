@@ -17,12 +17,12 @@ goto exit
 ::|Function definitions below
 ::---------------------------
 
-::Clean up the old PSMoveSteamVRBridge ide project folder
+::Clean up the old PSMoveSteamVRBridge generated project folder
 :cleanProjectFolder
-IF EXIST %PROJECT_ROOT%\ide (
-echo "Cleaning old vs_project folder..."
-del /f /s /q %PROJECT_ROOT%\ide > nul
-rmdir /s /q %PROJECT_ROOT%\ide
+IF EXIST %PROJECT_ROOT%\generated (
+echo "Cleaning old generated folder..."
+del /f /s /q %PROJECT_ROOT%\generated > nul
+rmdir /s /q %PROJECT_ROOT%\generated
 )
 goto:eof
 
