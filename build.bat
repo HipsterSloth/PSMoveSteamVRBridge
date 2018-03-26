@@ -13,7 +13,7 @@ goto exit
 
 ::Function runs INSTALL cmake target which will build the driver as either debug/release
 :buildDriver
-cmake --build ide --target INSTALL --config %BUILD_TYPE%
+cmake --build generated --target INSTALL --config %BUILD_TYPE%
 goto:eof
 
 :handleError
