@@ -1,6 +1,5 @@
 @echo off
 
-
 ::Build driver
 call :buildDriver || goto handleError
 
@@ -19,12 +18,10 @@ goto:eof
 
 :handleError
 echo "BUILD FAILED"
-endlocal
 exit /b 1
 goto:eof
 
 :exit
 echo "BUILD SUCCESSFUL"
-endlocal
 exit /b 0
 goto:eof
