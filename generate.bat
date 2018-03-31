@@ -1,5 +1,4 @@
 @echo off
-setlocal
 
 ::Initialise
 set PROJECT_ROOT=%cd%
@@ -47,12 +46,10 @@ goto:eof
 
 :handleError
 echo "GENERATE FAILED"
-endlocal
 exit /b 1
 goto:eof
 
 :exit
 echo "GENERATE SUCCESSFUL"
-endlocal
 exit /b 0
 goto:eof
