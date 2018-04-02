@@ -3,6 +3,7 @@
 //-- included -----
 #include <openvr_driver.h>
 #include <string>
+#include <map>
 #include <vector>
 #include <chrono>
 #include <atomic>
@@ -136,6 +137,9 @@ protected:
     vr::DriverPose_t m_Pose;
     unsigned short m_firmware_revision;
     unsigned short m_hardware_revision;
+
+	// Component handle registered upon Activate() and called to update button/trigger/axis events
+	std::map<int,vr::VRInputComponentHandle_t> m_ulComponentsMap;
 };
 
 class CPSMoveControllerLatest : public CPSMoveTrackedDeviceLatest
@@ -237,7 +241,6 @@ public:
     // Overridden Implementation of vr::ITrackedDeviceServerDriver
     virtual vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
     virtual void Deactivate() override;
-    virtual void *GetComponent(const char *pchComponentNameAndVersion) override;
 
 	// Overridden Implementation of CPSMoveTrackedDeviceLatest
     virtual vr::ETrackedDeviceClass GetTrackedDeviceClass() const override { return vr::TrackedDeviceClass_Controller; }
@@ -253,9 +256,10 @@ public:
 	inline PSMControllerType getPSMControllerType() const { return m_PSMControllerType; }
 
 private:
-    typedef void ( vr::IVRServerDriverHost::*ButtonUpdate )( uint32_t unWhichDevice, vr::EVRButtonId eButtonId, double eventTimeOffset );
-
-    void SendButtonUpdates( ButtonUpdate ButtonEvent, uint64_t ulMask );
+    //typedef vr::EVRInputError ( vr::IVRDriverInput::*UpdateComponent )(vr::VRInputComponentHandle_t ulComponent, bool bNewValue, double fTimeOffset);
+	
+    void SendBooleanUpdates(bool pressed, uint64_t ulMask );
+	void SendScalarUpdates(float val,  uint64_t ulMask);
 	void RealignHMDTrackingSpace();
     void UpdateControllerState();
 	void UpdateControllerStateFromPsMoveButtonState(ePSControllerType controllerType, ePSButtonID buttonId, PSMButtonState buttonState, vr::VRControllerState_t* pControllerStateToUpdate);
