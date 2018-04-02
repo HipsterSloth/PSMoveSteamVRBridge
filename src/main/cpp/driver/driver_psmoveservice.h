@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 //-- included -----
-#include <openvr_driver_compat.h>
+#include <openvr_driver.h>
 #include <string>
 #include <vector>
 #include <chrono>
@@ -138,7 +138,7 @@ protected:
     unsigned short m_hardware_revision;
 };
 
-class CPSMoveControllerLatest : public CPSMoveTrackedDeviceLatest, public vr::IVRControllerComponent
+class CPSMoveControllerLatest : public CPSMoveTrackedDeviceLatest
 {
 public:
 	// Mirrors definition in PSMControllerType
@@ -239,11 +239,7 @@ public:
     virtual void Deactivate() override;
     virtual void *GetComponent(const char *pchComponentNameAndVersion) override;
 
-    // Implementation of vr::IVRControllerComponent
-    virtual vr::VRControllerState_t GetControllerState() override;
-    virtual bool TriggerHapticPulse( uint32_t unAxisId, uint16_t usPulseDurationMicroseconds ) override;
-
-    // Overridden Implementation of CPSMoveTrackedDeviceLatest
+	// Overridden Implementation of CPSMoveTrackedDeviceLatest
     virtual vr::ETrackedDeviceClass GetTrackedDeviceClass() const override { return vr::TrackedDeviceClass_Controller; }
     virtual void Update() override;
 	virtual void RefreshWorldFromDriverPose() override;

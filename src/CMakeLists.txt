@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.0)
 # initialise variables
 set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
 set(PROJECT_SRC_DIR ${ROOT_DIR}/src/main/cpp/driver)
-set(OPENVR_COMPAT_HEADERS ${ROOT_DIR}/src/main/cpp/openvr-driver-compat)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/main/cmake)
 message(STATUS "CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}")
 message(STATUS "Running cmake in ${CMAKE_CURRENT_LIST_DIR}")
@@ -58,7 +57,7 @@ list(APPEND PSM_MONITOR_REQ_LIBS ${PSM_LIBRARIES})
 
 # Shared library: defines what is compiled, what output type it is and what libs/includes it needs
 add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver_psmoveservice.cpp)
-target_include_directories(driver_psmove PUBLIC ${OPENVR_PLUGIN_INCL_DIRS} ${PSM_PLUGIN_INCL_DIRS} ${OPENVR_COMPAT_HEADERS})
+target_include_directories(driver_psmove PUBLIC ${OPENVR_PLUGIN_INCL_DIRS} ${PSM_PLUGIN_INCL_DIRS} )
 target_link_libraries(driver_psmove ${OPENVR_PLUGIN_REQ_LIBS} ${PSM_PLUGIN_REQ_LIBS})
 
 # Monitor app: defines what is compiled, what output type it is and what libs/includes it needs

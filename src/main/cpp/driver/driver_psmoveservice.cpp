@@ -433,12 +433,12 @@ bool GetHMDDeviceIndex(vr::TrackedDeviceIndex_t *out_hmd_device_index)
 bool GetTrackedDevicePose(const vr::TrackedDeviceIndex_t device_index, PSMPosef *out_device_pose)
 {
     bool bSuccess= false;
-    vr::IVRServerDriverHost *driver_host_interface= vr::VRServerDriverHost_004();
+    vr::IVRServerDriverHost *driver_host_interface= vr::VRServerDriverHost();
 
     if (driver_host_interface != nullptr && device_index != vr::k_unTrackedDeviceIndexInvalid)
     {
         vr::TrackedDevicePose_t trackedDevicePoses[vr::k_unMaxTrackedDeviceCount];
-        vr::VRServerDriverHost_004()->GetRawTrackedDevicePoses(0.f, trackedDevicePoses, vr::k_unMaxTrackedDeviceCount);
+        vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, trackedDevicePoses, vr::k_unMaxTrackedDeviceCount);
 
         const vr::TrackedDevicePose_t &device_pose= trackedDevicePoses[device_index];
         if (device_pose.bDeviceIsConnected && device_pose.bPoseIsValid)
@@ -1393,9 +1393,9 @@ void CServerDriver_PSMoveService::AllocateUniquePSMoveController(PSMControllerID
                 new CPSMoveControllerLatest( psmControllerID, PSMControllerType::PSMController_Move, psmSerialNo.c_str());
 			m_vecTrackedDevices.push_back(TrackedDevice);
 
-			if (vr::VRServerDriverHost_004())
+			if (vr::VRServerDriverHost())
 			{
-				vr::VRServerDriverHost_004()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
+				vr::VRServerDriverHost()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
 			}
 		}
 		else
@@ -1421,9 +1421,9 @@ void CServerDriver_PSMoveService::AllocateUniqueVirtualController(PSMControllerI
             new CPSMoveControllerLatest( psmControllerID, PSMControllerType::PSMController_Virtual, psmSerialNo.c_str());
 		m_vecTrackedDevices.push_back(TrackedDevice);
 
-		if (vr::VRServerDriverHost_004())
+		if (vr::VRServerDriverHost())
 		{
-			vr::VRServerDriverHost_004()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
+			vr::VRServerDriverHost()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
 		}
     }
 }
@@ -1444,9 +1444,9 @@ void CServerDriver_PSMoveService::AllocateUniqueDualShock4Controller(PSMControll
             new CPSMoveControllerLatest(psmControllerID, PSMControllerType::PSMController_DualShock4, psmSerialNo.c_str());
 		m_vecTrackedDevices.push_back(TrackedDevice);
 
-		if (vr::VRServerDriverHost_004())
+		if (vr::VRServerDriverHost())
 		{
-			vr::VRServerDriverHost_004()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
+			vr::VRServerDriverHost()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
 		}
     }
 }
@@ -1515,9 +1515,9 @@ void CServerDriver_PSMoveService::AllocateUniquePSMoveTracker(const PSMClientTra
         CPSMoveTrackerLatest *TrackerDevice= new CPSMoveTrackerLatest(trackerInfo);
         m_vecTrackedDevices.push_back(TrackerDevice);
 
-        if (vr::VRServerDriverHost_004())
+        if (vr::VRServerDriverHost())
         {
-            vr::VRServerDriverHost_004()->TrackedDeviceAdded(TrackerDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_TrackingReference, TrackerDevice);
+            vr::VRServerDriverHost()->TrackedDeviceAdded(TrackerDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_TrackingReference, TrackerDevice);
         }
     }
 }
@@ -2445,7 +2445,8 @@ void CPSMoveControllerLatest::SendButtonUpdates( ButtonUpdate ButtonEvent, uint6
 
         if ( bit & ulMask )
         {
-            ( vr::VRServerDriverHost_004()->*ButtonEvent )( m_unSteamVRTrackedDeviceId, button, 0.0 );
+            //( vr::VRServerDriverHost()->*ButtonEvent )( m_unSteamVRTrackedDeviceId, button, 0.0 );
+			// must now call update component instead boolean or scalalr
         }
     }
 }
@@ -2716,7 +2717,8 @@ void CPSMoveControllerLatest::UpdateControllerState()
 				if (NewState.rAxis[0].x != m_ControllerState.rAxis[0].x || 
 					NewState.rAxis[0].y != m_ControllerState.rAxis[0].y)
 				{					
-					vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 0, NewState.rAxis[0]);
+					//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 0, NewState.rAxis[0]);
+					// TODO update device axis
 				}
 
 				// PSMove Trigger handling
@@ -2760,7 +2762,8 @@ void CPSMoveControllerLatest::UpdateControllerState()
 						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRTriggerAxisIndex));
 					}
 
-					vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_steamVRTriggerAxisIndex, NewState.rAxis[m_steamVRTriggerAxisIndex]);
+					//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_steamVRTriggerAxisIndex, NewState.rAxis[m_steamVRTriggerAxisIndex]);
+					// TODO update device axis
 				}
 				if (m_steamVRTriggerAxisIndex != 1 && NewState.rAxis[1].x != m_ControllerState.rAxis[1].x)
 				{
@@ -2774,7 +2777,8 @@ void CPSMoveControllerLatest::UpdateControllerState()
 						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + 1));
 					}
 
-					vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+					// TODO update device axis
 				}
 				if (m_steamVRNaviTriggerAxisIndex != m_steamVRTriggerAxisIndex && (NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x != m_ControllerState.rAxis[m_steamVRNaviTriggerAxisIndex].x))
 				{
@@ -2788,7 +2792,8 @@ void CPSMoveControllerLatest::UpdateControllerState()
 						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRNaviTriggerAxisIndex));
 					}
 
-					vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_steamVRNaviTriggerAxisIndex, NewState.rAxis[m_steamVRNaviTriggerAxisIndex]);
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_steamVRNaviTriggerAxisIndex, NewState.rAxis[m_steamVRNaviTriggerAxisIndex]);
+					// TODO update device axis
 				}
 
 				// Update the battery charge state
@@ -2909,14 +2914,18 @@ void CPSMoveControllerLatest::UpdateControllerState()
 				NewState.rAxis[3].y = 0.f;
 
 				if (NewState.rAxis[0].x != m_ControllerState.rAxis[0].x || NewState.rAxis[0].y != m_ControllerState.rAxis[0].y)
-					vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 0, NewState.rAxis[0]);
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 0, NewState.rAxis[0]);
+					// TODO update device axis
 				if (NewState.rAxis[1].x != m_ControllerState.rAxis[1].x)
-					vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+					// TODO update device axis
 
 				if (NewState.rAxis[2].x != m_ControllerState.rAxis[2].x || NewState.rAxis[2].y != m_ControllerState.rAxis[2].y)
-					vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 2, NewState.rAxis[2]);
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 2, NewState.rAxis[2]);
+					// TODO update device axis
 				if (NewState.rAxis[3].x != m_ControllerState.rAxis[3].x)
-					vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 3, NewState.rAxis[3]);
+					vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 3, NewState.rAxis[3]);
+					// TODO update device axis
 			}
         } break;
     case PSMController_Virtual:
@@ -2989,7 +2998,8 @@ void CPSMoveControllerLatest::UpdateControllerState()
 
                     if (NewState.rAxis[0].x != m_ControllerState.rAxis[0].x || NewState.rAxis[0].y != m_ControllerState.rAxis[0].y)
                     {
-					    vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 0, NewState.rAxis[0]);
+					    vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 0, NewState.rAxis[0]);
+						// TODO update device axis
                     }
 				}
 
@@ -3003,7 +3013,8 @@ void CPSMoveControllerLatest::UpdateControllerState()
 
                     if (NewState.rAxis[1].x != m_ControllerState.rAxis[1].x)
                     {
-					    vr::VRServerDriverHost_004()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+					    vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+						// TODO update device axis
                     }
 				}
 			}
@@ -3406,7 +3417,7 @@ void CPSMoveControllerLatest::UpdateTrackingState()
 
             // This call posts this pose to shared memory, where all clients will have access to it the next
             // moment they want to predict a pose.
-			vr::VRServerDriverHost_004()->TrackedDevicePoseUpdated( m_unSteamVRTrackedDeviceId, m_Pose, sizeof( vr::DriverPose_t ) );
+			vr::VRServerDriverHost()->TrackedDevicePoseUpdated( m_unSteamVRTrackedDeviceId, m_Pose, sizeof( vr::DriverPose_t ) );
         } break;
     case PSMControllerType::PSMController_DualShock4:
         {
@@ -3471,7 +3482,7 @@ void CPSMoveControllerLatest::UpdateTrackingState()
 
             // This call posts this pose to shared memory, where all clients will have access to it the next
             // moment they want to predict a pose.
-			vr::VRServerDriverHost_004()->TrackedDevicePoseUpdated( m_unSteamVRTrackedDeviceId, m_Pose, sizeof( vr::DriverPose_t ) );
+			vr::VRServerDriverHost()->TrackedDevicePoseUpdated( m_unSteamVRTrackedDeviceId, m_Pose, sizeof( vr::DriverPose_t ) );
         } break;
     case PSMControllerType::PSMController_Virtual:
         {
@@ -3583,7 +3594,7 @@ void CPSMoveControllerLatest::UpdateTrackingState()
 
             // This call posts this pose to shared memory, where all clients will have access to it the next
             // moment they want to predict a pose.
-			vr::VRServerDriverHost_004()->TrackedDevicePoseUpdated( m_unSteamVRTrackedDeviceId, m_Pose, sizeof( vr::DriverPose_t ) );
+			vr::VRServerDriverHost()->TrackedDevicePoseUpdated( m_unSteamVRTrackedDeviceId, m_Pose, sizeof( vr::DriverPose_t ) );
         } break;
     }
 }
@@ -3888,7 +3899,7 @@ void CPSMoveTrackerLatest::Update()
 
     // This call posts this pose to shared memory, where all clients will have access to it the next
     // moment they want to predict a pose.
-	vr::VRServerDriverHost_004()->TrackedDevicePoseUpdated( m_unSteamVRTrackedDeviceId, m_Pose, sizeof( vr::DriverPose_t ) );
+	vr::VRServerDriverHost()->TrackedDevicePoseUpdated( m_unSteamVRTrackedDeviceId, m_Pose, sizeof( vr::DriverPose_t ) );
 }
 
 bool CPSMoveTrackerLatest::HasTrackerId(int TrackerID)
