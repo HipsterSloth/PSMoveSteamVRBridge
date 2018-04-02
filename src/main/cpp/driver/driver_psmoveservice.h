@@ -139,7 +139,10 @@ protected:
     unsigned short m_hardware_revision;
 
 	// Component handle registered upon Activate() and called to update button/trigger/axis events
-	std::map<int,vr::VRInputComponentHandle_t> m_ulComponentsMap;
+	std::map<int,vr::VRInputComponentHandle_t> m_ulBoolComponentsMap;
+	std::map<int, vr::VRInputComponentHandle_t> m_ulScalarComponentsMap;
+	vr::VRInputComponentHandle_t m_ulHapticComponent;
+
 };
 
 class CPSMoveControllerLatest : public CPSMoveTrackedDeviceLatest

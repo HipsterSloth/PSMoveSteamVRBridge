@@ -102,6 +102,11 @@ protected:
 
 				case vr::VREvent_VendorSpecific_Reserved_Start + 0:
 					break;
+				case vr::VREvent_Input_HapticVibration:
+					//See this just goes to show the controller updates should be running on a background thread,
+					//we now have to fiddle around to get the event haptic vibration event coming from steamvr to
+					//the PSMoveService.
+					break;
 				}
 			}
 		}

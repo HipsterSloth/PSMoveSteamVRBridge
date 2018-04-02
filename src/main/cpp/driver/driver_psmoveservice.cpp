@@ -1682,11 +1682,11 @@ vr::EVRInitError CPSMoveTrackedDeviceLatest::Activate(vr::TrackedDeviceIndex_t u
 	
 	// System button component
 	vr::VRDriverInput()->CreateBooleanComponent(m_ulPropertyContainer, "/input/system/click", &m_ulComponent);
-	m_ulComponentsMap[vr::EVRButtonId::k_EButton_System] = m_ulComponent;
+	m_ulBoolComponentsMap[vr::EVRButtonId::k_EButton_System] = m_ulComponent;
 	
 	// Grip button component
 	vr::VRDriverInput()->CreateBooleanComponent(m_ulPropertyContainer, "/input/grip/click", &m_ulComponent);
-	m_ulComponentsMap[vr::EVRButtonId::k_EButton_Grip] = m_ulComponent;
+	m_ulBoolComponentsMap[vr::EVRButtonId::k_EButton_Grip] = m_ulComponent;
 	
 	// Guide button component
 	//vr::VRDriverInput()->CreateBooleanComponent(m_ulPropertyContainer, "/input/guide/click", &m_ulComponent);
@@ -1694,31 +1694,37 @@ vr::EVRInitError CPSMoveTrackedDeviceLatest::Activate(vr::TrackedDeviceIndex_t u
 
 	// Back button component
 	vr::VRDriverInput()->CreateBooleanComponent(m_ulPropertyContainer, "/input/back/click", &m_ulComponent);
-	m_ulComponentsMap[vr::EVRButtonId::k_EButton_Dashboard_Back] = m_ulComponent;
+	m_ulBoolComponentsMap[vr::EVRButtonId::k_EButton_Dashboard_Back] = m_ulComponent;
 
 	// Trigger button component
 	vr::VRDriverInput()->CreateBooleanComponent(m_ulPropertyContainer, "/input/trigger/click", &m_ulComponent);
-	m_ulComponentsMap[vr::EVRButtonId::k_EButton_SteamVR_Trigger] = m_ulComponent;
+	m_ulBoolComponentsMap[vr::EVRButtonId::k_EButton_SteamVR_Trigger] = m_ulComponent;
+
+	// Trigger value component
+	vr::VRDriverInput()->CreateScalarComponent(m_ulPropertyContainer, "/input/trigger/value", &m_ulComponent, vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
+	m_ulScalarComponentsMap[vr::EVRButtonId::k_EButton_SteamVR_Trigger] = m_ulComponent;
 	
 	// Application Menu button component
 	vr::VRDriverInput()->CreateBooleanComponent(m_ulPropertyContainer, "/input/application_menu/click", &m_ulComponent);
-	m_ulComponentsMap[vr::EVRButtonId::k_EButton_ApplicationMenu] = m_ulComponent;
+	m_ulBoolComponentsMap[vr::EVRButtonId::k_EButton_ApplicationMenu] = m_ulComponent;
 	
-	// Trackpad Click button component
+	// Create Trackpad Click button component
 	vr::VRDriverInput()->CreateBooleanComponent(m_ulPropertyContainer, "/input/trackpad/click", &m_ulComponent);
-	m_ulComponentsMap[vr::EVRButtonId::k_EButton_SteamVR_Touchpad] = m_ulComponent;
+	m_ulBoolComponentsMap[vr::EVRButtonId::k_EButton_SteamVR_Touchpad] = m_ulComponent;
 	
-	// Trackpad Axis X button component
+	// Create Trackpad Axis X button component
 	vr::VRDriverInput()->CreateScalarComponent(m_ulPropertyContainer, "/input/trackpad/x", &m_ulComponent, vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedTwoSided);
-	m_ulComponentsMap[vr::EVRButtonId::k_EButton_Axis2 ] = m_ulComponent;
+	m_ulScalarComponentsMap[vr::EVRButtonId::k_EButton_Axis2 ] = m_ulComponent;
 	
-	// Trackpad Axis Y button component
+	// Createt Trackpad Axis Y button component
 	vr::VRDriverInput()->CreateScalarComponent(m_ulPropertyContainer, "/input/trackpad/y", &m_ulComponent, vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedTwoSided);
-	m_ulComponentsMap[vr::EVRButtonId::k_EButton_Axis3] = m_ulComponent;
+	m_ulScalarComponentsMap[vr::EVRButtonId::k_EButton_Axis3] = m_ulComponent;
 	
-	// TODO Haptic feedback component
-	//vr::VRDriverInput()->CreateHapticComponent(m_ulPropertyContainer, "/output/haptic", &m_ulComponent);
-	//m_ulComponentsMap[vr::EVRButtonId::k_EButton_Axis0] = m_ulComponent;
+	// Create Haptic feedback component
+	// Unfortunately we don't have access to the next polled event coming from SteamVR from here,
+	// it does appear to be checked in monitor_psmoveservice.cpp on a background thread though but
+	// this doesn't allow a simple surgical fix. Will need to restructure the lifecycle of this driver...
+	vr::VRDriverInput()->CreateHapticComponent(m_ulPropertyContainer, "/output/haptic", &m_ulHapticComponent);
 	
 	return vr::VRInitError_None;
 }
@@ -2491,9 +2497,8 @@ void CPSMoveControllerLatest::SendBooleanUpdates( bool pressed, uint64_t ulMask)
 		if (bit & ulMask)
 		{
 			//( vr::VRServerDriverHost()->*ButtonEvent )( m_unSteamVRTrackedDeviceId, button, 0.0 );
-			// must now call update component instead
-			DriverLog("boolean update - button %i pressed!\n", button);
-			vr::VRDriverInput()->UpdateBooleanComponent(m_ulComponentsMap[button], pressed, 0.0);
+			// must now call update on the boolean component instead
+			vr::VRDriverInput()->UpdateBooleanComponent(m_ulBoolComponentsMap[button], pressed, 0.0);
 		}
 	}
 }
@@ -2512,9 +2517,8 @@ void CPSMoveControllerLatest::SendScalarUpdates(float val, uint64_t ulMask)
 		if (bit & ulMask)
 		{
 			//( vr::VRServerDriverHost()->*ButtonEvent )( m_unSteamVRTrackedDeviceId, button, 0.0 );
-			// must now call update component instead
-			DriverLog("scalar update - button %i pressed!\n", button);
-			vr::VRDriverInput()->UpdateScalarComponent(m_ulComponentsMap[button], val, 0.0);
+			// must now call update on the scalar component instead
+			vr::VRDriverInput()->UpdateScalarComponent(m_ulScalarComponentsMap[button], val, 0.0);
 		}
 	}
 }
@@ -2832,7 +2836,6 @@ void CPSMoveControllerLatest::UpdateControllerState()
 					NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRTriggerAxisIndex));
 				}
 
-				// TODO change this to update a registered touch controller component i.e. /input/trackpad/x /input/trackpad/y
 				//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_steamVRTriggerAxisIndex, NewState.rAxis[m_steamVRTriggerAxisIndex]);
 				SendScalarUpdates(NewState.rAxis[m_steamVRTriggerAxisIndex].x, NewState.ulButtonTouched);
 				SendScalarUpdates(NewState.rAxis[m_steamVRTriggerAxisIndex].x, NewState.ulButtonPressed);
@@ -2850,8 +2853,9 @@ void CPSMoveControllerLatest::UpdateControllerState()
 					NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + 1));
 				}
 
-				// TODO change this to update a registered touch controller component i.e. /input/trackpad/x /input/trackpad/y
 				//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+				SendScalarUpdates(NewState.rAxis[1].x, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[1].x, NewState.ulButtonPressed);
 			}
 			if (m_steamVRNaviTriggerAxisIndex != m_steamVRTriggerAxisIndex && (NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x != m_ControllerState.rAxis[m_steamVRNaviTriggerAxisIndex].x))
 			{
@@ -2865,8 +2869,9 @@ void CPSMoveControllerLatest::UpdateControllerState()
 					NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRNaviTriggerAxisIndex));
 				}
 
-				// TODO change this to update a registered touch controller component i.e. /input/trackpad/x /input/trackpad/y
 				// vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, m_steamVRNaviTriggerAxisIndex, NewState.rAxis[m_steamVRNaviTriggerAxisIndex]);
+				SendScalarUpdates(NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x, NewState.ulButtonPressed);
 			}
 
 			// Update the battery charge state
@@ -2986,24 +2991,36 @@ void CPSMoveControllerLatest::UpdateControllerState()
 			NewState.rAxis[3].x = clientView.RightTriggerValue;
 			NewState.rAxis[3].y = 0.f;
 
-			// TODO change this to update a registered touch controller component i.e. /input/trackpad/x /input/trackpad/y
 			if (NewState.rAxis[0].x != m_ControllerState.rAxis[0].x || NewState.rAxis[0].y != m_ControllerState.rAxis[0].y) {
 				//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 0, NewState.rAxis[0]);
+				SendScalarUpdates(NewState.rAxis[0].x, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[0].x, NewState.ulButtonPressed);
+				SendScalarUpdates(NewState.rAxis[0].y, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[0].y, NewState.ulButtonPressed);
 			}
 
-			// TODO change this to update a registered touch controller component i.e. /input/trackpad/x /input/trackpad/y
 			if (NewState.rAxis[1].x != m_ControllerState.rAxis[1].x) {
 				//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+				SendScalarUpdates(NewState.rAxis[1].x, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[1].x, NewState.ulButtonPressed);
+				SendScalarUpdates(NewState.rAxis[1].y, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[1].y, NewState.ulButtonPressed);
 			}
 
-			// TODO change this to update a registered touch controller component i.e. /input/trackpad/x /input/trackpad/y
 			if (NewState.rAxis[2].x != m_ControllerState.rAxis[2].x || NewState.rAxis[2].y != m_ControllerState.rAxis[2].y) {
 				//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 2, NewState.rAxis[2]);
+				SendScalarUpdates(NewState.rAxis[2].x, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[2].x, NewState.ulButtonPressed);
+				SendScalarUpdates(NewState.rAxis[2].y, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[2].y, NewState.ulButtonPressed);
 			}
 
-			// TODO change this to update a registered touch controller component i.e. /input/trackpad/x /input/trackpad/y
 			if (NewState.rAxis[3].x != m_ControllerState.rAxis[3].x) {
 				//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 3, NewState.rAxis[3]);
+				SendScalarUpdates(NewState.rAxis[3].x, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[3].x, NewState.ulButtonPressed);
+				SendScalarUpdates(NewState.rAxis[3].y, NewState.ulButtonTouched);
+				SendScalarUpdates(NewState.rAxis[3].y, NewState.ulButtonPressed);
 			}
 
 		}
@@ -3076,10 +3093,14 @@ void CPSMoveControllerLatest::UpdateControllerState()
 				NewState.rAxis[0].x = thumbStickX;
 				NewState.rAxis[0].y = thumbStickY;
 
+				// when either the x or y axis of the virtual controller change send a scalar component update
 				if (NewState.rAxis[0].x != m_ControllerState.rAxis[0].x || NewState.rAxis[0].y != m_ControllerState.rAxis[0].y)
 				{
-					// TODO change this to update a registered touch controller component i.e. /input/trackpad/x /input/trackpad/y
 					//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 0, NewState.rAxis[0]);
+					SendScalarUpdates(NewState.rAxis[0].x, NewState.ulButtonTouched);
+					SendScalarUpdates(NewState.rAxis[0].x, NewState.ulButtonPressed);
+					SendScalarUpdates(NewState.rAxis[0].y, NewState.ulButtonTouched);
+					SendScalarUpdates(NewState.rAxis[0].y, NewState.ulButtonPressed);
 				}
 			}
 
@@ -3093,8 +3114,12 @@ void CPSMoveControllerLatest::UpdateControllerState()
 
 				if (NewState.rAxis[1].x != m_ControllerState.rAxis[1].x)
 				{
-					// TODO change this to update a registered touch controller component i.e. /input/trackpad/x /input/trackpad/y
 					//vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_unSteamVRTrackedDeviceId, 1, NewState.rAxis[1]);
+					SendScalarUpdates(NewState.rAxis[1].x, NewState.ulButtonTouched);
+					SendScalarUpdates(NewState.rAxis[1].x, NewState.ulButtonPressed);
+					SendScalarUpdates(NewState.rAxis[1].y, NewState.ulButtonTouched);
+					SendScalarUpdates(NewState.rAxis[1].y, NewState.ulButtonPressed);
+
 				}
 			}
 		}
@@ -3107,12 +3132,10 @@ void CPSMoveControllerLatest::UpdateControllerState()
 	uint64_t ulChangedTouched = NewState.ulButtonTouched ^ m_ControllerState.ulButtonTouched;
 	uint64_t ulChangedPressed = NewState.ulButtonPressed ^ m_ControllerState.ulButtonPressed;
 
-	//SendButtonUpdates( &vr::IVRServerDriverHost::TrackedDeviceButtonTouched, ulChangedTouched & NewState.ulButtonTouched );
-	//SendButtonUpdates( &vr::IVRServerDriverHost::TrackedDeviceButtonUntouched, ulChangedTouched & ~NewState.ulButtonTouched );
 	SendBooleanUpdates( true,  ulChangedPressed &  NewState.ulButtonPressed);
 	SendBooleanUpdates( false, ulChangedPressed & ~NewState.ulButtonPressed);
-	//SendScalarUpdates(  NewState.rAxis[m_steamVRTriggerAxisIndex].x, ulChangedPressed &  NewState.ulButtonPressed);
-	//SendScalarUpdates(  NewState.rAxis[m_steamVRTriggerAxisIndex].x, ulChangedPressed & ~NewState.ulButtonPressed);
+	//SendButtonUpdates( &vr::IVRServerDriverHost::TrackedDeviceButtonTouched, ulChangedTouched & NewState.ulButtonTouched );
+	//SendButtonUpdates( &vr::IVRServerDriverHost::TrackedDeviceButtonUntouched, ulChangedTouched & ~NewState.ulButtonTouched );
 
 	m_ControllerState = NewState;
 }
