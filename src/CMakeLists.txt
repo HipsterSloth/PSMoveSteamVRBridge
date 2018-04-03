@@ -64,8 +64,17 @@ add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver.cpp
 								 ${PROJECT_SRC_DIR}/tracker.cpp
 								 ${PROJECT_SRC_DIR}/utils.cpp
 								 ${PROJECT_SRC_DIR}/watchdog.cpp
-								 ${PROJECT_SRC_DIR}/handsolver.cpp
-								 ${PROJECT_SRC_DIR}/constants.cpp)
+								 ${PROJECT_SRC_DIR}/facinghandsolver.cpp
+								 ${PROJECT_SRC_DIR}/logger.h
+								 ${PROJECT_SRC_DIR}/controller.h
+								 ${PROJECT_SRC_DIR}/serverdriver.h
+								 ${PROJECT_SRC_DIR}/trackeddevice.h
+								 ${PROJECT_SRC_DIR}/tracker.h
+								 ${PROJECT_SRC_DIR}/utils.h
+								 ${PROJECT_SRC_DIR}/watchdog.h
+								 ${PROJECT_SRC_DIR}/facinghandsolver.h
+								 ${PROJECT_SRC_DIR}/constants.h
+								 )
 target_include_directories(driver_psmove PUBLIC ${OPENVR_PLUGIN_INCL_DIRS} ${PSM_PLUGIN_INCL_DIRS} )
 target_link_libraries(driver_psmove ${OPENVR_PLUGIN_REQ_LIBS} ${PSM_PLUGIN_REQ_LIBS})
 
