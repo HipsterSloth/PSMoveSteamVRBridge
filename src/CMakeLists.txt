@@ -56,12 +56,21 @@ list(APPEND PSM_MONITOR_REQ_LIBS ${PSM_LIBRARIES})
 ##############################################################################################
 
 # Shared library: defines what is compiled, what output type it is and what libs/includes it needs
-add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver_psmoveservice.cpp)
+add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver.cpp 
+								 ${PROJECT_SRC_DIR}/logger.cpp
+								 ${PROJECT_SRC_DIR}/controller.cpp
+								 ${PROJECT_SRC_DIR}/serverdriver.cpp
+								 ${PROJECT_SRC_DIR}/trackeddevice.cpp
+								 ${PROJECT_SRC_DIR}/tracker.cpp
+								 ${PROJECT_SRC_DIR}/utils.cpp
+								 ${PROJECT_SRC_DIR}/watchdog.cpp
+								 ${PROJECT_SRC_DIR}/handsolver.cpp
+								 ${PROJECT_SRC_DIR}/constants.cpp)
 target_include_directories(driver_psmove PUBLIC ${OPENVR_PLUGIN_INCL_DIRS} ${PSM_PLUGIN_INCL_DIRS} )
 target_link_libraries(driver_psmove ${OPENVR_PLUGIN_REQ_LIBS} ${PSM_PLUGIN_REQ_LIBS})
 
 # Monitor app: defines what is compiled, what output type it is and what libs/includes it needs
-add_executable(monitor_psmove ${PROJECT_SRC_DIR}/monitor_psmoveservice.cpp)
+add_executable(monitor_psmove ${PROJECT_SRC_DIR}/monitor.cpp)
 target_include_directories(monitor_psmove PUBLIC ${OPENVR_MONITOR_INCL_DIRS} ${PSM_PLUGIN_INCL_DIRS})
 target_link_libraries(monitor_psmove ${OPENVR_MONITOR_REQ_LIBS} ${PSM_PLUGIN_REQ_LIBS})
 
