@@ -102,13 +102,13 @@ target_link_libraries(monitor_psmove ${OPENVR_MONITOR_REQ_LIBS} ${PSM_PLUGIN_REQ
 ##############################################################################################
 IF(${WIN32})
 	# Install required system libraries
-	#IF(MSVC_VERSION GREATER 1800)
-		#set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-		#set(CMAKE_INSTALL_DEBUG_LIBRARIES TRUE)
-		#set(CMAKE_INSTALL_MFC_LIBRARIES TRUE)
-	#ENDIF()
-	#set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME})
-	#INCLUDE(InstallRequiredSystemLibraries)
+	IF(${BUILD_TYPE} MATCHES "Debug" OR ${BUILD_TYPE} MATCHES "debug")
+		message("Including debug dependencies")
+		set(CMAKE_INSTALL_DEBUG_LIBRARIES TRUE)
+		set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME})
+		INCLUDE(InstallRequiredSystemLibraries)
+	ENDIF()
+	
 
 	# Copy driver library
 	install(
