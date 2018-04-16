@@ -4,8 +4,8 @@
 
 namespace steamvrbridge {
 
-	CPSMoveTrackerLatest::CPSMoveTrackerLatest(const PSMClientTrackerInfo *trackerInfo)
-		: CPSMoveTrackedDeviceLatest()
+	PSMServiceTracker::PSMServiceTracker(const PSMClientTrackerInfo *trackerInfo)
+		: TrackableDevice()
 		, m_nTrackerId(trackerInfo->tracker_id)
 	{
 		char buf[256];
@@ -15,13 +15,13 @@ namespace steamvrbridge {
 		SetClientTrackerInfo(trackerInfo);
 	}
 
-	CPSMoveTrackerLatest::~CPSMoveTrackerLatest()
+	PSMServiceTracker::~PSMServiceTracker()
 	{
 	}
 
-	vr::EVRInitError CPSMoveTrackerLatest::Activate(vr::TrackedDeviceIndex_t unObjectId)
+	vr::EVRInitError PSMServiceTracker::Activate(vr::TrackedDeviceIndex_t unObjectId)
 	{
-		vr::EVRInitError result = CPSMoveTrackedDeviceLatest::Activate(unObjectId);
+		vr::EVRInitError result = TrackableDevice::Activate(unObjectId);
 
 		if (result == vr::VRInitError_None)
 		{
@@ -62,11 +62,11 @@ namespace steamvrbridge {
 		return result;
 	}
 
-	void CPSMoveTrackerLatest::Deactivate()
+	void PSMServiceTracker::Deactivate()
 	{
 	}
 
-	void CPSMoveTrackerLatest::SetClientTrackerInfo(
+	void PSMServiceTracker::SetClientTrackerInfo(
 		const PSMClientTrackerInfo *trackerInfo)
 	{
 		m_tracker_info = *trackerInfo;
@@ -117,16 +117,16 @@ namespace steamvrbridge {
 		m_Pose.poseIsValid = true;
 	}
 
-	void CPSMoveTrackerLatest::Update()
+	void PSMServiceTracker::Update()
 	{
-		CPSMoveTrackedDeviceLatest::Update();
+		TrackableDevice::Update();
 
 		// This call posts this pose to shared memory, where all clients will have access to it the next
 		// moment they want to predict a pose.
 		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unSteamVRTrackedDeviceId, m_Pose, sizeof(vr::DriverPose_t));
 	}
 
-	bool CPSMoveTrackerLatest::HasTrackerId(int TrackerID)
+	bool PSMServiceTracker::HasTrackerId(int TrackerID)
 	{
 		return TrackerID == m_nTrackerId;
 	}

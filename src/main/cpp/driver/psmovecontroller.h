@@ -1,24 +1,15 @@
 #pragma once
+#include "trackabledevice.h"
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
-#include "trackabledevice.h"
 
 namespace steamvrbridge {
 
-	class Controller : public TrackableDevice
-	{
-	public:
-		// Mirrors definition in PSMControllerType
-		enum ePSControllerType
-		{
-			k_EPSControllerType_Move,
-			k_EPSControllerType_Navi,
-			k_EPSControllerType_DS4,
-			k_EPSControllerType_Virtual,
+	/* Trackable PS Move controller. The controller calss bridges the PSMoveService controller to
+	OpenVR's tracked device*/
+	class PSMoveController : public TrackableDevice {
 
-			k_EPSControllerType_Count
-		};
-
+		/* PSMoveService button IDs*/
 		enum ePSButtonID
 		{
 			k_EPSButtonID_0,
@@ -80,25 +71,10 @@ namespace steamvrbridge {
 			k_EPSButtonID_R3 = k_EPSButtonID_21,
 		};
 
-		enum eVRTouchpadDirection
-		{
-			k_EVRTouchpadDirection_None,
-
-			k_EVRTouchpadDirection_Left,
-			k_EVRTouchpadDirection_Up,
-			k_EVRTouchpadDirection_Right,
-			k_EVRTouchpadDirection_Down,
-
-			k_EVRTouchpadDirection_UpLeft,
-			k_EVRTouchpadDirection_UpRight,
-			k_EVRTouchpadDirection_DownLeft,
-			k_EVRTouchpadDirection_DownRight,
-
-			k_EVRTouchpadDirection_Count
-		};
-
-		Controller(PSMControllerID psmControllerID, PSMControllerType psmControllerType, const char *psmSerialNo);
-		virtual ~Controller();
+	public:
+		// Constructor/Destructor
+		PSMoveController(PSMControllerID psmControllerID, PSMControllerType psmControllerType, vr::ETrackedControllerRole trackedControllerRole, const char *psmSerialNo);
+		virtual ~PSMoveController();
 
 		// Overridden Implementation of vr::ITrackedDeviceServerDriver
 		virtual vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
@@ -109,19 +85,18 @@ namespace steamvrbridge {
 		virtual void Update() override;
 		virtual void RefreshWorldFromDriverPose() override;
 
-		// CPSMoveControllerLatest Interface 
-		bool AttachChildPSMController(int ChildControllerId, PSMControllerType controllerType, const std::string &ChildControllerSerialNo);
+		// PSMoveController Interface (accessor methods?)
 		inline bool HasPSMControllerId(int ControllerID) const { return ControllerID == m_nPSMControllerId; }
 		inline const PSMController * getPSMControllerView() const { return m_PSMServiceController; }
 		inline std::string getPSMControllerSerialNo() const { return m_strPSMControllerSerialNo; }
 		inline PSMControllerType getPSMControllerType() const { return m_PSMControllerType; }
 
 	private:
-		void SendBooleanUpdates(bool pressed, uint64_t ulMask);
-		void SendScalarUpdates(float val, uint64_t ulMask);
+
+		void PSMoveController::UpdateButtonState(ePSButtonID button, bool buttonState);
 		void RealignHMDTrackingSpace();
 		void UpdateControllerState();
-		void UpdateControllerStateFromPsMoveButtonState(ePSControllerType controllerType, ePSButtonID buttonId, PSMButtonState buttonState, vr::VRControllerState_t* pControllerStateToUpdate);
+		void UpdateControllerStateFromPsMoveButtonState(ePSButtonID buttonId, PSMButtonState buttonState);
 		void UpdateTrackingState();
 		void UpdateRumbleState();
 		void UpdateBatteryChargeState(PSMBatteryState newBatteryEnum);
@@ -132,12 +107,6 @@ namespace steamvrbridge {
 		PSMController *m_PSMServiceController;
 		std::string m_strPSMControllerSerialNo;
 
-		// Child Controller State
-		int m_nPSMChildControllerId;
-		PSMControllerType m_PSMChildControllerType;
-		PSMController *m_PSMChildControllerView;
-		std::string m_strPSMChildControllerSerialNo;
-
 		// Used to report the controllers calibration status
 		vr::ETrackingResult m_trackingStatus;
 
@@ -145,7 +114,7 @@ namespace steamvrbridge {
 		int m_nPoseSequenceNumber;
 
 		// To main structures for passing state to vrserver
-		vr::VRControllerState_t m_ControllerState;
+		//vr::VRControllerState_t m_ControllerState;
 
 		// Cached for answering version queries from vrserver
 		bool m_bIsBatteryCharging;
@@ -179,16 +148,12 @@ namespace steamvrbridge {
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_resetAlignButtonPressTime;
 		bool m_bResetAlignRequestSent;
 
-		bool m_bUsePSNaviDPadRecenter;
-		bool m_bUsePSNaviDPadRealign;
-
 		// Button Remapping
-		vr::EVRButtonId psButtonIDToVRButtonID[k_EPSControllerType_Count][k_EPSButtonID_Count];
-		eVRTouchpadDirection psButtonIDToVrTouchpadDirection[k_EPSControllerType_Count][k_EPSButtonID_Count];
+		vr::EVRButtonId psButtonIDToVRButtonID[k_EPSButtonID_Count];
+		eVRTouchpadDirection psButtonIDToVrTouchpadDirection[k_EPSButtonID_Count];
 		void LoadButtonMapping(
 			vr::IVRSettings *pSettings,
-			const Controller::ePSControllerType controllerType,
-			const Controller::ePSButtonID psButtonID,
+			const ePSButtonID psButtonID,
 			const vr::EVRButtonId defaultVRButtonID,
 			const eVRTouchpadDirection defaultTouchpadDirection,
 			int controllerId = -1);
@@ -218,18 +183,11 @@ namespace steamvrbridge {
 
 		// The axis to use for trigger input
 		int m_steamVRTriggerAxisIndex;
-		int m_steamVRNaviTriggerAxisIndex;
 
 		// The axes to use for touchpad input (virtual controller only)
 		int m_virtualTriggerAxisIndex;
 		int m_virtualTouchpadXAxisIndex;
 		int m_virtualTouchpadYAxisIndex;
-
-		// The size of the deadzone for the controller's thumbstick
-		float m_thumbstickDeadzone;
-
-		// Treat a thumbstick touch also as a press
-		bool m_bThumbstickTouchAsPress;
 
 		// Settings values. Used to adjust throwing power using linear velocity and acceleration.
 		float m_fLinearVelocityMultiplier;
@@ -246,10 +204,5 @@ namespace steamvrbridge {
 
 		// Callbacks
 		static void start_controller_response_callback(const PSMResponseMessage *response, void *userdata);
-
-		// stores the time since last update received from the PSMoveService
-		long long m_lastTimeDataFrameUpdatedMs;
-		bool m_initialUpdate;
-		const int MAX_WAIT_BETWEEN_DATA_FRAME_UPDATES_MS = 9; // 1000ms / 120fps == 8.3333..
 	};
 }

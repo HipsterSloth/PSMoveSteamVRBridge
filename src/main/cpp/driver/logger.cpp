@@ -42,7 +42,7 @@ namespace steamvrbridge{
 	* during initialization.  Client logging ends up in vrclient_appname.txt and server logging
 	* ends up in vrserver.txt.
 	*/
-	void Logger::DriverLog(const char *pMsgFormat, ...)
+	void Logger::Info(const char *pMsgFormat, ...)
 	{
 		va_list args;
 		va_start(args, pMsgFormat);
@@ -52,7 +52,7 @@ namespace steamvrbridge{
 		va_end(args);
 	}
 
-	void Logger::DebugDriverLog(const char *pMsgFormat, ...)
+	void Logger::Debug(const char *pMsgFormat, ...)
 	{
 
 #ifdef _DEBUG

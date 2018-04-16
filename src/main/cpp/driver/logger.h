@@ -13,7 +13,7 @@ namespace steamvrbridge
 		static bool InitDriverLog(vr::IVRDriverLog *pDriverLog);
 		static void CleanupDriverLog();
 		static void DriverLogVarArgs(const char *pMsgFormat, va_list args);
-		static void DriverLog(const char *pchFormat, ...);
-		static void DebugDriverLog(const char *pchFormat, ...);
+		static void Info(const char *pchFormat, ...);
+		static void Debug(const char *pchFormat, ...);
 	};
 }

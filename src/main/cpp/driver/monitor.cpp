@@ -15,7 +15,7 @@
 #include <windows.h>
 #endif
 
-const std::chrono::milliseconds k_MonitorInterval( 50 );
+const std::chrono::milliseconds k_MonitorInterval( 8 );
 
 class CPSMoveDriverMonitor
 {
@@ -88,24 +88,19 @@ protected:
 			vr::VREvent_t Event;
 			while ( vr::VRSystem()->PollNextEvent( &Event, sizeof( Event ) ) )
 			{
-				switch ( Event.eventType )
+				switch (Event.eventType)
 				{
 				case vr::VREvent_Quit:
 				case vr::VREvent_DriverRequestedQuit: // The driver has requested that SteamVR shut down
-					exit( 0 );
+					exit(0);
 					// NOTREAHED
 
 				case vr::VREvent_TrackedDeviceActivated:
 				case vr::VREvent_TrackedDeviceUpdated:
-					UpdateTrackedDevice( Event.trackedDeviceIndex );
+					UpdateTrackedDevice(Event.trackedDeviceIndex);
 					break;
 
 				case vr::VREvent_VendorSpecific_Reserved_Start + 0:
-					break;
-				case vr::VREvent_Input_HapticVibration:
-					//See this just goes to show the controller updates should be running on a background thread,
-					//we now have to fiddle around to get the event haptic vibration event coming from steamvr to
-					//the PSMoveService.
 					break;
 				}
 			}

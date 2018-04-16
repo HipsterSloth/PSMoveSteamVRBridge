@@ -1,7 +1,7 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
-#include "trackeddevice.h"
+#include "trackabledevice.h"
 #include "tracker.h"
 #include "logger.h"
 
@@ -68,7 +68,7 @@ namespace steamvrbridge {
 		bool m_bLaunchedPSMoveMonitor;
 		bool m_bInitialized;
 
-		std::vector< CPSMoveTrackedDeviceLatest * > m_vecTrackedDevices;
+		std::vector< TrackableDevice * > m_vecTrackedDevices;
 
 		// HMD Tracking Space
 		PSMPosef m_worldFromDriverPose;

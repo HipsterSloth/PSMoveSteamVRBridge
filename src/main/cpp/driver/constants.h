@@ -10,7 +10,7 @@ namespace steamvrbridge {
 	static const int k_touchpadTouchMapping = (vr::EVRButtonId)31;
 	static const float k_defaultThumbstickDeadZoneRadius = 0.1f;
 
-	static const char *k_PSButtonNames[CPSMoveControllerLatest::k_EPSButtonID_Count] = {
+	static const char *k_PSButtonNames[Controller::k_EPSButtonID_Count] = {
 		"ps",
 		"left",
 		"up",
@@ -45,7 +45,7 @@ namespace steamvrbridge {
 		"",
 	};
 
-	static const char *k_VirtualButtonNames[CPSMoveControllerLatest::k_EPSButtonID_Count] = {
+	static const char *k_VirtualButtonNames[Controller::k_EPSButtonID_Count] = {
 		"gamepad_button_0",
 		"gamepad_button_1",
 		"gamepad_button_2",
@@ -121,7 +121,7 @@ namespace steamvrbridge {
 		"axis_4",                 // k_EButton_Axis4
 	};
 
-	static const int k_max_vr_touchpad_directions = CPSMoveControllerLatest::k_EVRTouchpadDirection_Count;
+	static const int k_max_vr_touchpad_directions = Controller::k_EVRTouchpadDirection_Count;
 	static const char *k_VRTouchpadDirectionNames[k_max_vr_touchpad_directions] = {
 		"none",
 		"touchpad_left",

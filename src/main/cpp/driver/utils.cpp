@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "PSMoveClient_CAPI.h"
+#include "constants.h"
 #include <openvr_driver.h>
 #include <math.h>
 #include <string>
@@ -10,6 +11,7 @@ namespace steamvrbridge {
 	//==================================================================================================
 	// String Helpers
 	//==================================================================================================
+
 	int Utils::find_index_of_string_in_table(const char **string_table, const int string_table_count, const char *string)
 	{
 		int result_index = -1;
@@ -48,7 +50,7 @@ namespace steamvrbridge {
 #endif
 	}
 
-	/** Returns the specified path without its filename */
+	/* Returns the specified path without its filename */
 	std::string Utils::Path_StripFilename(const std::string & sPath, char slash)
 	{
 		if (slash == 0)
@@ -141,10 +143,89 @@ namespace steamvrbridge {
 		return bSuccess;
 	}
 
+	PSMQuatf Utils::ExtractHMDYawQuaternion(const PSMQuatf &q)
+	{
+		// Convert the quaternion to a basis matrix
+		const PSMMatrix3f hmd_orientation = PSM_Matrix3fCreateFromQuatf(&q);
+
+		// Extract the forward (z-axis) vector from the basis
+		const PSMVector3f forward = PSM_Matrix3fBasisZ(&hmd_orientation);
+		PSMVector3f forward2d = { forward.x, 0.f, forward.z };
+		forward2d = PSM_Vector3fNormalizeWithDefault(&forward2d, k_psm_float_vector3_k);
+
+		// Compute the yaw angle (amount the z-axis has been rotated to it's current facing)
+		const float cos_yaw = PSM_Vector3fDot(&forward, k_psm_float_vector3_k);
+		float half_yaw = acosf(fminf(fmaxf(cos_yaw, -1.f), 1.f)) / 2.f;
+
+		// Flip the sign of the yaw angle depending on if forward2d is to the left or right of global forward
+		PSMVector3f yaw_axis = PSM_Vector3fCross(k_psm_float_vector3_k, &forward2d);
+		if (PSM_Vector3fDot(&yaw_axis, k_psm_float_vector3_j) < 0)
+		{
+			half_yaw = -half_yaw;
+		}
+
+		// Convert this yaw rotation back into a quaternion
+		PSMQuatf yaw_quaternion =
+			PSM_QuatfCreate(
+				cosf(half_yaw), // w = cos(theta/2)
+				0.f, sinf(half_yaw), 0.f); // (x, y, z) = sin(theta/2)*axis, where axis = (0, 1, 0)
+
+		return yaw_quaternion;
+	}
+
+	PSMQuatf Utils::ExtractPSMoveYawQuaternion(const PSMQuatf &q)
+	{
+		// Convert the quaternion to a basis matrix
+		const PSMMatrix3f psmove_basis = PSM_Matrix3fCreateFromQuatf(&q);
+
+		// Extract the forward (negative z-axis) vector from the basis
+		const PSMVector3f global_forward = { 0.f, 0.f, -1.f };
+		const PSMVector3f &forward = PSM_Matrix3fBasisY(&psmove_basis);
+		PSMVector3f forward2d = { forward.x, 0.f, forward.z };
+		forward2d = PSM_Vector3fNormalizeWithDefault(&forward2d, &global_forward);
+
+		// Compute the yaw angle (amount the z-axis has been rotated to it's current facing)
+		const float cos_yaw = PSM_Vector3fDot(&forward, &global_forward);
+		float yaw = acosf(fminf(fmaxf(cos_yaw, -1.f), 1.f));
+
+		// Flip the sign of the yaw angle depending on if forward2d is to the left or right of global forward
+		const PSMVector3f &global_up = *k_psm_float_vector3_j;
+		PSMVector3f yaw_axis = PSM_Vector3fCross(&global_forward, &forward2d);
+		if (PSM_Vector3fDot(&yaw_axis, &global_up) < 0)
+		{
+			yaw = -yaw;
+		}
+
+		// Convert this yaw rotation back into a quaternion
+		PSMVector3f eulerPitch = { (float)1.57079632679489661923, 0.f, 0.f }; // pitch 90 up first
+		PSMVector3f eulerYaw = { 0, yaw, 0 };
+		PSMQuatf quatPitch = PSM_QuatfCreateFromAngles(&eulerPitch);
+		PSMQuatf quatYaw = PSM_QuatfCreateFromAngles(&eulerYaw);
+		PSMQuatf yaw_quaternion =
+			PSM_QuatfConcat(
+				&quatPitch, // pitch 90 up first
+				&quatYaw); // Then apply the yaw
+
+		return yaw_quaternion;
+	}
+
+	//TODO is this used?
+	void Utils::GetMetersPosInRotSpace(const PSMQuatf *rotation, PSMVector3f* out_position, const PSMPSMove &view)
+	{
+		//const PSMPSMove &view = m_PSMServiceController->ControllerState.PSMoveState;
+		const PSMVector3f &position = view.Pose.Position;
+
+		PSMVector3f unrotatedPositionMeters = PSM_Vector3fScale(&position, k_fScalePSMoveAPIToMeters);
+		PSMQuatf viewOrientationInverse = PSM_QuatfConjugate(rotation);
+
+		*out_position = PSM_QuatfRotateVector(&viewOrientationInverse, &unrotatedPositionMeters);
+	}
+
 	//==================================================================================================
 	// Math Helpers
 	//==================================================================================================
 	// From: http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
+
 	PSMQuatf Utils::openvrMatrixExtractPSMQuatf(const vr::HmdMatrix34_t &openVRTransform)
 	{
 		PSMQuatf q;
@@ -285,6 +366,7 @@ namespace steamvrbridge {
 	//==================================================================================================
 	// Conversion Helpers
 	//==================================================================================================
+
 	std::string Utils::PSMVector3fToString(const PSMVector3f& position)
 	{
 		std::ostringstream stringBuilder;
@@ -311,6 +393,7 @@ namespace steamvrbridge {
 	//==================================================================================================
 	// Generate Helpers
 	//==================================================================================================
+
 	void Utils::GenerateTrackerSerialNumber(char *p, int psize, int tracker)
 	{
 		snprintf(p, psize, "psmove_tracker%d", tracker);

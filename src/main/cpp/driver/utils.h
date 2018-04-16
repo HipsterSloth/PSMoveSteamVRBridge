@@ -20,6 +20,9 @@ namespace steamvrbridge {
 		static std::string Path_GetThisModulePath();
 		static bool GetHMDDeviceIndex(vr::TrackedDeviceIndex_t *out_hmd_device_index);
 		static bool GetTrackedDevicePose(const vr::TrackedDeviceIndex_t device_index, PSMPosef *out_device_pose);
+		static PSMQuatf ExtractHMDYawQuaternion(const PSMQuatf & q);
+		static PSMQuatf ExtractPSMoveYawQuaternion(const PSMQuatf & q);
+		static void GetMetersPosInRotSpace(const PSMQuatf * rotation, PSMVector3f * out_position, const PSMPSMove & view);
 		static PSMQuatf openvrMatrixExtractPSMQuatf(const vr::HmdMatrix34_t &openVRTransform);
 		static PSMQuatf psmMatrix3fToPSMQuatf(const PSMMatrix3f &psmMat);
 		static float psmVector3fDistance(const PSMVector3f &a, const PSMVector3f &b);

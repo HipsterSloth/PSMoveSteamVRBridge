@@ -1,14 +1,15 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
-#include "trackeddevice.h"
+#include "trackabledevice.h"
 
 namespace steamvrbridge {
 
-	class CPSMoveTrackerLatest : public CPSMoveTrackedDeviceLatest
+	// Represents a PSMoveService Tracker such as a PSEye camera. Implements an OpenVR TrackedDevice
+	class PSMServiceTracker : public TrackableDevice
 	{
 	public:
-		CPSMoveTrackerLatest(const PSMClientTrackerInfo *trackerInfo);
-		virtual ~CPSMoveTrackerLatest();
+		PSMServiceTracker(const PSMClientTrackerInfo *trackerInfo);
+		virtual ~PSMServiceTracker();
 
 		// Overridden Implementation of vr::ITrackedDeviceServerDriver
 		virtual vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;

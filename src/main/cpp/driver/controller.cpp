@@ -1,9 +1,12 @@
 #define _USE_MATH_DEFINES
 
+// TODO remove this class in favour of an interface definition
+
 #include "controller.h"
 #include "constants.h"
 #include "serverdriver.h"
 #include "utils.h"
+#include "settingsutil.h"
 #include <assert.h>
 #include "driver.h"
 #include "facinghandsolver.h"
@@ -16,18 +19,14 @@
 
 namespace steamvrbridge {
 
-	//==================================================================================================
-	// Controller Driver
-	//==================================================================================================
-
-	CPSMoveControllerLatest::CPSMoveControllerLatest(
+	Controller::Controller(
 		PSMControllerID psmControllerId,
 		PSMControllerType psmControllerType,
 		const char *psmSerialNo)
-		: CPSMoveTrackedDeviceLatest()
+		: TrackableDevice()
 		, m_nPSMControllerId(psmControllerId)
 		, m_PSMControllerType(psmControllerType)
-		, m_PSMControllerView(nullptr)
+		, m_PSMServiceController(nullptr)
 		, m_nPSMChildControllerId(-1)
 		, m_PSMChildControllerType(PSMControllerType::PSMController_None)
 		, m_PSMChildControllerView(nullptr)
@@ -68,6 +67,8 @@ namespace steamvrbridge {
 		, m_hmdAlignPSButtonID(k_EPSButtonID_Select)
 		, m_overrideModel("")
 		, m_orientationSolver(nullptr)
+		, m_lastTimeDataFrameUpdatedMs(0)
+		, m_initialUpdate(true)
 	{
 		char svrIdentifier[256];
 		Utils::GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerId);
@@ -81,7 +82,7 @@ namespace steamvrbridge {
 
 		// Tell PSM Client API that we are listening to this controller id
 		PSM_AllocateControllerListener(psmControllerId);
-		m_PSMControllerView = PSM_GetController(psmControllerId);
+		m_PSMServiceController = PSM_GetController(psmControllerId);
 
 		// Load config from steamvr.vrsettings
 		vr::IVRSettings *pSettings = vr::VRSettings();
@@ -123,22 +124,22 @@ namespace steamvrbridge {
 				LoadButtonMapping(pSettings, k_EPSControllerType_Navi, k_EPSButtonID_L3, vr::k_EButton_Grip, k_EVRTouchpadDirection_None);
 
 				// Trigger mapping
-				m_steamVRTriggerAxisIndex = LoadInt(pSettings, "psmove", "trigger_axis_index", 1);
-				m_steamVRNaviTriggerAxisIndex = LoadInt(pSettings, "psnavi_button", "trigger_axis_index", m_steamVRTriggerAxisIndex);
+				m_steamVRTriggerAxisIndex = SettingsUtil::LoadInt(pSettings, "psmove", "trigger_axis_index", 1);
+				m_steamVRNaviTriggerAxisIndex = SettingsUtil::LoadInt(pSettings, "psnavi_button", "trigger_axis_index", m_steamVRTriggerAxisIndex);
 
 				// Touch pad settings
 				m_bDelayAfterTouchpadPress =
-					LoadBool(pSettings, "psmove_touchpad", "delay_after_touchpad_press", m_bDelayAfterTouchpadPress);
+					SettingsUtil::LoadBool(pSettings, "psmove_touchpad", "delay_after_touchpad_press", m_bDelayAfterTouchpadPress);
 				m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis =
-					LoadBool(pSettings, "psmove", "use_spatial_offset_after_touchpad_press_as_touchpad_axis", false);
+					SettingsUtil::LoadBool(pSettings, "psmove", "use_spatial_offset_after_touchpad_press_as_touchpad_axis", false);
 				m_fMetersPerTouchpadAxisUnits =
-					LoadFloat(pSettings, "psmove", "meters_per_touchpad_units", .075f);
+					SettingsUtil::LoadFloat(pSettings, "psmove", "meters_per_touchpad_units", .075f);
 
 				// Throwing power settings
 				m_fLinearVelocityMultiplier =
-					LoadFloat(pSettings, "psmove_settings", "linear_velocity_multiplier", 1.f);
+					SettingsUtil::LoadFloat(pSettings, "psmove_settings", "linear_velocity_multiplier", 1.f);
 				m_fLinearVelocityExponent =
-					LoadFloat(pSettings, "psmove_settings", "linear_velocity_exponent", 0.f);
+					SettingsUtil::LoadFloat(pSettings, "psmove_settings", "linear_velocity_exponent", 0.f);
 
 				// Check for PSNavi up/down mappings
 				char remapButtonToButtonString[32];
@@ -165,25 +166,25 @@ namespace steamvrbridge {
 				}
 
 				// General Settings
-				m_bRumbleSuppressed = LoadBool(pSettings, "psmove_settings", "rumble_suppressed", m_bRumbleSuppressed);
-				m_fVirtuallExtendControllersYMeters = LoadFloat(pSettings, "psmove_settings", "psmove_extend_y", 0.0f);
-				m_fVirtuallExtendControllersZMeters = LoadFloat(pSettings, "psmove_settings", "psmove_extend_z", 0.0f);
-				m_fVirtuallyRotateController = LoadBool(pSettings, "psmove_settings", "psmove_rotate", false);
+				m_bRumbleSuppressed = SettingsUtil::LoadBool(pSettings, "psmove_settings", "rumble_suppressed", m_bRumbleSuppressed);
+				m_fVirtuallExtendControllersYMeters = SettingsUtil::LoadFloat(pSettings, "psmove_settings", "psmove_extend_y", 0.0f);
+				m_fVirtuallExtendControllersZMeters = SettingsUtil::LoadFloat(pSettings, "psmove_settings", "psmove_extend_z", 0.0f);
+				m_fVirtuallyRotateController = SettingsUtil::LoadBool(pSettings, "psmove_settings", "psmove_rotate", false);
 				m_fControllerMetersInFrontOfHmdAtCalibration =
-					LoadFloat(pSettings, "psmove", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
-				m_bDisableHMDAlignmentGesture = LoadBool(pSettings, "psmove_settings", "disable_alignment_gesture", false);
-				m_bUseControllerOrientationInHMDAlignment = LoadBool(pSettings, "psmove_settings", "use_orientation_in_alignment", true);
+					SettingsUtil::LoadFloat(pSettings, "psmove", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
+				m_bDisableHMDAlignmentGesture = SettingsUtil::LoadBool(pSettings, "psmove_settings", "disable_alignment_gesture", false);
+				m_bUseControllerOrientationInHMDAlignment = SettingsUtil::LoadBool(pSettings, "psmove_settings", "use_orientation_in_alignment", true);
 
 				m_thumbstickDeadzone =
-					fminf(fmaxf(LoadFloat(pSettings, "psnavi_settings", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
-				m_bThumbstickTouchAsPress = LoadBool(pSettings, "psnavi_settings", "thumbstick_touch_as_press", true);
+					fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, "psnavi_settings", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
+				m_bThumbstickTouchAsPress = SettingsUtil::LoadBool(pSettings, "psnavi_settings", "thumbstick_touch_as_press", true);
 
 #if LOG_TOUCHPAD_EMULATION != 0
 				Logger::DriverLog("use_spatial_offset_after_touchpad_press_as_touchpad_axis: %d\n", m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis);
 				Logger::DriverLog("meters_per_touchpad_units: %f\n", m_fMetersPerTouchpadAxisUnits);
 #endif
 
-				Logger::Logger::DriverLog("m_fControllerMetersInFrontOfHmdAtCalibration(psmove): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
+				Logger::Logger::Info("m_fControllerMetersInFrontOfHmdAtCalibration(psmove): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
 			}
 			else if (psmControllerType == PSMController_DualShock4)
 			{
@@ -207,12 +208,12 @@ namespace steamvrbridge {
 				LoadButtonMapping(pSettings, k_EPSControllerType_DS4, k_EPSButtonID_R3, vr::k_EButton_Grip, k_EVRTouchpadDirection_None);
 
 				// General Settings
-				m_bRumbleSuppressed = LoadBool(pSettings, "dualshock4_settings", "rumble_suppressed", m_bRumbleSuppressed);
-				m_bDisableHMDAlignmentGesture = LoadBool(pSettings, "dualshock4_settings", "disable_alignment_gesture", false);
+				m_bRumbleSuppressed = SettingsUtil::LoadBool(pSettings, "dualshock4_settings", "rumble_suppressed", m_bRumbleSuppressed);
+				m_bDisableHMDAlignmentGesture = SettingsUtil::LoadBool(pSettings, "dualshock4_settings", "disable_alignment_gesture", false);
 				m_fControllerMetersInFrontOfHmdAtCalibration =
-					LoadFloat(pSettings, "dualshock4_settings", "cm_in_front_of_hmd_at_calibration", 16.f) / 100.f;
+					SettingsUtil::LoadFloat(pSettings, "dualshock4_settings", "cm_in_front_of_hmd_at_calibration", 16.f) / 100.f;
 
-				Logger::DriverLog("m_fControllerMetersInFrontOfHmdAtCalibration(ds4): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
+				Logger::Info("m_fControllerMetersInFrontOfHmdAtCalibration(ds4): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
 			}
 			else if (psmControllerType == PSMController_Virtual)
 			{
@@ -222,16 +223,16 @@ namespace steamvrbridge {
 					LoadButtonMapping(
 						pSettings,
 						k_EPSControllerType_Virtual,
-						(CPSMoveControllerLatest::ePSButtonID)button_index,
+						(Controller::ePSButtonID)button_index,
 						(vr::EVRButtonId)button_index,
 						k_EVRTouchpadDirection_None,
 						psmControllerId);
 				}
 
 				// Axis mapping
-				m_virtualTriggerAxisIndex = LoadInt(pSettings, "virtual_axis", "trigger_axis_index", -1);
-				m_virtualTouchpadXAxisIndex = LoadInt(pSettings, "virtual_axis", "touchpad_x_axis_index", -1);
-				m_virtualTouchpadYAxisIndex = LoadInt(pSettings, "virtual_axis", "touchpad_y_axis_index", -1);
+				m_virtualTriggerAxisIndex = SettingsUtil::LoadInt(pSettings, "virtual_axis", "trigger_axis_index", -1);
+				m_virtualTouchpadXAxisIndex = SettingsUtil::LoadInt(pSettings, "virtual_axis", "touchpad_x_axis_index", -1);
+				m_virtualTouchpadYAxisIndex = SettingsUtil::LoadInt(pSettings, "virtual_axis", "touchpad_y_axis_index", -1);
 
 				// HMD align button mapping
 				{
@@ -243,14 +244,14 @@ namespace steamvrbridge {
 
 					if (fetchError == vr::VRSettingsError_None)
 					{
-						int button_index = Utils::find_index_of_string_in_table(k_VirtualButtonNames, CPSMoveControllerLatest::k_EPSButtonID_Count, alignButtonString);
+						int button_index = Utils::find_index_of_string_in_table(k_VirtualButtonNames, Controller::k_EPSButtonID_Count, alignButtonString);
 						if (button_index != -1)
 						{
-							m_hmdAlignPSButtonID = static_cast<CPSMoveControllerLatest::ePSButtonID>(button_index);
+							m_hmdAlignPSButtonID = static_cast<Controller::ePSButtonID>(button_index);
 						}
 						else
 						{
-							Logger::DriverLog("Invalid virtual controller hmd align button: %s\n", alignButtonString);
+							Logger::Info("Invalid virtual controller hmd align button: %s\n", alignButtonString);
 						}
 					}
 				}
@@ -269,29 +270,29 @@ namespace steamvrbridge {
 
 				// Touch pad settings
 				m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis =
-					LoadBool(pSettings, "virtual_controller", "use_spatial_offset_after_touchpad_press_as_touchpad_axis", false);
+					SettingsUtil::LoadBool(pSettings, "virtual_controller", "use_spatial_offset_after_touchpad_press_as_touchpad_axis", false);
 				m_fMetersPerTouchpadAxisUnits =
-					LoadFloat(pSettings, "virtual_controller", "meters_per_touchpad_units", .075f);
+					SettingsUtil::LoadFloat(pSettings, "virtual_controller", "meters_per_touchpad_units", .075f);
 
 				// Throwing power settings
 				m_fLinearVelocityMultiplier =
-					LoadFloat(pSettings, "virtual_controller_settings", "linear_velocity_multiplier", 1.f);
+					SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "linear_velocity_multiplier", 1.f);
 				m_fLinearVelocityExponent =
-					LoadFloat(pSettings, "virtual_controller_settings", "linear_velocity_exponent", 0.f);
+					SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "linear_velocity_exponent", 0.f);
 
 				// General Settings
-				m_bDisableHMDAlignmentGesture = LoadBool(pSettings, "virtual_controller_settings", "disable_alignment_gesture", false);
-				m_fVirtuallExtendControllersYMeters = LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_y", 0.0f);
-				m_fVirtuallExtendControllersZMeters = LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_z", 0.0f);
+				m_bDisableHMDAlignmentGesture = SettingsUtil::LoadBool(pSettings, "virtual_controller_settings", "disable_alignment_gesture", false);
+				m_fVirtuallExtendControllersYMeters = SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_y", 0.0f);
+				m_fVirtuallExtendControllersZMeters = SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_z", 0.0f);
 				m_fControllerMetersInFrontOfHmdAtCalibration =
-					LoadFloat(pSettings, "virtual_controller_settings", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
+					SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
 
 				m_thumbstickDeadzone =
-					fminf(fmaxf(LoadFloat(pSettings, "virtual_controller_settings", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
-				m_bThumbstickTouchAsPress = LoadBool(pSettings, "virtual_controller_settings", "thumbstick_touch_as_press", true);
+					fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
+				m_bThumbstickTouchAsPress = SettingsUtil::LoadBool(pSettings, "virtual_controller_settings", "thumbstick_touch_as_press", true);
 
 				// IK solver
-				if (LoadBool(pSettings, "virtual_controller_ik", "enable_ik", false))
+				if (SettingsUtil::LoadBool(pSettings, "virtual_controller_ik", "enable_ik", false))
 				{
 					char handString[16];
 					vr::EVRSettingsError fetchError;
@@ -324,10 +325,10 @@ namespace steamvrbridge {
 						}
 					}
 
-					float neckLength = LoadFloat(pSettings, "virtual_controller_ik", "neck_length", 0.2f); // meters
-					float halfShoulderLength = LoadFloat(pSettings, "virtual_controller_ik", "half_shoulder_length", 0.22f); // meters
-					float upperArmLength = LoadFloat(pSettings, "virtual_controller_ik", "upper_arm_length", 0.3f); // meters
-					float lowerArmLength = LoadFloat(pSettings, "virtual_controller_ik", "lower_arm_length", 0.35f); // meters
+					float neckLength = SettingsUtil::LoadFloat(pSettings, "virtual_controller_ik", "neck_length", 0.2f); // meters
+					float halfShoulderLength = SettingsUtil::LoadFloat(pSettings, "virtual_controller_ik", "half_shoulder_length", 0.22f); // meters
+					float upperArmLength = SettingsUtil::LoadFloat(pSettings, "virtual_controller_ik", "upper_arm_length", 0.3f); // meters
+					float lowerArmLength = SettingsUtil::LoadFloat(pSettings, "virtual_controller_ik", "lower_arm_length", 0.35f); // meters
 
 					//TODO: Select solver method
 					//m_orientationSolver = new CFABRIKArmSolver(hand, neckLength, halfShoulderLength, upperArmLength, lowerArmLength);
@@ -343,9 +344,10 @@ namespace steamvrbridge {
 
 		memset(&m_ControllerState, 0, sizeof(vr::VRControllerState_t));
 		m_trackingStatus = m_bDisableHMDAlignmentGesture ? vr::TrackingResult_Running_OK : vr::TrackingResult_Uninitialized;
+
 	}
 
-	CPSMoveControllerLatest::~CPSMoveControllerLatest()
+	Controller::~Controller()
 	{
 		if (m_PSMChildControllerView != nullptr)
 		{
@@ -353,8 +355,8 @@ namespace steamvrbridge {
 			m_PSMChildControllerView = nullptr;
 		}
 
-		PSM_FreeControllerListener(m_PSMControllerView->ControllerID);
-		m_PSMControllerView = nullptr;
+		PSM_FreeControllerListener(m_PSMServiceController->ControllerID);
+		m_PSMServiceController = nullptr;
 
 		if (m_orientationSolver != nullptr)
 		{
@@ -363,10 +365,10 @@ namespace steamvrbridge {
 		}
 	}
 
-	void CPSMoveControllerLatest::LoadButtonMapping(
+	void Controller::LoadButtonMapping(
 		vr::IVRSettings *pSettings,
-		const CPSMoveControllerLatest::ePSControllerType controllerType,
-		const CPSMoveControllerLatest::ePSButtonID psButtonID,
+		const Controller::ePSControllerType controllerType,
+		const Controller::ePSButtonID psButtonID,
 		const vr::EVRButtonId defaultVRButtonID,
 		const eVRTouchpadDirection defaultTouchpadDirection,
 		int controllerId)
@@ -385,22 +387,22 @@ namespace steamvrbridge {
 			const char *szTouchpadSectionName = "";
 			switch (controllerType)
 			{
-			case CPSMoveControllerLatest::k_EPSControllerType_Move:
+			case Controller::k_EPSControllerType_Move:
 				szPSButtonName = k_PSButtonNames[psButtonID];
 				szButtonSectionName = "psmove";
 				szTouchpadSectionName = "psmove_touchpad_directions";
 				break;
-			case CPSMoveControllerLatest::k_EPSControllerType_DS4:
+			case Controller::k_EPSControllerType_DS4:
 				szPSButtonName = k_PSButtonNames[psButtonID];
 				szButtonSectionName = "dualshock4_button";
 				szTouchpadSectionName = "dualshock4_touchpad";
 				break;
-			case CPSMoveControllerLatest::k_EPSControllerType_Navi:
+			case Controller::k_EPSControllerType_Navi:
 				szPSButtonName = k_PSButtonNames[psButtonID];
 				szButtonSectionName = "psnavi_button";
 				szTouchpadSectionName = "psnavi_touchpad";
 				break;
-			case CPSMoveControllerLatest::k_EPSControllerType_Virtual:
+			case Controller::k_EPSControllerType_Virtual:
 				szPSButtonName = k_VirtualButtonNames[psButtonID];
 				szButtonSectionName = "virtual_button";
 				szTouchpadSectionName = "virtual_touchpad";
@@ -500,79 +502,34 @@ namespace steamvrbridge {
 		psButtonIDToVrTouchpadDirection[controllerType][psButtonID] = vrTouchpadDirection;
 	}
 
-	bool CPSMoveControllerLatest::LoadBool(
-		vr::IVRSettings *pSettings,
-		const char *pchSection,
-		const char *pchSettingsKey,
-		const bool bDefaultValue)
+	vr::EVRInitError Controller::Activate(vr::TrackedDeviceIndex_t unObjectId)
 	{
-		vr::EVRSettingsError eError;
-		bool bResult = pSettings->GetBool(pchSection, pchSettingsKey, &eError);
-
-		if (eError != vr::VRSettingsError_None)
-		{
-			bResult = bDefaultValue;
-		}
-
-		return bResult;
-	}
-
-	int CPSMoveControllerLatest::LoadInt(
-		vr::IVRSettings *pSettings,
-		const char *pchSection,
-		const char *pchSettingsKey,
-		const int iDefaultValue)
-	{
-		vr::EVRSettingsError eError;
-		int iResult = pSettings->GetInt32(pchSection, pchSettingsKey, &eError);
-
-		if (eError != vr::VRSettingsError_None)
-		{
-			iResult = iDefaultValue;
-		}
-
-		return iResult;
-	}
-
-	float CPSMoveControllerLatest::LoadFloat(
-		vr::IVRSettings *pSettings,
-		const char *pchSection,
-		const char *pchSettingsKey,
-		const float fDefaultValue)
-	{
-		vr::EVRSettingsError eError;
-		float fResult = pSettings->GetFloat(pchSection, pchSettingsKey, &eError);
-
-		if (eError != vr::VRSettingsError_None)
-		{
-			fResult = fDefaultValue;
-		}
-
-		return fResult;
-	}
-
-	vr::EVRInitError CPSMoveControllerLatest::Activate(vr::TrackedDeviceIndex_t unObjectId)
-	{
-		vr::EVRInitError result = CPSMoveTrackedDeviceLatest::Activate(unObjectId);
+		vr::EVRInitError result = TrackableDevice::Activate(unObjectId);
 
 		if (result == vr::VRInitError_None)
 		{
-			Logger::DriverLog("CPSMoveControllerLatest::Activate - Controller %d Activated\n", unObjectId);
+			Logger::Info("CPSMoveControllerLatest::Activate - Controller %d Activated\n", unObjectId);
 
 			g_ServerTrackedDeviceProvider.LaunchPSMoveMonitor();
 
 			PSMRequestID requestId;
 			if (PSM_StartControllerDataStreamAsync(
-				m_PSMControllerView->ControllerID,
+				m_PSMServiceController->ControllerID,
 				PSMStreamFlags_includePositionData | PSMStreamFlags_includePhysicsData,
 				&requestId) == PSMResult_Success)
 			{
-				PSM_RegisterCallback(requestId, CPSMoveControllerLatest::start_controller_response_callback, this);
+				PSM_RegisterCallback(requestId, Controller::start_controller_response_callback, this);
 			}
 
 			// Setup controller properties
 			{
 				vr::CVRPropertyHelpers *properties = vr::VRProperties();
+
+				// log some stats about the HMD device
+				//vr::Prop_SecondsFromVsyncToPhotons_Float
+				vr::ETrackedPropertyError err;
+				float vsyncToPhotonsSec = properties->GetFloatProperty(m_ulPropertyContainer, vr::Prop_SecondsFromVsyncToPhotons_Float, &err);
+				Logger::Info("vsyncToPhotonsSec=%f\n", vsyncToPhotonsSec);
 
 				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String, "{psmove}controller_status_off.png");
 				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String, "{psmove}controller_status_ready.png");
@@ -612,18 +569,18 @@ namespace steamvrbridge {
 				{
 				case PSMController_Move:
 				{
-					snprintf(model_label, sizeof(model_label), "psmove_%d", m_PSMControllerView->ControllerID);
+					snprintf(model_label, sizeof(model_label), "psmove_%d", m_PSMServiceController->ControllerID);
 					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
 				} break;
 				case PSMController_DualShock4:
 				{
-					snprintf(model_label, sizeof(model_label), "dualshock4_%d", m_PSMControllerView->ControllerID);
+					snprintf(model_label, sizeof(model_label), "dualshock4_%d", m_PSMServiceController->ControllerID);
 					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}dualshock4_controller");
 
 				} break;
 				case PSMController_Virtual:
 				{
-					snprintf(model_label, sizeof(model_label), "virtual_%d", m_PSMControllerView->ControllerID);
+					snprintf(model_label, sizeof(model_label), "virtual_%d", m_PSMServiceController->ControllerID);
 					if (m_overrideModel.length() > 0)
 					{
 						properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, m_overrideModel.c_str());
@@ -646,21 +603,21 @@ namespace steamvrbridge {
 		return result;
 	}
 
-	void CPSMoveControllerLatest::start_controller_response_callback(
+	void Controller::start_controller_response_callback(
 		const PSMResponseMessage *response, void *userdata)
 	{
-		CPSMoveControllerLatest *controller = reinterpret_cast<CPSMoveControllerLatest *>(userdata);
+		Controller *controller = reinterpret_cast<Controller *>(userdata);
 
 		if (response->result_code == PSMResult::PSMResult_Success)
 		{
-			Logger::DriverLog("CPSMoveControllerLatest::start_controller_response_callback - Controller stream started\n");
+			Logger::Info("CPSMoveControllerLatest::start_controller_response_callback - Controller stream started\n");
 		}
 	}
 
-	void CPSMoveControllerLatest::Deactivate()
+	void Controller::Deactivate()
 	{
-		Logger::DriverLog("CPSMoveControllerLatest::Deactivate - Controller stream stopped\n");
-		PSM_StopControllerDataStreamAsync(m_PSMControllerView->ControllerID, nullptr);
+		Logger::Info("CPSMoveControllerLatest::Deactivate - Controller stream stopped\n");
+		PSM_StopControllerDataStreamAsync(m_PSMServiceController->ControllerID, nullptr);
 	}
 
 
@@ -688,7 +645,7 @@ namespace steamvrbridge {
 	//    return true;
 	//}
 
-	void CPSMoveControllerLatest::SendBooleanUpdates(bool pressed, uint64_t ulMask)
+	void Controller::SendBooleanUpdates(bool pressed, uint64_t ulMask)
 	{
 		if (!ulMask)
 			return;
@@ -703,12 +660,12 @@ namespace steamvrbridge {
 			{
 				//( vr::VRServerDriverHost()->*ButtonEvent )( m_unSteamVRTrackedDeviceId, button, 0.0 );
 				// must now call update on the boolean component instead
-				vr::VRDriverInput()->UpdateBooleanComponent(m_ulBoolComponentsMap[button], pressed, 0.0);
+				vr::VRDriverInput()->UpdateBooleanComponent(m_hButtons[button], pressed, 0.0);
 			}
 		}
 	}
 
-	void CPSMoveControllerLatest::SendScalarUpdates(float val, uint64_t ulMask)
+	void Controller::SendScalarUpdates(float val, uint64_t ulMask)
 	{
 		if (!ulMask)
 			return;
@@ -723,17 +680,17 @@ namespace steamvrbridge {
 			{
 				//( vr::VRServerDriverHost()->*ButtonEvent )( m_unSteamVRTrackedDeviceId, button, 0.0 );
 				// must now call update on the scalar component instead
-				vr::VRDriverInput()->UpdateScalarComponent(m_ulScalarComponentsMap[button], val, 0.0);
+				vr::VRDriverInput()->UpdateScalarComponent(m_hAxes[button], val, 0.0);
 			}
 		}
 	}
 
-	void CPSMoveControllerLatest::UpdateControllerState()
+	void Controller::UpdateControllerState()
 	{
 		static const uint64_t s_kTouchpadButtonMask = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad);
 
-		assert(m_PSMControllerView != nullptr);
-		assert(m_PSMControllerView->IsConnected);
+		assert(m_PSMServiceController != nullptr);
+		assert(m_PSMServiceController->IsConnected);
 
 		vr::VRControllerState_t NewState = { 0 };
 
@@ -741,11 +698,11 @@ namespace steamvrbridge {
 		// changed.  We don't try to be precise about that here.
 		NewState.unPacketNum = m_ControllerState.unPacketNum + 1;
 
-		switch (m_PSMControllerView->ControllerType)
+		switch (m_PSMServiceController->ControllerType)
 		{
 		case PSMController_Move:
 		{
-			const PSMPSMove &clientView = m_PSMControllerView->ControllerState.PSMoveState;
+			const PSMPSMove &clientView = m_PSMServiceController->ControllerState.PSMoveState;
 
 			bool bStartRealignHMDTriggered =
 				(clientView.StartButton == PSMButtonState_PRESSED && clientView.SelectButton == PSMButtonState_PRESSED) ||
@@ -838,9 +795,9 @@ namespace steamvrbridge {
 
 				PSMQuatf controllerBallPointedUpQuat = PSM_QuatfCreateFromAngles(&controllerBallPointedUpEuler);
 
-				Logger::DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
+				Logger::Info("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
 
-				PSM_ResetControllerOrientationAsync(m_PSMControllerView->ControllerID, &controllerBallPointedUpQuat, nullptr);
+				PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, &controllerBallPointedUpQuat, nullptr);
 				m_bResetPoseRequestSent = true;
 
 				RealignHMDTrackingSpace();
@@ -848,9 +805,9 @@ namespace steamvrbridge {
 			}
 			else if (bRecenterRequestTriggered)
 			{
-				Logger::DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling ClientPSMoveAPI::reset_orientation() in response to controller button press.\n");
+				Logger::Info("CPSMoveControllerLatest::UpdateControllerState(): Calling ClientPSMoveAPI::reset_orientation() in response to controller button press.\n");
 
-				PSM_ResetControllerOrientationAsync(m_PSMControllerView->ControllerID, k_psm_quaternion_identity, nullptr);
+				PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, k_psm_quaternion_identity, nullptr);
 				m_bResetPoseRequestSent = true;
 			}
 			else
@@ -948,10 +905,10 @@ namespace steamvrbridge {
 								if (!m_bTouchpadWasActive)
 								{
 									// Just pressed.
-									const PSMPSMove &view = m_PSMControllerView->ControllerState.PSMoveState;
+									const PSMPSMove &view = m_PSMServiceController->ControllerState.PSMoveState;
 									m_driverSpaceRotationAtTouchpadPressTime = view.Pose.Orientation;
 
-									GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &m_posMetersAtTouchpadPressTime);
+									Utils::GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &m_posMetersAtTouchpadPressTime, m_PSMServiceController->ControllerState.PSMoveState);
 
 #if LOG_TOUCHPAD_EMULATION != 0
 									Logger::DriverLog("Touchpad pressed! At (%f, %f, %f) meters relative to orientation\n",
@@ -962,7 +919,7 @@ namespace steamvrbridge {
 								{
 									// Held!
 									PSMVector3f newPosMeters;
-									GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &newPosMeters);
+									Utils::GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &newPosMeters, m_PSMServiceController->ControllerState.PSMoveState);
 
 									PSMVector3f offsetMeters = PSM_Vector3fSubtract(&newPosMeters, &m_posMetersAtTouchpadPressTime);
 
@@ -1035,7 +992,7 @@ namespace steamvrbridge {
 						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRTriggerAxisIndex));
 					}
 
-					// Send the button was press event only when it's almost fully pressed
+					// Send the button was pressed event only when it's almost fully pressed
 					if (NewState.rAxis[m_steamVRTriggerAxisIndex].x > 0.8f)
 					{
 						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRTriggerAxisIndex));
@@ -1053,6 +1010,7 @@ namespace steamvrbridge {
 						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + 1));
 					}
 
+					// Send the button was pressed event only when it's almost fully pressed
 					if (NewState.rAxis[1].x > 0.8f)
 					{
 						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + 1));
@@ -1069,6 +1027,7 @@ namespace steamvrbridge {
 						NewState.ulButtonTouched |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRNaviTriggerAxisIndex));
 					}
 
+					// Send the button was pressed event only when it's almost fully pressed
 					if (NewState.rAxis[m_steamVRNaviTriggerAxisIndex].x > 0.8f)
 					{
 						NewState.ulButtonPressed |= vr::ButtonMaskFromId(static_cast<vr::EVRButtonId>(vr::k_EButton_Axis0 + m_steamVRNaviTriggerAxisIndex));
@@ -1080,12 +1039,12 @@ namespace steamvrbridge {
 				}
 
 				// Update the battery charge state
-				UpdateBatteryChargeState(m_PSMControllerView->ControllerState.PSMoveState.BatteryValue);
+				UpdateBatteryChargeState(m_PSMServiceController->ControllerState.PSMoveState.BatteryValue);
 			}
 		} break;
 		case PSMController_DualShock4:
 		{
-			const PSMDualShock4 &clientView = m_PSMControllerView->ControllerState.PSDS4State;
+			const PSMDualShock4 &clientView = m_PSMServiceController->ControllerState.PSDS4State;
 
 			const bool bStartRealignHMDTriggered =
 				(clientView.ShareButton == PSMButtonState_PRESSED && clientView.OptionsButton == PSMButtonState_PRESSED) ||
@@ -1128,18 +1087,18 @@ namespace steamvrbridge {
 			// recenter the controller orientation pose and start the realignment of the controller to HMD tracking space.
 			if (bStartRealignHMDTriggered)
 			{
-				Logger::DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
+				Logger::Info("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
 
-				PSM_ResetControllerOrientationAsync(m_PSMControllerView->ControllerID, k_psm_quaternion_identity, nullptr);
+				PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, k_psm_quaternion_identity, nullptr);
 				m_bResetPoseRequestSent = true;
 
 				RealignHMDTrackingSpace();
 			}
 			else if (bRecenterRequestTriggered)
 			{
-				Logger::DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling ClientPSMoveAPI::reset_orientation() in response to controller button press.\n");
+				Logger::Info("CPSMoveControllerLatest::UpdateControllerState(): Calling ClientPSMoveAPI::reset_orientation() in response to controller button press.\n");
 
-				PSM_ResetControllerOrientationAsync(m_PSMControllerView->ControllerID, k_psm_quaternion_identity, nullptr);
+				PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, k_psm_quaternion_identity, nullptr);
 				m_bResetPoseRequestSent = true;
 			}
 			else
@@ -1232,22 +1191,22 @@ namespace steamvrbridge {
 		} break;
 		case PSMController_Virtual:
 		{
-			const PSMVirtualController &clientView = m_PSMControllerView->ControllerState.VirtualController;
+			const PSMVirtualController &clientView = m_PSMServiceController->ControllerState.VirtualController;
 
 			if (clientView.buttonStates[m_hmdAlignPSButtonID] == PSMButtonState_PRESSED)
 			{
-				Logger::DriverLog("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
+				Logger::Info("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
 
 				RealignHMDTrackingSpace();
 			}
 			else
 			{
-				int buttonCount = m_PSMControllerView->ControllerState.VirtualController.numButtons;
-				int axisCount = m_PSMControllerView->ControllerState.VirtualController.numAxes;
+				int buttonCount = m_PSMServiceController->ControllerState.VirtualController.numButtons;
+				int axisCount = m_PSMServiceController->ControllerState.VirtualController.numAxes;
 
 				for (int buttonIndex = 0; buttonIndex < buttonCount; ++buttonIndex)
 				{
-					if (m_PSMControllerView->ControllerState.VirtualController.buttonStates[buttonIndex])
+					if (m_PSMServiceController->ControllerState.VirtualController.buttonStates[buttonIndex])
 					{
 						NewState.ulButtonPressed |= vr::ButtonMaskFromId(psButtonIDToVRButtonID[k_EPSControllerType_Virtual][buttonIndex]);
 					}
@@ -1256,8 +1215,8 @@ namespace steamvrbridge {
 				if (m_virtualTouchpadXAxisIndex >= 0 && m_virtualTouchpadXAxisIndex < axisCount &&
 					m_virtualTouchpadYAxisIndex >= 0 && m_virtualTouchpadYAxisIndex < axisCount)
 				{
-					const unsigned char rawThumbStickX = m_PSMControllerView->ControllerState.VirtualController.axisStates[m_virtualTouchpadXAxisIndex];
-					const unsigned char rawThumbStickY = m_PSMControllerView->ControllerState.VirtualController.axisStates[m_virtualTouchpadYAxisIndex];
+					const unsigned char rawThumbStickX = m_PSMServiceController->ControllerState.VirtualController.axisStates[m_virtualTouchpadXAxisIndex];
+					const unsigned char rawThumbStickY = m_PSMServiceController->ControllerState.VirtualController.axisStates[m_virtualTouchpadYAxisIndex];
 					float thumbStickX = ((float)rawThumbStickX - 127.f) / 127.f;
 					float thumbStickY = ((float)rawThumbStickY - 127.f) / 127.f;
 
@@ -1312,7 +1271,7 @@ namespace steamvrbridge {
 				if (m_virtualTriggerAxisIndex >= 0 && m_virtualTriggerAxisIndex < axisCount)
 				{
 					// Remap trigger axis from [0, 255]
-					const float triggerValue = (float)m_PSMControllerView->ControllerState.VirtualController.axisStates[m_virtualTriggerAxisIndex] / 255.f;
+					const float triggerValue = (float)m_PSMServiceController->ControllerState.VirtualController.axisStates[m_virtualTriggerAxisIndex] / 255.f;
 
 					NewState.rAxis[1].x = triggerValue;
 					NewState.rAxis[1].y = 0.f;
@@ -1337,15 +1296,18 @@ namespace steamvrbridge {
 		uint64_t ulChangedTouched = NewState.ulButtonTouched ^ m_ControllerState.ulButtonTouched;
 		uint64_t ulChangedPressed = NewState.ulButtonPressed ^ m_ControllerState.ulButtonPressed;
 
-		SendBooleanUpdates(true, ulChangedPressed &  NewState.ulButtonPressed);
-		SendBooleanUpdates(false, ulChangedPressed & ~NewState.ulButtonPressed);
+		//SendBooleanUpdates(true, ulChangedPressed &  NewState.ulButtonPressed);
+		//SendBooleanUpdates(false, ulChangedPressed & ~NewState.ulButtonPressed);
+
 		//SendButtonUpdates( &vr::IVRServerDriverHost::TrackedDeviceButtonTouched, ulChangedTouched & NewState.ulButtonTouched );
 		//SendButtonUpdates( &vr::IVRServerDriverHost::TrackedDeviceButtonUntouched, ulChangedTouched & ~NewState.ulButtonTouched );
 
 		m_ControllerState = NewState;
+
+		//if()
 	}
 
-	void CPSMoveControllerLatest::UpdateControllerStateFromPsMoveButtonState(
+	void Controller::UpdateControllerStateFromPsMoveButtonState(
 		ePSControllerType controllerType,
 		ePSButtonID buttonId,
 		PSMButtonState buttonState,
@@ -1415,118 +1377,41 @@ namespace steamvrbridge {
 		}
 	}
 
-	PSMQuatf ExtractHMDYawQuaternion(const PSMQuatf &q)
-	{
-		// Convert the quaternion to a basis matrix
-		const PSMMatrix3f hmd_orientation = PSM_Matrix3fCreateFromQuatf(&q);
-
-		// Extract the forward (z-axis) vector from the basis
-		const PSMVector3f forward = PSM_Matrix3fBasisZ(&hmd_orientation);
-		PSMVector3f forward2d = { forward.x, 0.f, forward.z };
-		forward2d = PSM_Vector3fNormalizeWithDefault(&forward2d, k_psm_float_vector3_k);
-
-		// Compute the yaw angle (amount the z-axis has been rotated to it's current facing)
-		const float cos_yaw = PSM_Vector3fDot(&forward, k_psm_float_vector3_k);
-		float half_yaw = acosf(fminf(fmaxf(cos_yaw, -1.f), 1.f)) / 2.f;
-
-		// Flip the sign of the yaw angle depending on if forward2d is to the left or right of global forward
-		PSMVector3f yaw_axis = PSM_Vector3fCross(k_psm_float_vector3_k, &forward2d);
-		if (PSM_Vector3fDot(&yaw_axis, k_psm_float_vector3_j) < 0)
-		{
-			half_yaw = -half_yaw;
-		}
-
-		// Convert this yaw rotation back into a quaternion
-		PSMQuatf yaw_quaternion =
-			PSM_QuatfCreate(
-				cosf(half_yaw), // w = cos(theta/2)
-				0.f, sinf(half_yaw), 0.f); // (x, y, z) = sin(theta/2)*axis, where axis = (0, 1, 0)
-
-		return yaw_quaternion;
-	}
-
-	PSMQuatf ExtractPSMoveYawQuaternion(const PSMQuatf &q)
-	{
-		// Convert the quaternion to a basis matrix
-		const PSMMatrix3f psmove_basis = PSM_Matrix3fCreateFromQuatf(&q);
-
-		// Extract the forward (negative z-axis) vector from the basis
-		const PSMVector3f global_forward = { 0.f, 0.f, -1.f };
-		const PSMVector3f &forward = PSM_Matrix3fBasisY(&psmove_basis);
-		PSMVector3f forward2d = { forward.x, 0.f, forward.z };
-		forward2d = PSM_Vector3fNormalizeWithDefault(&forward2d, &global_forward);
-
-		// Compute the yaw angle (amount the z-axis has been rotated to it's current facing)
-		const float cos_yaw = PSM_Vector3fDot(&forward, &global_forward);
-		float yaw = acosf(fminf(fmaxf(cos_yaw, -1.f), 1.f));
-
-		// Flip the sign of the yaw angle depending on if forward2d is to the left or right of global forward
-		const PSMVector3f &global_up = *k_psm_float_vector3_j;
-		PSMVector3f yaw_axis = PSM_Vector3fCross(&global_forward, &forward2d);
-		if (PSM_Vector3fDot(&yaw_axis, &global_up) < 0)
-		{
-			yaw = -yaw;
-		}
-
-		// Convert this yaw rotation back into a quaternion
-		PSMVector3f eulerPitch = { (float)1.57079632679489661923, 0.f, 0.f }; // pitch 90 up first
-		PSMVector3f eulerYaw = { 0, yaw, 0 };
-		PSMQuatf quatPitch = PSM_QuatfCreateFromAngles(&eulerPitch);
-		PSMQuatf quatYaw = PSM_QuatfCreateFromAngles(&eulerYaw);
-		PSMQuatf yaw_quaternion =
-			PSM_QuatfConcat(
-				&quatPitch, // pitch 90 up first
-				&quatYaw); // Then apply the yaw
-
-		return yaw_quaternion;
-	}
-
-	void CPSMoveControllerLatest::GetMetersPosInRotSpace(const PSMQuatf *rotation, PSMVector3f* out_position)
-	{
-		const PSMPSMove &view = m_PSMControllerView->ControllerState.PSMoveState;
-		const PSMVector3f &position = view.Pose.Position;
-
-		PSMVector3f unrotatedPositionMeters = PSM_Vector3fScale(&position, k_fScalePSMoveAPIToMeters);
-		PSMQuatf viewOrientationInverse = PSM_QuatfConjugate(rotation);
-
-		*out_position = PSM_QuatfRotateVector(&viewOrientationInverse, &unrotatedPositionMeters);
-	}
-
-	void CPSMoveControllerLatest::RealignHMDTrackingSpace()
+	void Controller::RealignHMDTrackingSpace()
 	{
 		if (m_bDisableHMDAlignmentGesture)
 		{
-			Logger::DriverLog("Ignoring RealignHMDTrackingSpace request. Disabled.\n");
+			Logger::Info("Ignoring RealignHMDTrackingSpace request. Disabled.\n");
 			return;
 		}
 
-		Logger::DriverLog("Begin CPSMoveControllerLatest::RealignHMDTrackingSpace()\n");
+		Logger::Info("Begin CPSMoveControllerLatest::RealignHMDTrackingSpace()\n");
 
 		vr::TrackedDeviceIndex_t hmd_device_index = vr::k_unTrackedDeviceIndexInvalid;
 		if (Utils::GetHMDDeviceIndex(&hmd_device_index))
 		{
-			Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - HMD Device Index= %u\n", hmd_device_index);
+			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - HMD Device Index= %u\n", hmd_device_index);
 		}
 		else
 		{
-			Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Device Index\n");
+			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Device Index\n");
 			return;
 		}
 
 		PSMPosef hmd_pose_meters;
 		if (Utils::GetTrackedDevicePose(hmd_device_index, &hmd_pose_meters))
 		{
-			Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - hmd_pose_meters: %s \n", Utils::PSMPosefToString(hmd_pose_meters).c_str());
+			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - hmd_pose_meters: %s \n", Utils::PSMPosefToString(hmd_pose_meters).c_str());
 		}
 		else
 		{
-			Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Pose\n");
+			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Pose\n");
 			return;
 		}
 
 		// Make the HMD orientation only contain a yaw
-		hmd_pose_meters.Orientation = ExtractHMDYawQuaternion(hmd_pose_meters.Orientation);
-		Logger::DriverLog("hmd_pose_meters(yaw-only): %s \n", Utils::PSMPosefToString(hmd_pose_meters).c_str());
+		hmd_pose_meters.Orientation = Utils::ExtractHMDYawQuaternion(hmd_pose_meters.Orientation);
+		Logger::Info("hmd_pose_meters(yaw-only): %s \n", Utils::PSMPosefToString(hmd_pose_meters).c_str());
 
 		// We have the transform of the HMD in world space. 
 		// However the HMD and the controller aren't quite aligned depending on the controller type:
@@ -1552,11 +1437,11 @@ namespace steamvrbridge {
 		PSMPosef controllerPoseRelativeToHMD =
 			PSM_PosefCreate(&controllerLocalOffsetFromHmdPosition, &controllerOrientationInHmdSpaceQuat);
 
-		Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controllerPoseRelativeToHMD: %s \n", Utils::PSMPosefToString(controllerPoseRelativeToHMD).c_str());
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controllerPoseRelativeToHMD: %s \n", Utils::PSMPosefToString(controllerPoseRelativeToHMD).c_str());
 
 		// Compute the expected controller pose in HMD tracking space (i.e. "World Space")
 		PSMPosef controller_world_space_pose = PSM_PosefConcat(&controllerPoseRelativeToHMD, &hmd_pose_meters);
-		Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_world_space_pose: %s \n", Utils::PSMPosefToString(controller_world_space_pose).c_str());
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_world_space_pose: %s \n", Utils::PSMPosefToString(controller_world_space_pose).c_str());
 
 		/*
 		We now have the transform of the controller in world space -- controller_world_space_pose
@@ -1573,8 +1458,8 @@ namespace steamvrbridge {
 		// value because the user may have triggered a pose reset, in which case the driver's
 		// cached pose might not yet be up to date by the time this callback is triggered.
 		PSMPosef controller_pose_meters = *k_psm_pose_identity;
-		PSM_GetControllerPose(m_PSMControllerView->ControllerID, &controller_pose_meters);
-		Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(raw): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
+		PSM_GetControllerPose(m_PSMServiceController->ControllerID, &controller_pose_meters);
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(raw): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
 
 		// PSMove Position is in cm, but OpenVR stores position in meters
 		controller_pose_meters.Position = PSM_Vector3fScale(&controller_pose_meters.Position, k_fScalePSMoveAPIToMeters);
@@ -1584,59 +1469,59 @@ namespace steamvrbridge {
 			if (m_bUseControllerOrientationInHMDAlignment)
 			{
 				// Extract only the yaw from the controller orientation (assume it's mostly held upright)
-				controller_pose_meters.Orientation = ExtractPSMoveYawQuaternion(controller_pose_meters.Orientation);
-				Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(yaw-only): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
+				controller_pose_meters.Orientation = Utils::ExtractPSMoveYawQuaternion(controller_pose_meters.Orientation);
+				Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(yaw-only): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
 			}
 			else
 			{
 				const PSMVector3f eulerPitch = { (float)M_PI_2, 0.0f, 0.0f };
 
 				controller_pose_meters.Orientation = PSM_QuatfCreateFromAngles(&eulerPitch);
-				Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
+				Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
 			}
 		}
 		else if (m_PSMControllerType == PSMControllerType::PSMController_DualShock4 ||
 			m_PSMControllerType == PSMControllerType::PSMController_Virtual)
 		{
 			controller_pose_meters.Orientation = *k_psm_quaternion_identity;
-			Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
+			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
 		}
 
 		PSMPosef controller_pose_inv = PSM_PosefInverse(&controller_pose_meters);
-		Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_inv: %s \n", Utils::PSMPosefToString(controller_pose_inv).c_str());
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_inv: %s \n", Utils::PSMPosefToString(controller_pose_inv).c_str());
 
 		PSMPosef driver_pose_to_world_pose = PSM_PosefConcat(&controller_pose_inv, &controller_world_space_pose);
-		Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - driver_pose_to_world_pose: %s \n", Utils::PSMPosefToString(driver_pose_to_world_pose).c_str());
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - driver_pose_to_world_pose: %s \n", Utils::PSMPosefToString(driver_pose_to_world_pose).c_str());
 
 		PSMPosef test_composed_controller_world_space = PSM_PosefConcat(&controller_pose_meters, &driver_pose_to_world_pose);
-		Logger::DriverLog("CPSMoveControllerLatest::RealignHMDTrackingSpace() - test_composed_controller_world_space: %s \n", Utils::PSMPosefToString(test_composed_controller_world_space).c_str());
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - test_composed_controller_world_space: %s \n", Utils::PSMPosefToString(test_composed_controller_world_space).c_str());
 
 		g_ServerTrackedDeviceProvider.SetHMDTrackingSpace(driver_pose_to_world_pose);
 	}
 
-	void CPSMoveControllerLatest::UpdateTrackingState()
+	void Controller::UpdateTrackingState()
 	{
-		assert(m_PSMControllerView != nullptr);
-		assert(m_PSMControllerView->IsConnected);
+		assert(m_PSMServiceController != nullptr);
+		assert(m_PSMServiceController->IsConnected);
 
 		// The tracking status will be one of the following states:
 		m_Pose.result = m_trackingStatus;
 
-		m_Pose.deviceIsConnected = m_PSMControllerView->IsConnected;
+		m_Pose.deviceIsConnected = m_PSMServiceController->IsConnected;
 
 		// These should always be false from any modern driver.  These are for Oculus DK1-like
 		// rotation-only tracking.  Support for that has likely rotted in vrserver.
 		m_Pose.willDriftInYaw = false;
 		m_Pose.shouldApplyHeadModel = false;
 
-		switch (m_PSMControllerView->ControllerType)
+		switch (m_PSMServiceController->ControllerType)
 		{
 		case PSMControllerType::PSMController_Move:
 		{
-			const PSMPSMove &view = m_PSMControllerView->ControllerState.PSMoveState;
+			const PSMPSMove &view = m_PSMServiceController->ControllerState.PSMoveState;
 
 			// No prediction since that's already handled in the psmove service
-			m_Pose.poseTimeOffset = 0.f;
+			m_Pose.poseTimeOffset = -0.016f;
 
 			// No transform due to the current HMD orientation
 			m_Pose.qDriverFromHeadRotation.w = 1.f;
@@ -1650,7 +1535,6 @@ namespace steamvrbridge {
 			// Set position
 			{
 				const PSMVector3f &position = view.Pose.Position;
-
 				m_Pose.vecPosition[0] = position.x * k_fScalePSMoveAPIToMeters;
 				m_Pose.vecPosition[1] = position.y * k_fScalePSMoveAPIToMeters;
 				m_Pose.vecPosition[2] = position.z * k_fScalePSMoveAPIToMeters;
@@ -1721,9 +1605,10 @@ namespace steamvrbridge {
 				m_Pose.vecAngularAcceleration[2] = physicsData.AngularAccelerationRadPerSecSqr.z;
 			}
 
+
 			m_Pose.poseIsValid =
-				m_PSMControllerView->ControllerState.PSMoveState.bIsPositionValid &&
-				m_PSMControllerView->ControllerState.PSMoveState.bIsOrientationValid;
+				m_PSMServiceController->ControllerState.PSMoveState.bIsPositionValid &&
+				m_PSMServiceController->ControllerState.PSMoveState.bIsOrientationValid;
 
 			// This call posts this pose to shared memory, where all clients will have access to it the next
 			// moment they want to predict a pose.
@@ -1731,7 +1616,7 @@ namespace steamvrbridge {
 		} break;
 		case PSMControllerType::PSMController_DualShock4:
 		{
-			const PSMDualShock4 &view = m_PSMControllerView->ControllerState.PSDS4State;
+			const PSMDualShock4 &view = m_PSMServiceController->ControllerState.PSDS4State;
 
 			// No prediction since that's already handled in the psmove service
 			m_Pose.poseTimeOffset = 0.f;
@@ -1787,8 +1672,8 @@ namespace steamvrbridge {
 			}
 
 			m_Pose.poseIsValid =
-				m_PSMControllerView->ControllerState.PSDS4State.bIsPositionValid &&
-				m_PSMControllerView->ControllerState.PSDS4State.bIsOrientationValid;
+				m_PSMServiceController->ControllerState.PSDS4State.bIsPositionValid &&
+				m_PSMServiceController->ControllerState.PSDS4State.bIsOrientationValid;
 
 			// This call posts this pose to shared memory, where all clients will have access to it the next
 			// moment they want to predict a pose.
@@ -1796,7 +1681,7 @@ namespace steamvrbridge {
 		} break;
 		case PSMControllerType::PSMController_Virtual:
 		{
-			const PSMVirtualController &view = m_PSMControllerView->ControllerState.VirtualController;
+			const PSMVirtualController &view = m_PSMServiceController->ControllerState.VirtualController;
 
 			// No prediction since that's already handled in the psmove service
 			m_Pose.poseTimeOffset = 0.f;
@@ -1900,7 +1785,7 @@ namespace steamvrbridge {
 				m_Pose.vecAngularAcceleration[2] = 0.f;
 			}
 
-			m_Pose.poseIsValid = m_PSMControllerView->ControllerState.VirtualController.bIsPositionValid;
+			m_Pose.poseIsValid = m_PSMServiceController->ControllerState.VirtualController.bIsPositionValid;
 
 			// This call posts this pose to shared memory, where all clients will have access to it the next
 			// moment they want to predict a pose.
@@ -1909,7 +1794,7 @@ namespace steamvrbridge {
 		}
 	}
 
-	void CPSMoveControllerLatest::UpdateRumbleState()
+	void Controller::UpdateRumbleState()
 	{
 		if (!m_bRumbleSuppressed)
 		{
@@ -1949,7 +1834,7 @@ namespace steamvrbridge {
 				}
 
 				// Actually send the rumble to the server
-				PSM_SetControllerRumble(m_PSMControllerView->ControllerID, PSMControllerRumbleChannel_All, rumble_fraction);
+				PSM_SetControllerRumble(m_PSMServiceController->ControllerID, PSMControllerRumbleChannel_All, rumble_fraction);
 
 				// Remember the last rumble we went and when we sent it
 				m_lastTimeRumbleSent = now;
@@ -1970,7 +1855,7 @@ namespace steamvrbridge {
 		}
 	}
 
-	void CPSMoveControllerLatest::UpdateBatteryChargeState(
+	void Controller::UpdateBatteryChargeState(
 		PSMBatteryState newBatteryEnum)
 	{
 		bool bIsBatteryCharging = false;
@@ -2025,16 +1910,16 @@ namespace steamvrbridge {
 		}
 	}
 
-	void CPSMoveControllerLatest::Update()
+	void Controller::Update()
 	{
-		CPSMoveTrackedDeviceLatest::Update();
+		TrackableDevice::Update();
 
-		if (IsActivated() && m_PSMControllerView->IsConnected)
+		if (IsActivated() && m_PSMServiceController->IsConnected)
 		{
-			int seq_num = m_PSMControllerView->OutputSequenceNum;
-
-			// Only other updating incoming state if it actually changed
-			if (m_nPoseSequenceNumber != seq_num)
+			int seq_num = m_PSMServiceController->OutputSequenceNum;
+			
+			// Only other updating incoming state if it actually changed and is due for one
+			if (m_nPoseSequenceNumber < seq_num )
 			{
 				m_nPoseSequenceNumber = seq_num;
 
@@ -2047,16 +1932,17 @@ namespace steamvrbridge {
 		}
 	}
 
-	void CPSMoveControllerLatest::RefreshWorldFromDriverPose()
+	void Controller::RefreshWorldFromDriverPose()
 	{
-		CPSMoveTrackedDeviceLatest::RefreshWorldFromDriverPose();
+		TrackableDevice::RefreshWorldFromDriverPose();
 
 		// Mark the calibration process as done
 		// once we have setup the world from driver pose
 		m_trackingStatus = vr::TrackingResult_Running_OK;
 	}
 
-	bool CPSMoveControllerLatest::AttachChildPSMController(
+	// TODO this should be defined as a simpler combine controllers method
+	bool Controller::AttachChildPSMController(
 		int ChildControllerId,
 		PSMControllerType ChildControllerType,
 		const std::string &ChildControllerSerialNo)
@@ -2074,7 +1960,7 @@ namespace steamvrbridge {
 			PSMRequestID request_id;
 			if (PSM_StartControllerDataStreamAsync(ChildControllerId, PSMStreamFlags_defaultStreamOptions, &request_id))
 			{
-				PSM_RegisterCallback(request_id, CPSMoveControllerLatest::start_controller_response_callback, this);
+				PSM_RegisterCallback(request_id, Controller::start_controller_response_callback, this);
 				bSuccess = true;
 			}
 			else
