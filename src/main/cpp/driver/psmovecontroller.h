@@ -95,8 +95,10 @@ namespace steamvrbridge {
 
 		void PSMoveController::UpdateButtonState(ePSButtonID button, bool buttonState);
 		void RealignHMDTrackingSpace();
+		void HandleTouchPadDirection();
 		void UpdateControllerState();
 		void UpdateControllerStateFromPsMoveButtonState(ePSButtonID buttonId, PSMButtonState buttonState);
+		void HandleTrigger(float latestTriggerValue);
 		void UpdateTrackingState();
 		void UpdateRumbleState();
 		void UpdateBatteryChargeState(PSMBatteryState newBatteryEnum);
