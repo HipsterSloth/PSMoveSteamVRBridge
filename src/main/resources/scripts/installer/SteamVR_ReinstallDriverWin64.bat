@@ -3,6 +3,8 @@ call SteamVR_SetDriverVarsWin64.bat
 
 echo "(Re)Installing PSMoveService SteamVR Win64 driver..."
 
+cd ../
+
 IF NOT EXIST "%INSTALL_DIR%\bin\win64" mkdir "%INSTALL_DIR%\bin\win64"
 
 xcopy /y *.dll "%INSTALL_DIR%\bin\win64"

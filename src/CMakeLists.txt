@@ -84,7 +84,7 @@ add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver.cpp
 								 ${PROJECT_SRC_DIR}/psmovecontroller.h
 								 ${PROJECT_SRC_DIR}/psnavicontroller.h
 								 ${PROJECT_SRC_DIR}/psds4controller.h
-								 ${PROJECT_SRC_DIR}/virtualcontroller.cpp
+								 ${PROJECT_SRC_DIR}/virtualcontroller.h
 								 ${PROJECT_SRC_DIR}/combinedcontroller.h
 								 ${PROJECT_SRC_DIR}/settingsutil.h
 								 )
