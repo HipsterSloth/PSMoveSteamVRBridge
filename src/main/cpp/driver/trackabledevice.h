@@ -113,6 +113,8 @@ public:
 	virtual void RefreshWorldFromDriverPose();
 	PSMPosef GetWorldFromDriverPose();
 	virtual const char *GetSteamVRIdentifier() const;
+	virtual const vr::TrackedDeviceIndex_t getTrackedDeviceIndex();
+	inline vr::PropertyContainerHandle_t getPropertyContainerHandle() const { return m_ulPropertyContainer; }
 
 protected:
 	// OpenVR Properties

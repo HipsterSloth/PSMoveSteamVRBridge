@@ -90,6 +90,7 @@ namespace steamvrbridge {
 		inline const PSMController * getPSMControllerView() const { return m_PSMServiceController; }
 		inline std::string getPSMControllerSerialNo() const { return m_strPSMControllerSerialNo; }
 		inline PSMControllerType getPSMControllerType() const { return m_PSMControllerType; }
+		void UpdateRumbleState(float durationSecs);
 
 	private:
 
@@ -100,7 +101,7 @@ namespace steamvrbridge {
 		void UpdateControllerStateFromPsMoveButtonState(ePSButtonID buttonId, PSMButtonState buttonState);
 		void HandleTrigger(float latestTriggerValue);
 		void UpdateTrackingState();
-		void UpdateRumbleState();
+		
 		void UpdateBatteryChargeState(PSMBatteryState newBatteryEnum);
 
 		// Controller State

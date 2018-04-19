@@ -826,8 +826,11 @@ namespace steamvrbridge {
 		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unSteamVRTrackedDeviceId, m_Pose, sizeof(vr::DriverPose_t));
 	}
 
-	void PSMoveController::UpdateRumbleState() {
+	void PSMoveController::UpdateRumbleState(float durationSecs) {
 		if (!m_bRumbleSuppressed) {
+
+			m_pendingHapticPulseDuration = durationSecs * 1000000;
+
 			const float k_max_rumble_update_rate = 33.f; // Don't bother trying to update the rumble faster than 30fps (33ms)
 			const float k_max_pulse_microseconds = 1000.f; // Docs suggest max pulse duration of 5ms, but we'll call 1ms max
 
@@ -858,8 +861,8 @@ namespace steamvrbridge {
 					rumble_fraction = 1.f;
 				}
 
-				// Actually send the rumble to the server
 				PSM_SetControllerRumble(m_PSMServiceController->ControllerID, PSMControllerRumbleChannel_All, rumble_fraction);
+				// Actually send the rumble to the server
 
 				// Remember the last rumble we went and when we sent it
 				m_lastTimeRumbleSent = now;
@@ -943,7 +946,7 @@ namespace steamvrbridge {
 			}
 
 			// Update the outgoing state
-			UpdateRumbleState();
+			UpdateRumbleState(0);
 		}
 	}
 

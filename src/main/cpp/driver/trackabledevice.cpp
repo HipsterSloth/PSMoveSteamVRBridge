@@ -6,8 +6,7 @@
 
 TrackableDevice::TrackableDevice()
 	: m_ulPropertyContainer(vr::k_ulInvalidPropertyContainer)
-	, m_unSteamVRTrackedDeviceId(vr::k_unTrackedDeviceIndexInvalid)
-{
+	, m_unSteamVRTrackedDeviceId(vr::k_unTrackedDeviceIndexInvalid) {
 	memset(&m_Pose, 0, sizeof(m_Pose));
 	m_Pose.result = vr::TrackingResult_Uninitialized;
 
@@ -24,13 +23,10 @@ TrackableDevice::TrackableDevice()
 	m_hardware_revision = 0x0001;
 }
 
-TrackableDevice::~TrackableDevice()
-{
-}
+TrackableDevice::~TrackableDevice() {}
 
 // Shared Implementation of vr::ITrackedDeviceServerDriver
-vr::EVRInitError TrackableDevice::Activate(vr::TrackedDeviceIndex_t unObjectId)
-{
+vr::EVRInitError TrackableDevice::Activate(vr::TrackedDeviceIndex_t unObjectId) {
 	vr::CVRPropertyHelpers *properties = vr::VRProperties();
 
 	steamvrbridge::Logger::Info("CPSMoveTrackedDeviceLatest::Activate: %s is object id %d\n", GetSteamVRIdentifier(), unObjectId);
@@ -77,7 +73,7 @@ vr::EVRInitError TrackableDevice::Activate(vr::TrackedDeviceIndex_t unObjectId)
 
 		// Trigger value component
 		vr::VRDriverInput()->CreateScalarComponent(m_ulPropertyContainer, k_pch_Trackpad_Value, &m_hAxes[k_eValue_Trigger],
-			vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
+												   vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
 	}
 
 	/* Trackpad */
@@ -90,11 +86,11 @@ vr::EVRInitError TrackableDevice::Activate(vr::TrackedDeviceIndex_t unObjectId)
 
 		// Create Trackpad Axis X button component
 		vr::VRDriverInput()->CreateScalarComponent(m_ulPropertyContainer, k_pch_Trackpad_X, &m_hAxes[k_eTrackpad_X],
-			vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedTwoSided);
+												   vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedTwoSided);
 
 		// Create Trackpad Axis Y button component
 		vr::VRDriverInput()->CreateScalarComponent(m_ulPropertyContainer, k_pch_Trackpad_Y, &m_hAxes[k_eTrackpad_Y],
-			vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedTwoSided);
+												   vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedTwoSided);
 	}
 
 	/* Create Haptic feedback component */
@@ -103,55 +99,47 @@ vr::EVRInitError TrackableDevice::Activate(vr::TrackedDeviceIndex_t unObjectId)
 	return vr::VRInitError_None;
 }
 
-void TrackableDevice::Deactivate()
-{
+void TrackableDevice::Deactivate() {
 	steamvrbridge::Logger::Info("CPSMoveTrackedDeviceLatest::Deactivate: %s was object id %d\n", GetSteamVRIdentifier(), m_unSteamVRTrackedDeviceId);
 	m_unSteamVRTrackedDeviceId = vr::k_unTrackedDeviceIndexInvalid;
 }
 
-void TrackableDevice::EnterStandby()
-{
+void TrackableDevice::EnterStandby() {
 	//###HipsterSloth $TODO - No good way to do this at the moment
 }
 
-void *TrackableDevice::GetComponent(const char *pchComponentNameAndVersion)
-{
+void *TrackableDevice::GetComponent(const char *pchComponentNameAndVersion) {
 	return NULL;
 }
 
-void TrackableDevice::DebugRequest(const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize)
-{
+void TrackableDevice::DebugRequest(const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize) {
 
 }
 
-vr::DriverPose_t TrackableDevice::GetPose()
-{
+vr::DriverPose_t TrackableDevice::GetPose() {
 	// This is only called at startup to synchronize with the driver.
 	// Future updates are driven by our thread calling TrackedDevicePoseUpdated()
 	return m_Pose;
 }
 
 // TrackedDevice Interface
-vr::ETrackedDeviceClass TrackableDevice::GetTrackedDeviceClass() const
-{
+vr::ETrackedDeviceClass TrackableDevice::GetTrackedDeviceClass() const {
 	// TODO implement this properly
 	return vr::TrackedDeviceClass_Invalid;
 }
 
 // Returns the tracked device's role. e.g. TrackedControllerRole_LeftHand
-vr::ETrackedControllerRole TrackableDevice::GetTrackedDeviceRole() const
-{
+vr::ETrackedControllerRole TrackableDevice::GetTrackedDeviceRole() const {
 	return m_TrackedControllerRole;
 }
 
-bool TrackableDevice::IsActivated() const
-{
+// Will return true based on whether a TrackedDeviceIndex was assigned during Activate()
+bool TrackableDevice::IsActivated() const {
 	return m_unSteamVRTrackedDeviceId != vr::k_unTrackedDeviceIndexInvalid;
 }
 
 // Updates the tracked device through OpenVR's IVRDriverInput from its current state.
-void TrackableDevice::Update()
-{
+void TrackableDevice::Update() {
 	// Touchpad
 	if (m_hAxes[k_eTrackpad_X]) vr::VRDriverInput()->UpdateScalarComponent(m_hAxes[k_eTrackpad_X], state.trackpad.axis.x, 0);
 	if (m_hAxes[k_eTrackpad_Y]) vr::VRDriverInput()->UpdateScalarComponent(m_hAxes[k_eTrackpad_Y], state.trackpad.axis.y, 0);
@@ -169,8 +157,7 @@ void TrackableDevice::Update()
 	if (m_hButtons[k_eButton_System]) vr::VRDriverInput()->UpdateBooleanComponent(m_hButtons[k_eButton_System], state.system.isPressed, 0);
 }
 
-void TrackableDevice::RefreshWorldFromDriverPose()
-{
+void TrackableDevice::RefreshWorldFromDriverPose() {
 	steamvrbridge::Logger::Info("Begin CServerDriver_PSMoveService::RefreshWorldFromDriverPose() for device %s\n", GetSteamVRIdentifier());
 
 	const PSMPosef worldFromDriverPose = steamvrbridge::g_ServerTrackedDeviceProvider.GetWorldFromDriverPose();
@@ -187,8 +174,7 @@ void TrackableDevice::RefreshWorldFromDriverPose()
 	m_Pose.vecWorldFromDriverTranslation[2] = worldFromDriverPose.Position.z;
 }
 
-PSMPosef TrackableDevice::GetWorldFromDriverPose()
-{
+PSMPosef TrackableDevice::GetWorldFromDriverPose() {
 	PSMVector3f psmToOpenVRTranslation = {
 		(float)m_Pose.vecWorldFromDriverTranslation[0],
 		(float)m_Pose.vecWorldFromDriverTranslation[1],
@@ -203,7 +189,10 @@ PSMPosef TrackableDevice::GetWorldFromDriverPose()
 	return psmToOpenVRPose;
 }
 
-const char *TrackableDevice::GetSteamVRIdentifier() const
-{
+const char *TrackableDevice::GetSteamVRIdentifier() const {
 	return m_strSteamVRSerialNo.c_str();
+}
+
+const vr::TrackedDeviceIndex_t TrackableDevice::getTrackedDeviceIndex() {
+	return m_unSteamVRTrackedDeviceId;
 }
