@@ -1,6 +1,23 @@
+# Note: For now this build script just builds doxygen pages and deploys them to the gh-branch on each commit.
+# When the PSMoveService has a linux library published (WIP) uncomment the build to compile
+# against linux.
 language: cpp
 addons:
   apt:
     packages: cmake
-before_install: generate.sh
-script: build.sh
+before_install:
+  - sudo apt-get update && sudo apt-get install doxygen
+  # TODO uncomment this when PSMoveService has a linux published library
+  # - generate.sh
+script:
+  doxygen doc/Doxyfile  # Generate Doxygen Documentation
+  # TODO uncomment this when PSMoveService has a linux published library
+  # - build.sh
+deploy: # Publish static Doxygen html files to gh-pages branch, accessible at https://<username>.github.io/PSMoveSteamVRBridge
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN  # Set in travis-ci.org dashboard, marked secure
+  keep-history: true
+  local-dir: docs/html
+  on:
+    branch: master
