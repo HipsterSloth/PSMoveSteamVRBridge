@@ -6,6 +6,7 @@ addons:
   apt:
     packages: cmake
 before_install:
+  - sudo apt-get update && sudo apt-get install doxygen
   - openssl aes-256-cbc -K $encrypted_fe6187c05066_key -iv $encrypted_fe6187c05066_iv -in super_secret.txt.enc -out super_secret.txt -d
   # TODO uncomment this when PSMoveService has a linux published library
   # - generate.sh
