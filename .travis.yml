@@ -13,7 +13,8 @@ before_install:
 script: 
   # TODO uncomment this when PSMoveService has a linux published library
   # - build.sh
-after_success:
+# TODO this should occurr after script once the build is working 
+# after_success:
   # Generate the docs only if master, the travis_build_docs is true and we can use secure variables
   - >-
     if [[ "$TRAVIS_BRANCH" = "master" && -n "$TRAVIS_BUILD_DOCS" && "$TRAVIS_PULL_REQUEST" = "false" ]] ; then
