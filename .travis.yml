@@ -1,11 +1,17 @@
+# Note: For now this build script just builds doxygen pages and deploys them to the gh-branch on each commit.
+# When the PSMoveService has a linux library published (WIP) uncomment the build to compile
+# against linux.
 language: cpp
 addons:
   apt:
     packages: cmake
 before_install:
   - openssl aes-256-cbc -K $encrypted_fe6187c05066_key -iv $encrypted_fe6187c05066_iv -in super_secret.txt.enc -out super_secret.txt -d
-  - generate.sh
-script: build.sh
+  # TODO uncomment this when PSMoveService has a linux published library
+  # - generate.sh
+script: 
+  # TODO uncomment this when PSMoveService has a linux published library
+  # - build.sh
 after_success:
   # Generate the docs only if master, the travis_build_docs is true and we can use secure variables
   - >-
