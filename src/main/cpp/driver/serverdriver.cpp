@@ -162,10 +162,11 @@ namespace steamvrbridge {
 					uint64_t handle = hapticData.containerHandle;
 					// TODO might be useful to pass to the UpdateRumble method
 					float durationSecs = hapticData.fDurationSeconds;
-					//float amplitude = hapticData.fAmplitude;
-					//float frequency = hapticData.fFrequency
+					float amplitude = hapticData.fAmplitude;
+					float frequency = hapticData.fFrequency;
 
-					steamvrbridge::Logger::Info("CServerDriver_PSMoveService::RunFrame: haptic event, trackedDeviceIndex=%d\n", &trackedDeviceIndex);
+					steamvrbridge::Logger::Debug("CServerDriver_PSMoveService::RunFrame: haptic event, trackedDeviceIndex=%d, durationSecs=%f, amplitude=%f, frequency=%f\n"
+												, &trackedDeviceIndex, durationSecs, amplitude, frequency);
 
 					// find the trackable device this vibration event is intended for (probably inefficient)
 					for (auto it = m_vecTrackedDevices.begin(); it != m_vecTrackedDevices.end(); ++it) {
@@ -174,7 +175,9 @@ namespace steamvrbridge {
 						if (pTrackedDevice->GetTrackedDeviceClass() == vr::TrackedDeviceClass_Controller
 							&& pTrackedDevice->getPropertyContainerHandle() == handle) {
 							PSMoveController *pController = static_cast<PSMoveController *>(pTrackedDevice);
-							pController->UpdateRumbleState(durationSecs); // tell controller to rumble
+							pController->setPendingPulseDurationSecs(durationSecs); // tell controller to rumble
+							steamvrbridge::Logger::Debug("CServerDriver_PSMoveService::RunFrame: haptic event, succesfully found device using container property handle\n"
+														, &trackedDeviceIndex, amplitude, frequency);
 						}
 					}
 					break;

@@ -30,7 +30,7 @@ namespace steamvrbridge {
 		, m_bIsBatteryCharging(false)
 		, m_fBatteryChargeFraction(0.f)
 		, m_bRumbleSuppressed(false)
-		, m_pendingHapticPulseDuration(0)
+		, m_pendingHapticPulseDurationSecs(0)
 		, m_lastTimeRumbleSent()
 		, m_lastTimeRumbleSentValid(false)
 		, m_resetPoseButtonPressTime()
@@ -826,10 +826,15 @@ namespace steamvrbridge {
 		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unSteamVRTrackedDeviceId, m_Pose, sizeof(vr::DriverPose_t));
 	}
 
-	void PSMoveController::UpdateRumbleState(float durationSecs) {
+	void PSMoveController::setPendingPulseDurationSecs(float durationSecs) {
+		m_pendingHapticPulseDurationSecs = durationSecs;
+	}
+
+	void PSMoveController::UpdateRumbleState() {
 		if (!m_bRumbleSuppressed) {
 
-			m_pendingHapticPulseDuration = durationSecs * 1000000;
+			// convert to microseconds
+			uint16_t pendingHapticPulseDurationMicroSecs = static_cast<uint16_t>(m_pendingHapticPulseDurationSecs * 1000000);
 
 			const float k_max_rumble_update_rate = 33.f; // Don't bother trying to update the rumble faster than 30fps (33ms)
 			const float k_max_pulse_microseconds = 1000.f; // Docs suggest max pulse duration of 5ms, but we'll call 1ms max
@@ -845,11 +850,14 @@ namespace steamvrbridge {
 
 			// See if a rumble request hasn't come too recently
 			if (bTimoutElapsed) {
-				float rumble_fraction = static_cast<float>(m_pendingHapticPulseDuration) / k_max_pulse_microseconds;
+				float rumble_fraction = static_cast<float>(pendingHapticPulseDurationMicroSecs) / k_max_pulse_microseconds;
+
+				if (rumble_fraction > 0)
+					steamvrbridge::Logger::Debug("PSMoveController::UpdateRumble: m_pendingHapticPulseDurationSecs=%f ,pendingHapticPulseDurationMicroSecs=%d, rumble_fraction=%f\n", m_pendingHapticPulseDurationSecs, pendingHapticPulseDurationMicroSecs, rumble_fraction);
 
 				// Unless a zero rumble intensity was explicitly set, 
 				// don't rumble less than 35% (no enough to feel)
-				if (m_pendingHapticPulseDuration != 0) {
+				if (m_pendingHapticPulseDurationSecs != 0) {
 					if (rumble_fraction < 0.35f) {
 						// rumble values less 35% isn't noticeable
 						rumble_fraction = 0.35f;
@@ -861,8 +869,8 @@ namespace steamvrbridge {
 					rumble_fraction = 1.f;
 				}
 
-				PSM_SetControllerRumble(m_PSMServiceController->ControllerID, PSMControllerRumbleChannel_All, rumble_fraction);
 				// Actually send the rumble to the server
+				PSM_SetControllerRumble(m_PSMServiceController->ControllerID, PSMControllerRumbleChannel_All, rumble_fraction);
 
 				// Remember the last rumble we went and when we sent it
 				m_lastTimeRumbleSent = now;
@@ -870,14 +878,14 @@ namespace steamvrbridge {
 
 				// Reset the pending haptic pulse duration.
 				// If another call to TriggerHapticPulse() is made later, it will stomp this value.
-				// If no call to TriggerHapticPulse() is made later, then the next call to UpdateRumbleState()
+				// If no future haptic event is received by ServerDriver then the next call to UpdateRumbleState()
 				// in k_max_rumble_update_rate milliseconds will set the rumble_fraction to 0.f
 				// This effectively makes the shortest rumble pulse k_max_rumble_update_rate milliseconds.
-				m_pendingHapticPulseDuration = 0;
+				m_pendingHapticPulseDurationSecs = 0;
 			}
 		} else {
 			// Reset the pending haptic pulse duration since rumble is suppressed.
-			m_pendingHapticPulseDuration = 0;
+			m_pendingHapticPulseDurationSecs = 0;
 		}
 	}
 
@@ -946,7 +954,7 @@ namespace steamvrbridge {
 			}
 
 			// Update the outgoing state
-			UpdateRumbleState(0);
+			UpdateRumbleState();
 		}
 	}
 

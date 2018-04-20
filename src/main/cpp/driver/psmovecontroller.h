@@ -10,8 +10,7 @@ namespace steamvrbridge {
 	class PSMoveController : public TrackableDevice {
 
 		/* PSMoveService button IDs*/
-		enum ePSButtonID
-		{
+		enum ePSButtonID {
 			k_EPSButtonID_0,
 			k_EPSButtonID_1,
 			k_EPSButtonID_2,
@@ -90,7 +89,8 @@ namespace steamvrbridge {
 		inline const PSMController * getPSMControllerView() const { return m_PSMServiceController; }
 		inline std::string getPSMControllerSerialNo() const { return m_strPSMControllerSerialNo; }
 		inline PSMControllerType getPSMControllerType() const { return m_PSMControllerType; }
-		void UpdateRumbleState(float durationSecs);
+		void setPendingPulseDurationSecs(float durationSecs);
+		void UpdateRumbleState();
 
 	private:
 
@@ -101,7 +101,7 @@ namespace steamvrbridge {
 		void UpdateControllerStateFromPsMoveButtonState(ePSButtonID buttonId, PSMButtonState buttonState);
 		void HandleTrigger(float latestTriggerValue);
 		void UpdateTrackingState();
-		
+
 		void UpdateBatteryChargeState(PSMBatteryState newBatteryEnum);
 
 		// Controller State
@@ -125,7 +125,7 @@ namespace steamvrbridge {
 
 		// Rumble state
 		bool m_bRumbleSuppressed;
-		uint16_t m_pendingHapticPulseDuration;
+		float m_pendingHapticPulseDurationSecs;
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_lastTimeRumbleSent;
 		bool m_lastTimeRumbleSentValid;
 
