@@ -2,5 +2,15 @@ language: cpp
 addons:
   apt:
     packages: cmake
-before_install: generate.sh
+before_install:
+  - openssl aes-256-cbc -K $encrypted_fe6187c05066_key -iv $encrypted_fe6187c05066_iv -in super_secret.txt.enc -out super_secret.txt -d
+  - generate.sh
 script: build.sh
+after_success:
+  # Generate the docs only if master, the travis_build_docs is true and we can use secure variables
+  - >-
+    if [[ "$TRAVIS_BRANCH" = "master" && -n "$TRAVIS_BUILD_DOCS" && "$TRAVIS_PULL_REQUEST" = "false" ]] ; then
+      cd $PROJECT_DIR_ABS
+      source .ci/setup-ssh.sh || travis_terminate 1
+      .ci/generateDocumentation.sh || travis_terminate 1
+    fi
