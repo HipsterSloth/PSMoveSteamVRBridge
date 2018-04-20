@@ -98,7 +98,6 @@ namespace steamvrbridge {
 		void RealignHMDTrackingSpace();
 		void HandleTouchPadDirection();
 		void UpdateControllerState();
-		void UpdateControllerStateFromPsMoveButtonState(ePSButtonID buttonId, PSMButtonState buttonState);
 		void HandleTrigger(float latestTriggerValue);
 		void UpdateTrackingState();
 
@@ -144,7 +143,6 @@ namespace steamvrbridge {
 		bool m_bTouchpadWasActive;
 
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_lastTouchpadPressTime;
-		bool m_touchpadDirectionsUsed;
 
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_resetPoseButtonPressTime;
 		bool m_bResetPoseRequestSent;

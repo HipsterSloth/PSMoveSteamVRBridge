@@ -43,7 +43,6 @@ namespace steamvrbridge {
 		, m_bDelayAfterTouchpadPress(false)
 		, m_bTouchpadWasActive(false)
 		, m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis(false)
-		, m_touchpadDirectionsUsed(false)
 		, m_fControllerMetersInFrontOfHmdAtCalibration(0.f)
 		, m_posMetersAtTouchpadPressTime(*k_psm_float_vector3_zero)
 		, m_driverSpaceRotationAtTouchpadPressTime(*k_psm_quaternion_identity)
@@ -417,16 +416,6 @@ namespace steamvrbridge {
 			m_bResetPoseRequestSent = true;
 		} else {
 
-			/*UpdateControllerStateFromPsMoveButtonState(k_EPSButtonID_Circle, clientView.CircleButton);
-			UpdateControllerStateFromPsMoveButtonState(k_EPSButtonID_Cross, clientView.CrossButton);
-			UpdateControllerStateFromPsMoveButtonState(k_EPSButtonID_Move, clientView.MoveButton);
-			UpdateControllerStateFromPsMoveButtonState(k_EPSButtonID_PS, clientView.PSButton);
-			UpdateControllerStateFromPsMoveButtonState(k_EPSButtonID_Select, clientView.SelectButton);
-			UpdateControllerStateFromPsMoveButtonState(k_EPSButtonID_Square, clientView.SquareButton);
-			UpdateControllerStateFromPsMoveButtonState(k_EPSButtonID_Start, clientView.StartButton);
-			UpdateControllerStateFromPsMoveButtonState(k_EPSButtonID_Triangle, clientView.TriangleButton);
-			UpdateControllerStateFromPsMoveButtonState(k_EPSButtonID_Trigger, clientView.TriggerButton);*/
-
 			// Process all the button mappings 
 			// Check all PSMoveService controller button and update the controller state if it's changed.
 			UpdateButtonState(k_EPSButtonID_Circle, clientView.CircleButton);
@@ -439,9 +428,7 @@ namespace steamvrbridge {
 			UpdateButtonState(k_EPSButtonID_Triangle, clientView.TriangleButton);
 			UpdateButtonState(k_EPSButtonID_Trigger, clientView.TriggerButton);
 
-
 			// Touchpad handling
-			m_touchpadDirectionsUsed = false;
 			HandleTouchPadDirection();
 
 			// PSMove Trigger handling
@@ -458,8 +445,8 @@ namespace steamvrbridge {
 	}
 
 	// Updates this controllers trackable state for the given controller button id. The mappings should not be configured
-	// via vr_settings.xml anymore as IVRDriverInput is aiming to offer a UI config interface for this in SteamVR Runtime.
-	// Therefore they should be set in stone here.
+	// via vr_settings.xml anymore as IVRDriverInput is aiming to offer a UI config interface for this in SteamVR Runtime, 
+	// therefore they should be set in stone here.
 	void PSMoveController::UpdateButtonState(ePSButtonID button, bool buttonState) {
 		switch (button) {
 			case k_EPSButtonID_PS:
@@ -497,45 +484,51 @@ namespace steamvrbridge {
 		}
 	}
 
-	void PSMoveController::UpdateControllerStateFromPsMoveButtonState(
-		ePSButtonID buttonId,
-		PSMButtonState buttonState) {
-		UpdateButtonState(buttonId, buttonState);
+	// TODO - migrate this to PS Navi Controller class.
+	//void PSMoveController::UpdateTouchpadState(
+	//	ePSButtonID buttonId,
+	//	PSMButtonState buttonState) {
 
-		/* Now check if the button pressed was a directional touchpad button. If it is was then fake a change
-		in the touchpad axis. i.e. pretend a finger touched the touchpad in the given direction */
-		if (buttonState == PSMButtonState_DOWN || buttonState == PSMButtonState_PRESSED) {
-			if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Left) {
-				m_touchpadDirectionsUsed = true;
-				state.trackpad.axis.x = -1.0f;
-			} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Right) {
-				m_touchpadDirectionsUsed = true;
-				state.trackpad.axis.x = 1.0f;
-			} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Up) {
-				m_touchpadDirectionsUsed = true;
-				state.trackpad.axis.y = -1.0f;
-			} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Down) {
-				m_touchpadDirectionsUsed = true;
-				state.trackpad.axis.y = 1.0f;
-			} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_UpLeft) {
-				m_touchpadDirectionsUsed = true;
-				state.trackpad.axis.x = -0.707f;
-				state.trackpad.axis.y = 0.707f;
-			} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_UpRight) {
-				m_touchpadDirectionsUsed = true;
-				state.trackpad.axis.x = 0.707f;
-				state.trackpad.axis.y = 0.707f;
-			} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_DownLeft) {
-				m_touchpadDirectionsUsed = true;
-				state.trackpad.axis.x = -0.707f;
-				state.trackpad.axis.y = -0.707f;
-			} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_DownRight) {
-				m_touchpadDirectionsUsed = true;
-				state.trackpad.axis.x = 0.707f;
-				state.trackpad.axis.y = -0.707f;
-			}
-		}
-	}
+	//	/* Now check if the button pressed was a directional touchpad button. If it is was then fake a change
+	//	in the touchpad axis. i.e. pretend a finger touched the touchpad in the given direction */
+	//	if (buttonState == PSMButtonState_DOWN || buttonState == PSMButtonState_PRESSED) {
+	//		if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Left) {
+	//			m_touchpadDirectionsUsed = true;
+	//			state.trackpad.axis.x = -1.0f;
+	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Right) {
+	//			m_touchpadDirectionsUsed = true;
+	//			state.trackpad.axis.x = 1.0f;
+	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Up) {
+	//			m_touchpadDirectionsUsed = true;
+	//			state.trackpad.axis.y = -1.0f;
+	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Down) {
+	//			m_touchpadDirectionsUsed = true;
+	//			state.trackpad.axis.y = 1.0f;
+	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_UpLeft) {
+	//			m_touchpadDirectionsUsed = true;
+	//			state.trackpad.axis.x = -0.707f;
+	//			state.trackpad.axis.y = 0.707f;
+	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_UpRight) {
+	//			m_touchpadDirectionsUsed = true;
+	//			state.trackpad.axis.x = 0.707f;
+	//			state.trackpad.axis.y = 0.707f;
+	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_DownLeft) {
+	//			m_touchpadDirectionsUsed = true;
+	//			state.trackpad.axis.x = -0.707f;
+	//			state.trackpad.axis.y = -0.707f;
+	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_DownRight) {
+	//			m_touchpadDirectionsUsed = true;
+	//			state.trackpad.axis.x = 0.707f;
+	//			state.trackpad.axis.y = -0.707f;
+	//		}
+	//	}
+
+	//	if (buttonState == PSMButtonState_DOWN || buttonState == PSMButtonState_PRESSED) {
+	//		m_touchpadDirectionsUsed = true;
+	//		state.trackpad.axis.x = 0.f;
+	//		state.trackpad.axis.y = 0.f;
+	//	}
+	//}
 
 	void PSMoveController::RealignHMDTrackingSpace() {
 		if (m_bDisableHMDAlignmentGesture) {
@@ -632,68 +625,70 @@ namespace steamvrbridge {
 		g_ServerTrackedDeviceProvider.SetHMDTrackingSpace(driver_pose_to_world_pose);
 	}
 
+	// TODO - release of the Move button isn't stopping the TouchpadIsActive
 	void PSMoveController::HandleTouchPadDirection() {
-		if (!m_touchpadDirectionsUsed) {
-			// Virtual TouchPad Handling (i.e. controller spatial offset as touchpad)
-			if (m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis) {
-				bool bTouchpadIsActive = state.trackpad.isPressed || state.trackpad.isTouched;
+		// Virtual TouchPad Handling (i.e. controller spatial offset as touchpad)
+		if (m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis) {
+			bool bTouchpadIsActive = state.trackpad.isPressed || state.trackpad.isTouched;
 
-				if (bTouchpadIsActive) {
-					bool bIsNewTouchpadLocation = true;
+			if (bTouchpadIsActive) {
+				bool bIsNewTouchpadLocation = true;
 
-					if (m_bDelayAfterTouchpadPress) {
-						std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+				if (m_bDelayAfterTouchpadPress) {
+					std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 
-						if (!m_bTouchpadWasActive) {
-							const float k_max_touchpad_press = 2000.0; // time until coordinates are reset, otherwise assume in last location.
-							std::chrono::duration<double, std::milli> timeSinceActivated = now - m_lastTouchpadPressTime;
+					if (!m_bTouchpadWasActive) {
+						const float k_max_touchpad_press = 2000.0; // time until coordinates are reset, otherwise assume in last location.
+						std::chrono::duration<double, std::milli> timeSinceActivated = now - m_lastTouchpadPressTime;
 
-							bIsNewTouchpadLocation = timeSinceActivated.count() >= k_max_touchpad_press;
-						}
-						m_lastTouchpadPressTime = now;
+						bIsNewTouchpadLocation = timeSinceActivated.count() >= k_max_touchpad_press;
 					}
-
-					if (bIsNewTouchpadLocation) {
-						if (!m_bTouchpadWasActive) {
-							// Just pressed.
-							const PSMPSMove &view = m_PSMServiceController->ControllerState.PSMoveState;
-							m_driverSpaceRotationAtTouchpadPressTime = view.Pose.Orientation;
-
-							Utils::GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &m_posMetersAtTouchpadPressTime, m_PSMServiceController->ControllerState.PSMoveState);
-
-							#if LOG_TOUCHPAD_EMULATION != 0
-							Logger::DriverLog("Touchpad pressed! At (%f, %f, %f) meters relative to orientation\n",
-											  m_posMetersAtTouchpadPressTime.x, m_posMetersAtTouchpadPressTime.y, m_posMetersAtTouchpadPressTime.z);
-							#endif
-						} else {
-							// Held!
-							PSMVector3f newPosMeters;
-							Utils::GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &newPosMeters, m_PSMServiceController->ControllerState.PSMoveState);
-
-							PSMVector3f offsetMeters = PSM_Vector3fSubtract(&newPosMeters, &m_posMetersAtTouchpadPressTime);
-
-							#if LOG_TOUCHPAD_EMULATION != 0
-							Logger::DriverLog("Touchpad held! Relative position (%f, %f, %f) meters\n",
-											  offsetMeters.x, offsetMeters.y, offsetMeters.z);
-							#endif
-
-							state.trackpad.axis.x = offsetMeters.x / m_fMetersPerTouchpadAxisUnits;
-							state.trackpad.axis.x = fminf(fmaxf(state.trackpad.axis.x, -1.0f), 1.0f);
-
-							state.trackpad.axis.y = -offsetMeters.z / m_fMetersPerTouchpadAxisUnits;
-							state.trackpad.axis.y = fminf(fmaxf(state.trackpad.axis.y, -1.0f), 1.0f);
-
-							#if LOG_TOUCHPAD_EMULATION != 0
-							Logger::DriverLog("Touchpad axis at (%f, %f) \n",
-											  state.trackpad.axis.x, state.trackpad.axis.y);
-							#endif
-						}
-					}
+					m_lastTouchpadPressTime = now;
 				}
 
+				if (bIsNewTouchpadLocation) {
+					if (!m_bTouchpadWasActive) {
+						// Just pressed.
+						const PSMPSMove &view = m_PSMServiceController->ControllerState.PSMoveState;
+						m_driverSpaceRotationAtTouchpadPressTime = view.Pose.Orientation;
+
+						Utils::GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &m_posMetersAtTouchpadPressTime, m_PSMServiceController->ControllerState.PSMoveState);
+
+						#if LOG_TOUCHPAD_EMULATION != 0
+						Logger::DriverLog("Touchpad pressed! At (%f, %f, %f) meters relative to orientation\n",
+										  m_posMetersAtTouchpadPressTime.x, m_posMetersAtTouchpadPressTime.y, m_posMetersAtTouchpadPressTime.z);
+						#endif
+					} else {
+						// Held!
+						PSMVector3f newPosMeters;
+						Utils::GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &newPosMeters, m_PSMServiceController->ControllerState.PSMoveState);
+
+						PSMVector3f offsetMeters = PSM_Vector3fSubtract(&newPosMeters, &m_posMetersAtTouchpadPressTime);
+
+						#if LOG_TOUCHPAD_EMULATION != 0
+						Logger::DriverLog("Touchpad held! Relative position (%f, %f, %f) meters\n",
+										  offsetMeters.x, offsetMeters.y, offsetMeters.z);
+						#endif
+
+						state.trackpad.axis.x = offsetMeters.x / m_fMetersPerTouchpadAxisUnits;
+						state.trackpad.axis.x = fminf(fmaxf(state.trackpad.axis.x, -1.0f), 1.0f);
+
+						state.trackpad.axis.y = -offsetMeters.z / m_fMetersPerTouchpadAxisUnits;
+						state.trackpad.axis.y = fminf(fmaxf(state.trackpad.axis.y, -1.0f), 1.0f);
+
+						#if LOG_TOUCHPAD_EMULATION != 0
+						Logger::DriverLog("Touchpad axis at (%f, %f) \n",
+										  state.trackpad.axis.x, state.trackpad.axis.y);
+						#endif
+					}
+				}
 				// Remember if the touchpad was active the previous frame for edge detection
 				m_bTouchpadWasActive = bTouchpadIsActive;
+			} else { // trackpad is no longer active to reset the trackpad axis
+				state.trackpad.axis.x = 0.f;
+				state.trackpad.axis.y = 0.f;
 			}
+
 		}
 	}
 
@@ -830,6 +825,8 @@ namespace steamvrbridge {
 		m_pendingHapticPulseDurationSecs = durationSecs;
 	}
 
+	// TODO - Make use of amplitude and frequency for Buffered Haptics, will give us patterning and panning vibration.
+	// See: https://developer.oculus.com/documentation/pcsdk/latest/concepts/dg-input-touch-haptic/
 	void PSMoveController::UpdateRumbleState() {
 		if (!m_bRumbleSuppressed) {
 
