@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/k3w5se9j6p5phxeg?svg=true)](https://ci.appveyor.com/project/SuperEvenSteven/psmovesteamvrbridge)  [![Documentation](https://img.shields.io/badge/code-documented-green.svg)](https://superevensteven.github.io/PSMoveSteamVRBridge/annotated.html)
+[![Build status](https://ci.appveyor.com/api/projects/status/k3w5se9j6p5phxeg?svg=true)](https://ci.appveyor.com/project/SuperEvenSteven/psmovesteamvrbridge)  [![Documentation](https://img.shields.io/badge/code-documented-brightgreen.svg)](https://superevensteven.github.io/PSMoveSteamVRBridge/annotated.html)
 
 # PSMoveSteamVRBridge
 PSMoveSteamVRBridge is a client for [PSMoveService](https://github.com/cboulay/PSMoveService) that takes the pose and button data of PSMove/DualShock4/PSNavi controller and forwards it into SteamVR. The [FAQ](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki/Frequently-Asked-Questions) is a good starting point for any specific questions you may have about the project. 
