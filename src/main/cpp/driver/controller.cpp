@@ -181,8 +181,8 @@ namespace steamvrbridge {
 				m_bThumbstickTouchAsPress = SettingsUtil::LoadBool(pSettings, "psnavi_settings", "thumbstick_touch_as_press", true);
 
 #if LOG_TOUCHPAD_EMULATION != 0
-				Logger::DriverLog("use_spatial_offset_after_touchpad_press_as_touchpad_axis: %d\n", m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis);
-				Logger::DriverLog("meters_per_touchpad_units: %f\n", m_fMetersPerTouchpadAxisUnits);
+				Logger::Info("use_spatial_offset_after_touchpad_press_as_touchpad_axis: %d\n", m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis);
+				Logger::Info("meters_per_touchpad_units: %f\n", m_fMetersPerTouchpadAxisUnits);
 #endif
 
 				Logger::Logger::Info("m_fControllerMetersInFrontOfHmdAtCalibration(psmove): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
@@ -912,7 +912,7 @@ namespace steamvrbridge {
 									Utils::GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &m_posMetersAtTouchpadPressTime, m_PSMServiceController->ControllerState.PSMoveState);
 
 #if LOG_TOUCHPAD_EMULATION != 0
-									Logger::DriverLog("Touchpad pressed! At (%f, %f, %f) meters relative to orientation\n",
+									Logger::Info("Touchpad pressed! At (%f, %f, %f) meters relative to orientation\n",
 										m_posMetersAtTouchpadPressTime.x, m_posMetersAtTouchpadPressTime.y, m_posMetersAtTouchpadPressTime.z);
 #endif
 								}
@@ -925,7 +925,7 @@ namespace steamvrbridge {
 									PSMVector3f offsetMeters = PSM_Vector3fSubtract(&newPosMeters, &m_posMetersAtTouchpadPressTime);
 
 #if LOG_TOUCHPAD_EMULATION != 0
-									Logger::DriverLog("Touchpad held! Relative position (%f, %f, %f) meters\n",
+									Logger::Info("Touchpad held! Relative position (%f, %f, %f) meters\n",
 										offsetMeters.x, offsetMeters.y, offsetMeters.z);
 #endif
 
@@ -936,7 +936,7 @@ namespace steamvrbridge {
 									NewState.rAxis[0].y = fminf(fmaxf(NewState.rAxis[0].y, -1.0f), 1.0f);
 
 #if LOG_TOUCHPAD_EMULATION != 0
-									Logger::DriverLog("Touchpad axis at (%f, %f) \n",
+									Logger::Info("Touchpad axis at (%f, %f) \n",
 										NewState.rAxis[0].x, NewState.rAxis[0].y);
 #endif
 								}

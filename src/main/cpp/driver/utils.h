@@ -22,6 +22,7 @@ namespace steamvrbridge {
 		static bool GetTrackedDevicePose(const vr::TrackedDeviceIndex_t device_index, PSMPosef *out_device_pose);
 		static PSMQuatf ExtractHMDYawQuaternion(const PSMQuatf & q);
 		static PSMQuatf ExtractPSMoveYawQuaternion(const PSMQuatf & q);
+		// Takes a given controller position vector, applies a given quartenian rotation and sets the result to a given output position vector.
 		static void GetMetersPosInRotSpace(const PSMQuatf * rotation, PSMVector3f * out_position, const PSMPSMove & view);
 		static PSMQuatf openvrMatrixExtractPSMQuatf(const vr::HmdMatrix34_t &openVRTransform);
 		static PSMQuatf psmMatrix3fToPSMQuatf(const PSMMatrix3f &psmMat);
