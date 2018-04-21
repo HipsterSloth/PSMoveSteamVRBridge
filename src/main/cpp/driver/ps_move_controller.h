@@ -1,5 +1,5 @@
 #pragma once
-#include "trackabledevice.h"
+#include "trackable_device.h"
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
 

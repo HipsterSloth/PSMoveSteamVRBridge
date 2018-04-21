@@ -1,6 +1,6 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
-#include "trackabledevice.h"
+#include "trackable_device.h"
 
 namespace steamvrbridge {
 

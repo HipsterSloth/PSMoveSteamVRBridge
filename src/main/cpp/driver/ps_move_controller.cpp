@@ -1,12 +1,13 @@
 #define _USE_MATH_DEFINES
 
 #include "constants.h"
-#include "serverdriver.h"
+#include "server_driver.h"
 #include "utils.h"
-#include "settingsutil.h"
+#include "settings_util.h"
 #include "driver.h"
-#include "facinghandsolver.h"
-#include "psmovecontroller.h"
+#include "facing_handsolver.h"
+#include "ps_move_controller.h"
+#include "trackable_device.h"
 #include <assert.h>
 
 #if _MSC_VER
@@ -327,31 +328,6 @@ namespace steamvrbridge {
 		PSM_StopControllerDataStreamAsync(m_PSMServiceController->ControllerID, nullptr);
 	}
 
-
-	// Legacy IVRControllerComponent
-	//void *CPSMoveControllerLatest::GetComponent(const char *pchComponentNameAndVersion)
-	//{
-	//    if (!strcasecmp(pchComponentNameAndVersion, vr::IVRControllerComponent_Version))
-	//    {
-	//        return (vr::IVRControllerComponent*)this;
-	//    }
-	//
-	//    return NULL;
-	//}
-	// Legacy IVRControllerComponent
-	//vr::VRControllerState_t CPSMoveControllerLatest::GetControllerState()
-	//{
-	//    return m_ControllerState;
-	//}
-	// Legacy IVRControllerComponent
-	//bool CPSMoveControllerLatest::TriggerHapticPulse( uint32_t unAxisId, uint16_t usPulseDurationMicroseconds )
-	//{
-	//    m_pendingHapticPulseDuration = usPulseDurationMicroseconds;
-	//    UpdateRumbleState();
-	//
-	//    return true;
-	//}
-
 	void PSMoveController::UpdateControllerState() {
 		static const uint64_t s_kTouchpadButtonMask = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad);
 
@@ -439,7 +415,7 @@ namespace steamvrbridge {
 			UpdateBatteryChargeState(m_PSMServiceController->ControllerState.PSMoveState.BatteryValue);
 		}
 
-		// TODO rename?
+		// TODO rename to something related to sending or notifying of OpenVR runtime?
 		// Report trackable state to SteamVR Runtime
 		TrackableDevice::Update();
 	}
@@ -483,52 +459,6 @@ namespace steamvrbridge {
 				break;
 		}
 	}
-
-	// TODO - migrate this to PS Navi Controller class.
-	//void PSMoveController::UpdateTouchpadState(
-	//	ePSButtonID buttonId,
-	//	PSMButtonState buttonState) {
-
-	//	/* Now check if the button pressed was a directional touchpad button. If it is was then fake a change
-	//	in the touchpad axis. i.e. pretend a finger touched the touchpad in the given direction */
-	//	if (buttonState == PSMButtonState_DOWN || buttonState == PSMButtonState_PRESSED) {
-	//		if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Left) {
-	//			m_touchpadDirectionsUsed = true;
-	//			state.trackpad.axis.x = -1.0f;
-	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Right) {
-	//			m_touchpadDirectionsUsed = true;
-	//			state.trackpad.axis.x = 1.0f;
-	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Up) {
-	//			m_touchpadDirectionsUsed = true;
-	//			state.trackpad.axis.y = -1.0f;
-	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_Down) {
-	//			m_touchpadDirectionsUsed = true;
-	//			state.trackpad.axis.y = 1.0f;
-	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_UpLeft) {
-	//			m_touchpadDirectionsUsed = true;
-	//			state.trackpad.axis.x = -0.707f;
-	//			state.trackpad.axis.y = 0.707f;
-	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_UpRight) {
-	//			m_touchpadDirectionsUsed = true;
-	//			state.trackpad.axis.x = 0.707f;
-	//			state.trackpad.axis.y = 0.707f;
-	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_DownLeft) {
-	//			m_touchpadDirectionsUsed = true;
-	//			state.trackpad.axis.x = -0.707f;
-	//			state.trackpad.axis.y = -0.707f;
-	//		} else if (psButtonIDToVrTouchpadDirection[buttonId] == k_EVRTouchpadDirection_DownRight) {
-	//			m_touchpadDirectionsUsed = true;
-	//			state.trackpad.axis.x = 0.707f;
-	//			state.trackpad.axis.y = -0.707f;
-	//		}
-	//	}
-
-	//	if (buttonState == PSMButtonState_DOWN || buttonState == PSMButtonState_PRESSED) {
-	//		m_touchpadDirectionsUsed = true;
-	//		state.trackpad.axis.x = 0.f;
-	//		state.trackpad.axis.y = 0.f;
-	//	}
-	//}
 
 	void PSMoveController::RealignHMDTrackingSpace() {
 		if (m_bDisableHMDAlignmentGesture) {
@@ -625,7 +555,6 @@ namespace steamvrbridge {
 		g_ServerTrackedDeviceProvider.SetHMDTrackingSpace(driver_pose_to_world_pose);
 	}
 
-	// TODO - release of the Move button isn't stopping the TouchpadIsActive
 	void PSMoveController::HandleTouchPadDirection() {
 		// Virtual TouchPad Handling (i.e. controller spatial offset as touchpad)
 		if (m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis) {
@@ -641,10 +570,130 @@ namespace steamvrbridge {
 						const float k_max_touchpad_press = 2000.0; // time until coordinates are reset, otherwise assume in last location.
 						std::chrono::duration<double, std::milli> timeSinceActivated = now - m_lastTouchpadPressTime;
 
+						// true if the touchpad has been active for more than the max time required to hold it
 						bIsNewTouchpadLocation = timeSinceActivated.count() >= k_max_touchpad_press;
 					}
 					m_lastTouchpadPressTime = now;
 				}
+
+				/* TODO - Pseudo code still needs some work and this would also warrant an informative ui overlay in monitor.cpp.
+
+				# Concept Touchpad Emulation
+
+				This uses the idea of a single and double press of the move button to distinguish both directional and non-directional 
+				trackpad touch tracking from trackpad clicking. A press and hold of move button activates the touchpad tracking. 
+
+				Contiuous tracking occurs after first press of the move button. The first pose of the controller is stored as origin. 
+				If still held the direction of the touchpad is relative to the origin pose and latest future pose along the controller's 
+				z an y axis where the button face is along axis x.
+				```
+				Central origin pose:
+
+						z   _
+						|  (_)
+						|  {0} <- Move button pressed and held facing forward on the x axis
+						|  |*|
+						|  {_}
+						|_________ y
+					   /
+					  /
+					 /
+					x
+
+				
+				Future pose update:
+
+				        z                 _
+					    |                (_)
+					    |     ------->   {0} <- Move button still held facing forward on the x axis
+					    |    direction   |*|
+					    |      right     {_}
+					    |_________ y
+					   /
+					  /
+					 /
+					x
+				```
+
+				## Simulating a Non-directional Trackpad Click
+				To simulate a non-directional trackpad click the move button is pressed and released. It's considered a non-directional click if 
+				the initial press and release occurs within max time press period in millis.
+				i.e.
+					press...release
+
+				When the move button is released within the non-directional click max time, the centre pose is cleared and the touchpad direction is reset to origin.
+
+				## Simulating a directional Trackpad Click
+				To simulate a directional trackpad click the move button is pressed, the controller is physicall moved along z, y axis relative to the controller
+				and the move button is released and quickly pressed again. Similar to a double click with a long pause after inital press.
+				i.e. 
+					press and hold.......................release...press
+
+				When the move button is released and no subsequent press is detected the centre pose is cleared and the touchpad direction is reset to origin.
+
+				## Actual Device with Trackapd Psuedo-code
+				i.e. Normally with a real trackpad this would occur:
+
+				The events for a trackpad click would be:
+
+					- thumb makes contact on touchpad surface
+					- touchpad begins tracking current touch position of thumb
+					- thumb clicks touchpad
+					- touchpad pressed event occurs
+
+				The events for trackpad touch tracking would be:
+
+					The events would be:
+					- thumb makes contact on touchpad surface
+					- touchpad begins tracking current touch position of thumb
+					- touchpad touch event occurs
+
+				With touchpad emulation those events would look like this:
+
+				## Simulated Trackpad Psuedo-code
+				The events for a trackpad click (press and release) would be:
+
+					* if time since directional and non-directional button press is 0 then reset origin pose
+					* move button is pressed or move button is pressed and held
+					* non-directional button press time now is captured
+					* start tracking initial pose and save it as central origin
+					* controller is moved along z, y axis in relation to the controller
+					* move button is released within max non-directional button press time period i.e. (let's say 500ms?)
+					* trackpad axis state is reset to origin
+					* trackpad click state is changed to true
+					* trackpad click state is changed to false (since this is a simulated event)
+					* directional and non-directional button press times are set to 0
+
+				The events for trackpad touch updates (press and hold) would be:
+
+					* if time since directional and non-directional button press is 0 then reset origin pose
+					* move button is pressed or move button is pressed and held
+					* non-directional button press time now is captured
+					* start tracking initial pose and save it as central origin
+					* controller is moved along z, y axis in relation to the controller
+					* direction from central origin and new pose is calculated
+					* trackpad x, y are updated
+					* move button is eventually released
+
+				The events for directional trackpad click (press, hold, release, press) would be:
+
+					* if time since directional and non-directional button press is 0 then reset origin pose
+					* move button is pressed or move button is pressed and held
+					* non-directional button press time now is captured
+					* start tracking initial pose and save it as central origin
+					* controller is moved along z, y axis in relation to the controller
+					* direction from central origin and new pose is calculated
+					* touchpad x, y are updated
+					* max non-directional button press time eventually expires
+					* move button is released 
+					* directional button press time now is captured
+					* move button is pressed again within max directional button press time period 
+					* trackpad click state is changed to true
+					* directional and non-directional button press times are set to 0
+
+				Note: Distinction between a directional trackpad click and a general trackpad click shouldn't be a big issue,
+				unless an app/game changes it's definition while detection is in progress. This is very unlikely to occur.
+				*/		
 
 				if (bIsNewTouchpadLocation) {
 					if (!m_bTouchpadWasActive) {
@@ -660,6 +709,9 @@ namespace steamvrbridge {
 						#endif
 					} else {
 						// Held!
+
+						// check if the initial pose 
+
 						PSMVector3f newPosMeters;
 						Utils::GetMetersPosInRotSpace(&m_driverSpaceRotationAtTouchpadPressTime, &newPosMeters, m_PSMServiceController->ControllerState.PSMoveState);
 

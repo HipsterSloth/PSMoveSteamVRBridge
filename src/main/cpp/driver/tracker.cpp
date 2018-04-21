@@ -1,4 +1,5 @@
 #include "tracker.h"
+#include "trackable_device.h"
 #include "utils.h"
 #include "constants.h"
 

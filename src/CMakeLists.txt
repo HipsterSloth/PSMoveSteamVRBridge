@@ -59,34 +59,34 @@ list(APPEND PSM_MONITOR_REQ_LIBS ${PSM_LIBRARIES})
 add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver.cpp 
 								 ${PROJECT_SRC_DIR}/logger.cpp
 								 ${PROJECT_SRC_DIR}/controller.cpp
-								 ${PROJECT_SRC_DIR}/serverdriver.cpp
-								 ${PROJECT_SRC_DIR}/trackabledevice.cpp
+								 ${PROJECT_SRC_DIR}/server_driver.cpp
+								 ${PROJECT_SRC_DIR}/trackable_device.cpp
 								 ${PROJECT_SRC_DIR}/tracker.cpp
 								 ${PROJECT_SRC_DIR}/utils.cpp
 								 ${PROJECT_SRC_DIR}/watchdog.cpp
-								 ${PROJECT_SRC_DIR}/facinghandsolver.cpp
-								 ${PROJECT_SRC_DIR}/psmovecontroller.cpp
-								 ${PROJECT_SRC_DIR}/psnavicontroller.cpp
-								 ${PROJECT_SRC_DIR}/psds4controller.cpp
-								 ${PROJECT_SRC_DIR}/virtualcontroller.cpp
-								 ${PROJECT_SRC_DIR}/combinedcontroller.cpp
-								 ${PROJECT_SRC_DIR}/settingsutil.cpp
+								 ${PROJECT_SRC_DIR}/facing_handsolver.cpp
+								 ${PROJECT_SRC_DIR}/ps_move_controller.cpp
+								 ${PROJECT_SRC_DIR}/ps_navi_controller.cpp
+								 ${PROJECT_SRC_DIR}/ps_ds4_controller.cpp
+								 ${PROJECT_SRC_DIR}/virtual_controller.cpp
+								 ${PROJECT_SRC_DIR}/ps_combined_controller.cpp
+								 ${PROJECT_SRC_DIR}/settings_util.cpp
 								 ${PROJECT_SRC_DIR}/driver.h
 								 ${PROJECT_SRC_DIR}/logger.h
 								 ${PROJECT_SRC_DIR}/controller.h
-								 ${PROJECT_SRC_DIR}/serverdriver.h
-								 ${PROJECT_SRC_DIR}/trackabledevice.h
+								 ${PROJECT_SRC_DIR}/server_driver.h
+								 ${PROJECT_SRC_DIR}/trackable_device.h
 								 ${PROJECT_SRC_DIR}/tracker.h
 								 ${PROJECT_SRC_DIR}/utils.h
 								 ${PROJECT_SRC_DIR}/watchdog.h
-								 ${PROJECT_SRC_DIR}/facinghandsolver.h
+								 ${PROJECT_SRC_DIR}/facing_handsolver.h
 								 ${PROJECT_SRC_DIR}/constants.h
-								 ${PROJECT_SRC_DIR}/psmovecontroller.h
-								 ${PROJECT_SRC_DIR}/psnavicontroller.h
-								 ${PROJECT_SRC_DIR}/psds4controller.h
-								 ${PROJECT_SRC_DIR}/virtualcontroller.h
-								 ${PROJECT_SRC_DIR}/combinedcontroller.h
-								 ${PROJECT_SRC_DIR}/settingsutil.h
+								 ${PROJECT_SRC_DIR}/ps_move_controller.h
+								 ${PROJECT_SRC_DIR}/ps_navi_controller.h
+								 ${PROJECT_SRC_DIR}/ps_ds4_controller.h
+								 ${PROJECT_SRC_DIR}/virtual_controller.h
+								 ${PROJECT_SRC_DIR}/ps_combined_controller.h
+								 ${PROJECT_SRC_DIR}/settings_util.h
 								 )
 target_include_directories(driver_psmove PUBLIC ${OPENVR_PLUGIN_INCL_DIRS} ${PSM_PLUGIN_INCL_DIRS} )
 target_link_libraries(driver_psmove ${OPENVR_PLUGIN_REQ_LIBS} ${PSM_PLUGIN_REQ_LIBS})

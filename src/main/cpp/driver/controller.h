@@ -1,7 +1,9 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
-#include "trackabledevice.h"
+#include "trackable_device.h"
+
+// TODO: This needs to be broken up into it's respective controller device components
 
 namespace steamvrbridge {
 

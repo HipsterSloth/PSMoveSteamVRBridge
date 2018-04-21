@@ -2,14 +2,15 @@
 
 // TODO remove this class in favour of an interface definition
 
+#include "driver.h"
 #include "controller.h"
 #include "constants.h"
-#include "serverdriver.h"
+#include "server_driver.h"
 #include "utils.h"
-#include "settingsutil.h"
+#include "settings_util.h"
+#include "facing_handsolver.h"
+#include "trackable_device.h"
 #include <assert.h>
-#include "driver.h"
-#include "facinghandsolver.h"
 
 #if _MSC_VER
 #define strcasecmp(a, b) stricmp(a,b)

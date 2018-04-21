@@ -1,7 +1,7 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
-#include "trackabledevice.h"
+#include "trackable_device.h"
 #include "tracker.h"
 #include "logger.h"
 

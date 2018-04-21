@@ -1,4 +1,4 @@
-#include "settingsutil.h"
+#include "settings_util.h"
 
 namespace steamvrbridge {
 
