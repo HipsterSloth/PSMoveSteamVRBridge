@@ -344,7 +344,18 @@ namespace steamvrbridge {
 		// See if the recenter button has been held for the requisite amount of time
 		bool bRecenterRequestTriggered = false;
 		{
-			PSMButtonState resetPoseButtonState = clientView.SelectButton;
+			PSMButtonState resetPoseButtonState;
+			switch (m_TrackedControllerRole) {
+				case vr::TrackedControllerRole_LeftHand:
+					resetPoseButtonState = clientView.SelectButton;
+					break;
+				case vr::TrackedControllerRole_RightHand:
+					resetPoseButtonState = clientView.StartButton;
+					break;
+				default:
+					resetPoseButtonState = clientView.SelectButton;
+					break;
+			}
 
 			switch (resetPoseButtonState) {
 				case PSMButtonState_PRESSED:
@@ -733,7 +744,7 @@ namespace steamvrbridge {
 				PSMVector3f global_forward = PSM_QuatfRotateVector(&orientation, &local_forward);
 
 				shift = PSM_Vector3fScaleAndAdd(&global_forward, m_fVirtuallExtendControllersZMeters, &shift);
-		}
+			}
 
 			if (m_fVirtuallExtendControllersYMeters != 0.0f) {
 
