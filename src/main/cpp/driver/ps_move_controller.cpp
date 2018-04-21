@@ -589,12 +589,12 @@ namespace steamvrbridge {
 				```
 				Central origin pose:
 
-						z   _
-						|  (_)
-						|  {0} <- Move button pressed and held facing forward on the x axis
-						|  |*|
-						|  {_}
-						|_________ y
+					    z   _
+					    |  (_)
+					    |  {0} <- Move button pressed and held facing forward on the x axis
+					    |  |*|
+					    |  {_}
+					    |_________ y
 					   /
 					  /
 					 /
@@ -603,7 +603,7 @@ namespace steamvrbridge {
 				
 				Future pose update:
 
-				        z                 _
+					    z                 _
 					    |                (_)
 					    |     ------->   {0} <- Move button still held facing forward on the x axis
 					    |    direction   |*|
