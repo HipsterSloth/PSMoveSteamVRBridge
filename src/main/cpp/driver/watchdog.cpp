@@ -148,7 +148,7 @@ namespace steamvrbridge {
 		va_list args;
 		va_start(args, pMsgFormat);
 
-		Logger::DriverLogVarArgs(pMsgFormat, args);
+		WatchdogLogVarArgs(pMsgFormat, args);
 
 		va_end(args);
 	}

@@ -8,39 +8,28 @@ namespace steamvrbridge {
 	/* A device tracked by OpenVR through its ITrackedDeviceServerDriver interface definition. It implements
 	the required features of an ITrackedDeviceServerDriver and also defines a standard interface for how this
 	class should be used.*/
-	class TrackableDevice : public vr::ITrackedDeviceServerDriver {
+	class ITrackableDevice : public vr::ITrackedDeviceServerDriver {
 	public:
 
 		enum {
-			k_eButton_Trackpad,
-			k_eButton_Trigger,
+			// buttons
 			k_eButton_Grip,
 			k_eButton_Application,
 			k_eButton_System,
 			k_eButton_Guide,
 			k_eButton_Back,
-			k_eValue_Trigger,
+
+			// trackpad
+			k_eButton_Trackpad,
+			k_eTouch_Trackpad,
 			k_eTrackpad_X,
 			k_eTrackpad_Y,
-			k_eTouch_Trackpad,
-			k_eTouch_Trigger
+			
+			//trigger
+			k_eButton_Trigger,
+			k_eTouch_Trigger,
+			k_eValue_Trigger
 		} DeviceInput;
-
-		enum eVRTouchpadDirection {
-			k_EVRTouchpadDirection_None,
-
-			k_EVRTouchpadDirection_Left,
-			k_EVRTouchpadDirection_Up,
-			k_EVRTouchpadDirection_Right,
-			k_EVRTouchpadDirection_Down,
-
-			k_EVRTouchpadDirection_UpLeft,
-			k_EVRTouchpadDirection_UpRight,
-			k_EVRTouchpadDirection_DownLeft,
-			k_EVRTouchpadDirection_DownRight,
-
-			k_EVRTouchpadDirection_Count
-		};
 
 		/* Definition of a Tracked Device's State */
 		struct Axis {
@@ -71,7 +60,6 @@ namespace steamvrbridge {
 			Button grip;
 			Button application;
 			Button system;
-			Button guide;
 			Button back;
 			Trigger trigger;
 			TrackPad trackpad;
@@ -89,12 +77,11 @@ namespace steamvrbridge {
 		const char *k_pch_Trigger_Touch = "/input/trigger/touch";
 		const char *k_pch_Application = "/input/application_menu/click";
 		const char *k_pch_Back = "/input/back/click";
-		const char *k_pch_Guide = "/input/guide/click";
 		const char *k_pch_Grip = "/input/grip/click";
 		const char *k_pch_System = "/input/system/click";
 
-		TrackableDevice();
-		virtual ~TrackableDevice();
+		ITrackableDevice();
+		virtual ~ITrackableDevice();
 
 		// Shared Implementation of vr::ITrackedDeviceServerDriver
 		virtual vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;

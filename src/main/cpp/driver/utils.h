@@ -24,6 +24,18 @@ namespace steamvrbridge {
 		static PSMQuatf ExtractPSMoveYawQuaternion(const PSMQuatf & q);
 		// Takes a given controller position vector, applies a given quartenian rotation and sets the result to a given output position vector.
 		static void GetMetersPosInRotSpace(const PSMQuatf * rotation, PSMVector3f * out_position, const PSMPSMove & view);
+
+		// Returns the HMD pose in meters.
+		// Throws a std::exception when HMD index or HMD pose can't be obtained.
+		static PSMPosef Utils::GetHMDPoseInMeters();
+
+		// Returns a PSM pose of the controller aligned to the HMD tracking space. Returns NULL pointer when
+		// HMD index or pose can't be obtained.
+		static PSMPosef Utils::RealignHMDTrackingSpace(PSMQuatf controllerOrientationInHmdSpaceQuat,
+													   PSMVector3f controllerLocalOffsetFromHmdPosition,
+													   PSMControllerID controllerId,
+													   PSMPosef hmd_pose_meters,
+													   bool useControllerOrientation);
 		static PSMQuatf openvrMatrixExtractPSMQuatf(const vr::HmdMatrix34_t &openVRTransform);
 		static PSMQuatf psmMatrix3fToPSMQuatf(const PSMMatrix3f &psmMat);
 		static float psmVector3fDistance(const PSMVector3f &a, const PSMVector3f &b);

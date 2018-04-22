@@ -1,4 +1,5 @@
-#include "controller.h"
+#pragma once
+#include "openvr_driver.h"
 
 namespace steamvrbridge {
 	//==================================================================================================
@@ -10,7 +11,72 @@ namespace steamvrbridge {
 	static const int k_touchpadTouchMapping = (vr::EVRButtonId)31;
 	static const float k_defaultThumbstickDeadZoneRadius = 0.1f;
 
-	static const char *k_PSButtonNames[Controller::k_EPSButtonID_Count] = {
+	static const float DEFAULT_HAPTIC_DURATION = 0.f;
+	static const float DEFAULT_HAPTIC_AMPLITUDE = 1.f;
+	static const float DEFAULT_HAPTIC_FREQUENCY = 200.f;
+
+	/* PSMoveService button IDs*/
+	enum ePSButtonID {
+		k_EPSButtonID_0,
+		k_EPSButtonID_1,
+		k_EPSButtonID_2,
+		k_EPSButtonID_3,
+		k_EPSButtonID_4,
+		k_EPSButtonID_5,
+		k_EPSButtonID_6,
+		k_EPSButtonID_7,
+		k_EPSButtonID_8,
+		k_EPSButtonID_9,
+		k_EPSButtonID_10,
+		k_EPSButtonID_11,
+		k_EPSButtonID_12,
+		k_EPSButtonID_13,
+		k_EPSButtonID_14,
+		k_EPSButtonID_15,
+		k_EPSButtonID_16,
+		k_EPSButtonID_17,
+		k_EPSButtonID_18,
+		k_EPSButtonID_19,
+		k_EPSButtonID_20,
+		k_EPSButtonID_21,
+		k_EPSButtonID_22,
+		k_EPSButtonID_23,
+		k_EPSButtonID_24,
+		k_EPSButtonID_25,
+		k_EPSButtonID_26,
+		k_EPSButtonID_27,
+		k_EPSButtonID_28,
+		k_EPSButtonID_29,
+		k_EPSButtonID_30,
+		k_EPSButtonID_31,
+
+		k_EPSButtonID_Count,
+
+		k_EPSButtonID_PS = k_EPSButtonID_0,
+		k_EPSButtonID_Left = k_EPSButtonID_1,
+		k_EPSButtonID_Up = k_EPSButtonID_2,
+		k_EPSButtonID_Right = k_EPSButtonID_3,
+		k_EPSButtonID_Down = k_EPSButtonID_4,
+		k_EPSButtonID_Move = k_EPSButtonID_5,
+		k_EPSButtonID_Trackpad = k_EPSButtonID_6,
+		k_EPSButtonID_Trigger = k_EPSButtonID_7,
+		k_EPSButtonID_Triangle = k_EPSButtonID_8,
+		k_EPSButtonID_Square = k_EPSButtonID_9,
+		k_EPSButtonID_Circle = k_EPSButtonID_10,
+		k_EPSButtonID_Cross = k_EPSButtonID_11,
+		k_EPSButtonID_Select = k_EPSButtonID_12,
+		k_EPSButtonID_Share = k_EPSButtonID_13,
+		k_EPSButtonID_Start = k_EPSButtonID_14,
+		k_EPSButtonID_Options = k_EPSButtonID_15,
+		k_EPSButtonID_L1 = k_EPSButtonID_16,
+		k_EPSButtonID_L2 = k_EPSButtonID_17,
+		k_EPSButtonID_L3 = k_EPSButtonID_18,
+		k_EPSButtonID_R1 = k_EPSButtonID_19,
+		k_EPSButtonID_R2 = k_EPSButtonID_20,
+		k_EPSButtonID_R3 = k_EPSButtonID_21,
+	};
+
+	static const char *k_PSButtonNames[k_EPSButtonID_Count] = {
 		"ps",
 		"left",
 		"up",
@@ -45,7 +111,7 @@ namespace steamvrbridge {
 		"",
 	};
 
-	static const char *k_VirtualButtonNames[Controller::k_EPSButtonID_Count] = {
+	static const char *k_VirtualButtonNames[k_EPSButtonID_Count] = {
 		"gamepad_button_0",
 		"gamepad_button_1",
 		"gamepad_button_2",
@@ -121,7 +187,23 @@ namespace steamvrbridge {
 		"axis_4",                 // k_EButton_Axis4
 	};
 
-	static const int k_max_vr_touchpad_directions = Controller::k_EVRTouchpadDirection_Count;
+	enum eVRTouchpadDirection {
+		k_EVRTouchpadDirection_None,
+
+		k_EVRTouchpadDirection_Left,
+		k_EVRTouchpadDirection_Up,
+		k_EVRTouchpadDirection_Right,
+		k_EVRTouchpadDirection_Down,
+
+		k_EVRTouchpadDirection_UpLeft,
+		k_EVRTouchpadDirection_UpRight,
+		k_EVRTouchpadDirection_DownLeft,
+		k_EVRTouchpadDirection_DownRight,
+
+		k_EVRTouchpadDirection_Count
+	};
+
+	static const int k_max_vr_touchpad_directions = k_EVRTouchpadDirection_Count;
 	static const char *k_VRTouchpadDirectionNames[k_max_vr_touchpad_directions] = {
 		"none",
 		"touchpad_left",

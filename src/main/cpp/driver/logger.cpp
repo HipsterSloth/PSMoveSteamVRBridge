@@ -4,64 +4,82 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-namespace steamvrbridge{
+/** Provides printf-style line logging via the vr::IVRDriverLog interface provided by SteamVR
+* during initialization.  Client logging ends up in vrclient_appname.txt and server logging
+* ends up in vrserver.txt.
+*/
+namespace steamvrbridge {
+
+	// TODO make this a singleton logger per class for convenience
 
 	static vr::IVRDriverLog * s_pLogFile = NULL;
 
-#if !defined( WIN32)
-#define vsnprintf_s vsnprintf
-#endif
+	#if !defined( WIN32)
+	#define vsnprintf_s vsnprintf
+	#endif
 
-	bool Logger::InitDriverLog(vr::IVRDriverLog *pDriverLog)
-	{
+	// Initialises the IVRDriverLog logger.
+	bool Logger::InitDriverLog(vr::IVRDriverLog *pDriverLog) {
 		if (s_pLogFile)
 			return false;
 		s_pLogFile = pDriverLog;
 		return s_pLogFile != NULL;
 	}
 
-	void Logger::CleanupDriverLog()
-	{
+	// Cleans up the IVRDriverLog logger.
+	void Logger::CleanupDriverLog() {
 		s_pLogFile = NULL;
 	}
 
-	void Logger::DriverLogVarArgs(const char *pMsgFormat, va_list args)
-	{
+
+	// Takes a given message and using vsprint
+	void Logger::DriverLogVarArgs(const char *pMsgFormat, va_list args, std::string logLevel) {
 		char buf[1024];
-#if defined( WIN32 )
+		#if defined( WIN32 )
 		vsprintf_s(buf, pMsgFormat, args);
-#else
+		#else
 		vsnprintf(buf, sizeof(buf), pMsgFormat, args);
-#endif
+		#endif
 
 		if (s_pLogFile)
-			s_pLogFile->Log(buf);
+			s_pLogFile->Log((logLevel + buf).c_str());
 	}
 
-	/** Provides printf-style debug logging via the vr::IVRDriverLog interface provided by SteamVR
-	* during initialization.  Client logging ends up in vrclient_appname.txt and server logging
-	* ends up in vrserver.txt.
+	/** Logs a printf-style info line logging.
 	*/
-	void Logger::Info(const char *pMsgFormat, ...)
-	{
+	void Logger::Info(const char *pMsgFormat, ...) {
 		va_list args;
 		va_start(args, pMsgFormat);
-
-		Logger::DriverLogVarArgs(pMsgFormat, args);
-
+		Logger::DriverLogVarArgs(pMsgFormat, args, "INFO - ");
 		va_end(args);
 	}
 
-	void Logger::Debug(const char *pMsgFormat, ...)
-	{
-
-#ifdef _DEBUG
+	/** Logs a printf-style warn line logging.
+	*/
+	void Logger::Warn(const char *pMsgFormat, ...) {
 		va_list args;
 		va_start(args, pMsgFormat);
-
-		Logger::DriverLogVarArgs(pMsgFormat, args);
-
+		Logger::DriverLogVarArgs(pMsgFormat, args, "WARN - ");
 		va_end(args);
-#endif
+	}
+
+	/** Logs a printf-style error line logging.
+	*/
+	void Logger::Error(const char *pMsgFormat, ...) {
+		va_list args;
+		va_start(args, pMsgFormat);
+		Logger::DriverLogVarArgs(pMsgFormat, args, "ERROR - ");
+		va_end(args);
+	}
+
+	/** Logs a printf-style debug line logging.
+	*/
+	void Logger::Debug(const char *pMsgFormat, ...) {
+		#ifdef _DEBUG
+		va_list args;
+		va_start(args, pMsgFormat);
+		Logger::DriverLogVarArgs(pMsgFormat, args, "DEBUG - ");
+		va_end(args);
+		#endif
 	}
 }

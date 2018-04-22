@@ -3,6 +3,7 @@
 // TODO remove this class in favour of an interface definition
 
 #include "driver.h"
+#include "old_controller.h"
 #include "controller.h"
 #include "constants.h"
 #include "server_driver.h"
@@ -24,7 +25,7 @@ namespace steamvrbridge {
 		PSMControllerID psmControllerId,
 		PSMControllerType psmControllerType,
 		const char *psmSerialNo)
-		: TrackableDevice()
+		: ITrackableDevice()
 		, m_nPSMControllerId(psmControllerId)
 		, m_PSMControllerType(psmControllerType)
 		, m_PSMServiceController(nullptr)
@@ -505,7 +506,7 @@ namespace steamvrbridge {
 
 	vr::EVRInitError Controller::Activate(vr::TrackedDeviceIndex_t unObjectId)
 	{
-		vr::EVRInitError result = TrackableDevice::Activate(unObjectId);
+		vr::EVRInitError result = ITrackableDevice::Activate(unObjectId);
 
 		if (result == vr::VRInitError_None)
 		{
@@ -1913,7 +1914,7 @@ namespace steamvrbridge {
 
 	void Controller::Update()
 	{
-		TrackableDevice::Update();
+		ITrackableDevice::Update();
 
 		if (IsActivated() && m_PSMServiceController->IsConnected)
 		{
@@ -1935,7 +1936,7 @@ namespace steamvrbridge {
 
 	void Controller::RefreshWorldFromDriverPose()
 	{
-		TrackableDevice::RefreshWorldFromDriverPose();
+		ITrackableDevice::RefreshWorldFromDriverPose();
 
 		// Mark the calibration process as done
 		// once we have setup the world from driver pose

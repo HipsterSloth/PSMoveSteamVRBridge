@@ -58,7 +58,7 @@ list(APPEND PSM_MONITOR_REQ_LIBS ${PSM_LIBRARIES})
 # Shared library: defines what is compiled, what output type it is and what libs/includes it needs
 add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver.cpp 
 								 ${PROJECT_SRC_DIR}/logger.cpp
-								 ${PROJECT_SRC_DIR}/controller.cpp
+								 ${PROJECT_SRC_DIR}/old_controller.cpp
 								 ${PROJECT_SRC_DIR}/server_driver.cpp
 								 ${PROJECT_SRC_DIR}/trackable_device.cpp
 								 ${PROJECT_SRC_DIR}/tracker.cpp
@@ -74,6 +74,7 @@ add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver.cpp
 								 ${PROJECT_SRC_DIR}/driver.h
 								 ${PROJECT_SRC_DIR}/logger.h
 								 ${PROJECT_SRC_DIR}/controller.h
+								 ${PROJECT_SRC_DIR}/old_controller.h
 								 ${PROJECT_SRC_DIR}/server_driver.h
 								 ${PROJECT_SRC_DIR}/trackable_device.h
 								 ${PROJECT_SRC_DIR}/tracker.h

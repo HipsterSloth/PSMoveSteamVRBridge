@@ -6,7 +6,7 @@
 namespace steamvrbridge {
 
 	PSMServiceTracker::PSMServiceTracker(const PSMClientTrackerInfo *trackerInfo)
-		: TrackableDevice()
+		: ITrackableDevice()
 		, m_nTrackerId(trackerInfo->tracker_id)
 	{
 		char buf[256];
@@ -22,7 +22,7 @@ namespace steamvrbridge {
 
 	vr::EVRInitError PSMServiceTracker::Activate(vr::TrackedDeviceIndex_t unObjectId)
 	{
-		vr::EVRInitError result = TrackableDevice::Activate(unObjectId);
+		vr::EVRInitError result = ITrackableDevice::Activate(unObjectId);
 
 		if (result == vr::VRInitError_None)
 		{
@@ -120,7 +120,7 @@ namespace steamvrbridge {
 
 	void PSMServiceTracker::Update()
 	{
-		TrackableDevice::Update();
+		ITrackableDevice::Update();
 
 		// This call posts this pose to shared memory, where all clients will have access to it the next
 		// moment they want to predict a pose.

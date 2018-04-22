@@ -68,7 +68,7 @@ namespace steamvrbridge {
 		bool m_bLaunchedPSMoveMonitor;
 		bool m_bInitialized;
 
-		std::vector< TrackableDevice * > m_vecTrackedDevices;
+		std::vector< ITrackableDevice * > m_vecTrackedDevices;
 
 		// HMD Tracking Space
 		PSMPosef m_worldFromDriverPose;

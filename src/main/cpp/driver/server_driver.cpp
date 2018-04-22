@@ -160,13 +160,9 @@ namespace steamvrbridge {
 					vr::VREvent_HapticVibration_t hapticData = event.data.hapticVibration;
 					vr::TrackedDeviceIndex_t trackedDeviceIndex = event.trackedDeviceIndex;
 					uint64_t handle = hapticData.containerHandle;
-					// TODO might be useful to pass to the UpdateRumble method
-					float durationSecs = hapticData.fDurationSeconds;
-					float amplitude = hapticData.fAmplitude;
-					float frequency = hapticData.fFrequency;
 
-					steamvrbridge::Logger::Debug("CServerDriver_PSMoveService::RunFrame: haptic event, trackedDeviceIndex=%d, durationSecs=%f, amplitude=%f, frequency=%f\n"
-												, &trackedDeviceIndex, durationSecs, amplitude, frequency);
+					//Logger::Debug("CServerDriver_PSMoveService::RunFrame: haptic event, trackedDeviceIndex=%d, durationSecs=%f, amplitude=%f, frequency=%f\n"
+					//				, &trackedDeviceIndex, durationSecs, amplitude, frequency);
 
 					// find the trackable device this vibration event is intended for (probably inefficient)
 					for (auto it = m_vecTrackedDevices.begin(); it != m_vecTrackedDevices.end(); ++it) {
@@ -175,9 +171,8 @@ namespace steamvrbridge {
 						if (pTrackedDevice->GetTrackedDeviceClass() == vr::TrackedDeviceClass_Controller
 							&& pTrackedDevice->getPropertyContainerHandle() == handle) {
 							PSMoveController *pController = static_cast<PSMoveController *>(pTrackedDevice);
-							pController->setPendingPulseDurationSecs(durationSecs); // tell controller to rumble
-							steamvrbridge::Logger::Debug("CServerDriver_PSMoveService::RunFrame: haptic event, succesfully found device using container property handle\n"
-														, &trackedDeviceIndex, amplitude, frequency);
+							pController->SetPendingHapticVibration(hapticData); // tell controller to rumble
+							Logger::Debug("CServerDriver_PSMoveService::RunFrame: haptic event, succesfully found device using container property handle\n");
 						}
 					}
 					break;
@@ -186,7 +181,7 @@ namespace steamvrbridge {
 
 		// Update all active tracked devices
 		for (auto it = m_vecTrackedDevices.begin(); it != m_vecTrackedDevices.end(); ++it) {
-			TrackableDevice *pTrackedDevice = *it;
+			ITrackableDevice *pTrackedDevice = *it;
 
 			switch (pTrackedDevice->GetTrackedDeviceClass()) {
 				case vr::TrackedDeviceClass_Controller:
@@ -308,7 +303,7 @@ namespace steamvrbridge {
 		Logger::Info("CServerDriver_PSMoveService::HandleDisconnectedFromPSMoveService - Called\n");
 
 		for (auto it = m_vecTrackedDevices.begin(); it != m_vecTrackedDevices.end(); ++it) {
-			TrackableDevice *pDevice = *it;
+			ITrackableDevice *pDevice = *it;
 
 			pDevice->Deactivate();
 		}
@@ -425,7 +420,7 @@ namespace steamvrbridge {
 		// Tell all the devices that the relationship between the psmove and the OpenVR
 		// tracking spaces changed
 		for (auto it = m_vecTrackedDevices.begin(); it != m_vecTrackedDevices.end(); ++it) {
-			TrackableDevice *pDevice = *it;
+			ITrackableDevice *pDevice = *it;
 
 			pDevice->RefreshWorldFromDriverPose();
 		}
@@ -445,7 +440,7 @@ namespace steamvrbridge {
 
 				// if we already have another PS Move controller then set this new controller's role to the right hand
 				for (auto it = m_vecTrackedDevices.begin(); it != m_vecTrackedDevices.end(); ++it) {
-					TrackableDevice *pDevice = *it;
+					ITrackableDevice *pDevice = *it;
 					if (pDevice->GetTrackedDeviceRole() == vr::TrackedControllerRole_LeftHand)
 						trackedControllerRole = vr::TrackedControllerRole_RightHand;
 				}
@@ -518,16 +513,16 @@ namespace steamvrbridge {
 		std::transform(naviSerialNo.begin(), naviSerialNo.end(), naviSerialNo.begin(), ::toupper);
 		std::transform(parentSerialNo.begin(), parentSerialNo.end(), parentSerialNo.begin(), ::toupper);
 
-		for (TrackableDevice *trackedDevice : m_vecTrackedDevices) {
+		for (ITrackableDevice *trackedDevice : m_vecTrackedDevices) {
 			if (trackedDevice->GetTrackedDeviceClass() == vr::TrackedDeviceClass_Controller) {
 				PSMoveController *test_controller = static_cast<PSMoveController *>(trackedDevice);
-				const std::string testSerialNo = test_controller->getPSMControllerSerialNo();
+				const std::string testSerialNo = test_controller->GetPSMControllerSerialNo();
 
 				if (testSerialNo == parentSerialNo) {
 					bFoundParent = true;
 
-					if (test_controller->getPSMControllerType() == PSMController_Move ||
-						test_controller->getPSMControllerType() == PSMController_Virtual) {
+					if (test_controller->GetPSMControllerType() == PSMController_Move ||
+						test_controller->GetPSMControllerType() == PSMController_Virtual) {
 						/*if (test_controller->AttachChildPSMController(NaviControllerID, PSMController_Navi, naviSerialNo))
 						{
 							Logger::Info("Attached navi controller serial %s to controller serial %s\n", naviSerialNo.c_str(), parentSerialNo.c_str());

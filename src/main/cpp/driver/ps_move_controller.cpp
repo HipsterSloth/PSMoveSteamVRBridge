@@ -23,7 +23,7 @@ namespace steamvrbridge {
 		PSMControllerType psmControllerType,
 		vr::ETrackedControllerRole trackedControllerRole,
 		const char *psmSerialNo)
-		: TrackableDevice()
+		: ITrackableDevice()
 		, m_nPSMControllerId(psmControllerId)
 		, m_PSMControllerType(psmControllerType)
 		, m_PSMServiceController(nullptr)
@@ -31,7 +31,9 @@ namespace steamvrbridge {
 		, m_bIsBatteryCharging(false)
 		, m_fBatteryChargeFraction(0.f)
 		, m_bRumbleSuppressed(false)
-		, m_pendingHapticPulseDurationSecs(0)
+		, m_pendingHapticDurationSecs(DEFAULT_HAPTIC_DURATION)
+		, m_pendingHapticAmplitude(DEFAULT_HAPTIC_AMPLITUDE)
+		, m_pendingHapticFrequency(DEFAULT_HAPTIC_FREQUENCY)
 		, m_lastTimeRumbleSent()
 		, m_lastTimeRumbleSentValid(false)
 		, m_resetPoseButtonPressTime()
@@ -242,7 +244,7 @@ namespace steamvrbridge {
 	}
 
 	vr::EVRInitError PSMoveController::Activate(vr::TrackedDeviceIndex_t unObjectId) {
-		vr::EVRInitError result = TrackableDevice::Activate(unObjectId);
+		vr::EVRInitError result = ITrackableDevice::Activate(unObjectId);
 
 		if (result == vr::VRInitError_None) {
 			Logger::Info("CPSMoveControllerLatest::Activate - Controller %d Activated\n", unObjectId);
@@ -384,9 +386,8 @@ namespace steamvrbridge {
 
 		// If START was just pressed while and SELECT was held or vice versa,
 		// recenter the controller orientation pose and start the realignment of the controller to HMD tracking space.
-		if (bStartRealignHMDTriggered) {
+		if (bStartRealignHMDTriggered && !m_bDisableHMDAlignmentGesture) {
 			PSMVector3f controllerBallPointedUpEuler = { (float)M_PI_2, 0.0f, 0.0f };
-
 			PSMQuatf controllerBallPointedUpQuat = PSM_QuatfCreateFromAngles(&controllerBallPointedUpEuler);
 
 			Logger::Info("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
@@ -394,7 +395,30 @@ namespace steamvrbridge {
 			PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, &controllerBallPointedUpQuat, nullptr);
 			m_bResetPoseRequestSent = true;
 
-			RealignHMDTrackingSpace();
+			// We have the transform of the HMD in world space. 
+			// However the HMD and the controller aren't quite aligned depending on the controller type:
+			PSMQuatf controllerOrientationInHmdSpaceQuat = *k_psm_quaternion_identity;
+			PSMVector3f controllerLocalOffsetFromHmdPosition = *k_psm_float_vector3_zero;
+			// Rotation) The controller's local -Z axis (from the center to the glowing ball) is currently pointed 
+			//    in the direction of the HMD's local +Y axis, 
+			// Translation) The controller's position is a few inches ahead of the HMD's on the HMD's local -Z axis. 
+			PSMVector3f eulerPitch = { (float)M_PI_2, 0.0f, 0.0f };
+			controllerOrientationInHmdSpaceQuat = PSM_QuatfCreateFromAngles(&eulerPitch);
+			controllerLocalOffsetFromHmdPosition = { 0.0f, 0.0f, -1.0f * m_fControllerMetersInFrontOfHmdAtCalibration };
+
+			try {
+				PSMPosef hmdPose = Utils::GetHMDPoseInMeters();
+				PSMPosef realignedPose = Utils::RealignHMDTrackingSpace(controllerOrientationInHmdSpaceQuat,
+																		controllerLocalOffsetFromHmdPosition,
+																		m_PSMServiceController->ControllerID,
+																		hmdPose,
+																		m_bUseControllerOrientationInHMDAlignment);
+				g_ServerTrackedDeviceProvider.SetHMDTrackingSpace(realignedPose);
+			} catch (std::exception & e) {
+				// Log an error message and safely carry on
+				Logger::Error(e.what());
+			}
+
 			m_bResetAlignRequestSent = true;
 		} else if (bRecenterRequestTriggered) {
 			Logger::Info("CPSMoveControllerLatest::UpdateControllerState(): Calling ClientPSMoveAPI::reset_orientation() in response to controller button press.\n");
@@ -416,19 +440,18 @@ namespace steamvrbridge {
 			UpdateButtonState(k_EPSButtonID_Trigger, clientView.TriggerButton);
 
 			// Touchpad handling
-			HandleTouchPadDirection();
+			UpdateTouchPadDirection();
 
 			// PSMove Trigger handling
 			float latestTriggerValue = clientView.TriggerValue / 255.f;
-			HandleTrigger(latestTriggerValue);
+			SetTriggerValue(latestTriggerValue);
 
 			// Update the battery charge state
 			UpdateBatteryChargeState(m_PSMServiceController->ControllerState.PSMoveState.BatteryValue);
 		}
 
-		// TODO rename to something related to sending or notifying of OpenVR runtime?
 		// Report trackable state to SteamVR Runtime
-		TrackableDevice::Update();
+		ITrackableDevice::Update();
 	}
 
 	// Updates this controllers trackable state for the given controller button id. The mappings should not be configured
@@ -454,13 +477,13 @@ namespace steamvrbridge {
 				if (state.trigger.isTouched != buttonState)
 					state.trigger.isTouched = buttonState;
 				break;
-			case k_EPSButtonID_Square:
-				if (state.guide.isPressed != buttonState)
-					state.guide.isPressed = buttonState;
+			case k_EPSButtonID_Square: // TODO
+				/*if (state.?.isPressed != buttonState)
+					state.?.isPressed = buttonState;*/
 				break;
-			case k_EPSButtonID_Circle:
-				if (state.back.isPressed != buttonState)
-					state.back.isPressed = buttonState;
+			case k_EPSButtonID_Circle: // TODO
+				/*if (state. ? .isPressed != buttonState)
+					state. ? .isPressed = buttonState;*/
 				break;
 			case k_EPSButtonID_Move:
 				if (state.trackpad.isPressed != buttonState)
@@ -471,148 +494,53 @@ namespace steamvrbridge {
 		}
 	}
 
-	void PSMoveController::RealignHMDTrackingSpace() {
-		if (m_bDisableHMDAlignmentGesture) {
-			Logger::Info("Ignoring RealignHMDTrackingSpace request. Disabled.\n");
-			return;
-		}
+	/* TODO - Add informative ui overlay in monitor.cpp to show the user how this works.
 
-		Logger::Info("Begin CPSMoveControllerLatest::RealignHMDTrackingSpace()\n");
+	In a nutshell, upon the move button being pressed the initial pose is captured and rotated relative to the
+	controller's position. After a buttonheld threshold it's considered held and the next controller pose is captured
+	and again rotated. The initial and current are subtracted to get the distance in meters between the two. The rotation
+	is important since it must be relative to the controller not the world. After the rotation a repeatable calculation of
+	distance between the two on the z and x axis can be determined. This is then scaled and applied to the x and y axis
+	of the trackpad. When the ps move button is no longer pressed the trackpad axis is reset to 0,0 and past state is
+	cleared.
 
-		vr::TrackedDeviceIndex_t hmd_device_index = vr::k_unTrackedDeviceIndexInvalid;
-		if (Utils::GetHMDDeviceIndex(&hmd_device_index)) {
-			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - HMD Device Index= %u\n", hmd_device_index);
-		} else {
-			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Device Index\n");
-			return;
-		}
+	```
+	Initial origin pose:
 
-		PSMPosef hmd_pose_meters;
-		if (Utils::GetTrackedDevicePose(hmd_device_index, &hmd_pose_meters)) {
-			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - hmd_pose_meters: %s \n", Utils::PSMPosefToString(hmd_pose_meters).c_str());
-		} else {
-			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Pose\n");
-			return;
-		}
+		z   _
+		|  (_)
+		|  {0} <- Move button pressed and held facing forward on the y axis
+		|  |*|
+		|  {_}
+		|_________ x
+	   /
+	  /
+	 /
+	y
 
-		// Make the HMD orientation only contain a yaw
-		hmd_pose_meters.Orientation = Utils::ExtractHMDYawQuaternion(hmd_pose_meters.Orientation);
-		Logger::Info("hmd_pose_meters(yaw-only): %s \n", Utils::PSMPosefToString(hmd_pose_meters).c_str());
 
-		// We have the transform of the HMD in world space. 
-		// However the HMD and the controller aren't quite aligned depending on the controller type:
-		PSMQuatf controllerOrientationInHmdSpaceQuat = *k_psm_quaternion_identity;
-		PSMVector3f controllerLocalOffsetFromHmdPosition = *k_psm_float_vector3_zero;
-		if (m_PSMControllerType == PSMControllerType::PSMController_Move) {
-			// Rotation) The controller's local -Z axis (from the center to the glowing ball) is currently pointed 
-			//    in the direction of the HMD's local +Y axis, 
-			// Translation) The controller's position is a few inches ahead of the HMD's on the HMD's local -Z axis. 
-			PSMVector3f eulerPitch = { (float)M_PI_2, 0.0f, 0.0f };
-			controllerOrientationInHmdSpaceQuat = PSM_QuatfCreateFromAngles(&eulerPitch);
-			controllerLocalOffsetFromHmdPosition = { 0.0f, 0.0f, -1.0f * m_fControllerMetersInFrontOfHmdAtCalibration };
-		}
+	Future pose update:
 
-		// Transform the HMD's world space transform to where we expect the controller's world space transform to be.
-		PSMPosef controllerPoseRelativeToHMD =
-			PSM_PosefCreate(&controllerLocalOffsetFromHmdPosition, &controllerOrientationInHmdSpaceQuat);
+		z                 _
+		|       7.5cm    (_)
+		|     ------->   {0} <- Move button still held facing forward on the x axis
+		|      moved     |*|
+		|      right     {_}
+		|_________ x
+	   /
+	  /
+	 /
+	y
+	```
+	*/
 
-		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controllerPoseRelativeToHMD: %s \n", Utils::PSMPosefToString(controllerPoseRelativeToHMD).c_str());
-
-		// Compute the expected controller pose in HMD tracking space (i.e. "World Space")
-		PSMPosef controller_world_space_pose = PSM_PosefConcat(&controllerPoseRelativeToHMD, &hmd_pose_meters);
-		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_world_space_pose: %s \n", Utils::PSMPosefToString(controller_world_space_pose).c_str());
-
-		/*
-		We now have the transform of the controller in world space -- controller_world_space_pose
-
-		We also have the transform of the controller in driver space -- psmove_pose_meters
-
-		We need the transform that goes from driver space to world space -- driver_pose_to_world_pose
-		psmove_pose_meters * driver_pose_to_world_pose = controller_world_space_pose
-		psmove_pose_meters.inverse() * psmove_pose_meters * driver_pose_to_world_pose = psmove_pose_meters.inverse() * controller_world_space_pose
-		driver_pose_to_world_pose = psmove_pose_meters.inverse() * controller_world_space_pose
-		*/
-
-		// Get the current pose from the controller view instead of using the driver's cached
-		// value because the user may have triggered a pose reset, in which case the driver's
-		// cached pose might not yet be up to date by the time this callback is triggered.
-		PSMPosef controller_pose_meters = *k_psm_pose_identity;
-		PSM_GetControllerPose(m_PSMServiceController->ControllerID, &controller_pose_meters);
-		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(raw): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
-
-		// PSMove Position is in cm, but OpenVR stores position in meters
-		controller_pose_meters.Position = PSM_Vector3fScale(&controller_pose_meters.Position, k_fScalePSMoveAPIToMeters);
-
-		if (m_bUseControllerOrientationInHMDAlignment) {
-			// Extract only the yaw from the controller orientation (assume it's mostly held upright)
-			controller_pose_meters.Orientation = Utils::ExtractPSMoveYawQuaternion(controller_pose_meters.Orientation);
-			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(yaw-only): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
-		} else {
-			const PSMVector3f eulerPitch = { (float)M_PI_2, 0.0f, 0.0f };
-
-			controller_pose_meters.Orientation = PSM_QuatfCreateFromAngles(&eulerPitch);
-			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
-		}
-
-		PSMPosef controller_pose_inv = PSM_PosefInverse(&controller_pose_meters);
-		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_inv: %s \n", Utils::PSMPosefToString(controller_pose_inv).c_str());
-
-		PSMPosef driver_pose_to_world_pose = PSM_PosefConcat(&controller_pose_inv, &controller_world_space_pose);
-		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - driver_pose_to_world_pose: %s \n", Utils::PSMPosefToString(driver_pose_to_world_pose).c_str());
-
-		PSMPosef test_composed_controller_world_space = PSM_PosefConcat(&controller_pose_meters, &driver_pose_to_world_pose);
-		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - test_composed_controller_world_space: %s \n", Utils::PSMPosefToString(test_composed_controller_world_space).c_str());
-
-		g_ServerTrackedDeviceProvider.SetHMDTrackingSpace(driver_pose_to_world_pose);
-	}
-
-	void PSMoveController::HandleTouchPadDirection() {
+	// Updates the state of the controllers touchpad axis relative to its position over time and active state.
+	void PSMoveController::UpdateTouchPadDirection() {
 		// Virtual TouchPad Handling (i.e. controller spatial offset as touchpad)
 		if (m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis) {
 			bool bTouchpadIsActive = state.trackpad.isPressed || state.trackpad.isTouched;
 
 			if (bTouchpadIsActive) {
-
-				/* TODO - Add informative ui overlay in monitor.cpp to show the user how this works.
-
-				In a nutshell, upon the move button being pressed the initial pose is captured and rotated relative to the
-				controller's position. After a buttonheld threshold it's considered held and the next controller pose is captured
-				and again rotated. The initial and current are subtracted to get the distance in meters between the two. The rotation
-				is important since it must be relative to the controller not the world. After the rotation a repeatable calculation of
-				distance between the two on the z and x axis can be determined. This is then scaled and applied to the x and y axis
-				of the trackpad. When the ps move button is no longer pressed the trackpad axis is reset to 0,0 and past state is
-				cleared.
-
-
-				```
-				Initial origin pose:
-
-						z   _
-						|  (_)
-						|  {0} <- Move button pressed and held facing forward on the y axis
-						|  |*|
-						|  {_}
-						|_________ x
-					   /
-					  /
-					 /
-					y
-
-
-				Future pose update:
-
-						z                 _
-						|       7.5cm    (_)
-						|     ------->   {0} <- Move button still held facing forward on the x axis
-						|      moved     |*|
-						|      right     {_}
-						|_________ x
-					   /
-					  /
-					 /
-					y
-				```
-				*/
 
 				bool bIsNewTouchpadLocation = true;
 
@@ -676,7 +604,7 @@ namespace steamvrbridge {
 		}
 	}
 
-	void PSMoveController::HandleTrigger(float latestTriggerValue) {
+	void PSMoveController::SetTriggerValue(float latestTriggerValue) {
 
 		/* Check if the Trigger value has changed, this value represents how far the trigger has been physically pressed.
 		It's considered touched at any value greater than 0.1 but it's only considered touched/pressed when it's nearly
@@ -770,7 +698,7 @@ namespace steamvrbridge {
 		}
 
 		// Set the physics state of the controller
-		{
+		/*{
 			const PSMPhysicsData &physicsData = view.PhysicsData;
 
 			m_Pose.vecVelocity[0] = physicsData.LinearVelocityCmPerSec.x
@@ -794,7 +722,7 @@ namespace steamvrbridge {
 			m_Pose.vecAngularAcceleration[0] = physicsData.AngularAccelerationRadPerSecSqr.x;
 			m_Pose.vecAngularAcceleration[1] = physicsData.AngularAccelerationRadPerSecSqr.y;
 			m_Pose.vecAngularAcceleration[2] = physicsData.AngularAccelerationRadPerSecSqr.z;
-		}
+		}*/
 
 		m_Pose.poseIsValid =
 			m_PSMServiceController->ControllerState.PSMoveState.bIsPositionValid &&
@@ -805,20 +733,27 @@ namespace steamvrbridge {
 		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unSteamVRTrackedDeviceId, m_Pose, sizeof(vr::DriverPose_t));
 	}
 
-	void PSMoveController::setPendingPulseDurationSecs(float durationSecs) {
-		m_pendingHapticPulseDurationSecs = durationSecs;
+	void PSMoveController::SetPendingHapticVibration(vr::VREvent_HapticVibration_t hapticData) {
+		m_pendingHapticDurationSecs = hapticData.fDurationSeconds;
+		m_pendingHapticAmplitude = hapticData.fAmplitude;
+		m_pendingHapticFrequency = hapticData.fFrequency;
 	}
 
-	// TODO - Make use of amplitude and frequency for Buffered Haptics, will give us patterning and panning vibration.
+	// TODO - Make use of amplitude and frequency for Buffered Haptics, will give us patterning and panning vibration (for ds4?).
 	// See: https://developer.oculus.com/documentation/pcsdk/latest/concepts/dg-input-touch-haptic/
 	void PSMoveController::UpdateRumbleState() {
 		if (!m_bRumbleSuppressed) {
 
-			// convert to microseconds
-			uint16_t pendingHapticPulseDurationMicroSecs = static_cast<uint16_t>(m_pendingHapticPulseDurationSecs * 1000000);
+			// pulse duration - the length of each pulse
+			// amplitude - strength of vibration
+			// frequency - speed of each pulse
+
+
+			// convert to microseconds, the max duration received from OpenVR appears to be 5 micro seconds
+			uint16_t pendingHapticPulseDurationMicroSecs = static_cast<uint16_t>(m_pendingHapticDurationSecs * 1000000);
 
 			const float k_max_rumble_update_rate = 33.f; // Don't bother trying to update the rumble faster than 30fps (33ms)
-			const float k_max_pulse_microseconds = 1000.f; // Docs suggest max pulse duration of 5ms, but we'll call 1ms max
+			const float k_max_pulse_microseconds = 5000.f; // Docs suggest max pulse duration of 5ms, but we'll call 1ms max
 
 			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 			bool bTimoutElapsed = true;
@@ -831,14 +766,14 @@ namespace steamvrbridge {
 
 			// See if a rumble request hasn't come too recently
 			if (bTimoutElapsed) {
-				float rumble_fraction = static_cast<float>(pendingHapticPulseDurationMicroSecs) / k_max_pulse_microseconds;
+				float rumble_fraction = (static_cast<float>(pendingHapticPulseDurationMicroSecs) / k_max_pulse_microseconds) * m_pendingHapticAmplitude;
 
 				if (rumble_fraction > 0)
-					steamvrbridge::Logger::Debug("PSMoveController::UpdateRumble: m_pendingHapticPulseDurationSecs=%f ,pendingHapticPulseDurationMicroSecs=%d, rumble_fraction=%f\n", m_pendingHapticPulseDurationSecs, pendingHapticPulseDurationMicroSecs, rumble_fraction);
+					steamvrbridge::Logger::Debug("PSMoveController::UpdateRumble: m_pendingHapticPulseDurationSecs=%f ,pendingHapticPulseDurationMicroSecs=%d, rumble_fraction=%f\n", m_pendingHapticDurationSecs, pendingHapticPulseDurationMicroSecs, rumble_fraction);
 
 				// Unless a zero rumble intensity was explicitly set, 
 				// don't rumble less than 35% (no enough to feel)
-				if (m_pendingHapticPulseDurationSecs != 0) {
+				if (m_pendingHapticDurationSecs != 0) {
 					if (rumble_fraction < 0.35f) {
 						// rumble values less 35% isn't noticeable
 						rumble_fraction = 0.35f;
@@ -862,11 +797,15 @@ namespace steamvrbridge {
 				// If no future haptic event is received by ServerDriver then the next call to UpdateRumbleState()
 				// in k_max_rumble_update_rate milliseconds will set the rumble_fraction to 0.f
 				// This effectively makes the shortest rumble pulse k_max_rumble_update_rate milliseconds.
-				m_pendingHapticPulseDurationSecs = 0;
+				m_pendingHapticDurationSecs = DEFAULT_HAPTIC_DURATION;
+				m_pendingHapticAmplitude = DEFAULT_HAPTIC_AMPLITUDE;
+				m_pendingHapticFrequency = DEFAULT_HAPTIC_FREQUENCY;
 			}
 		} else {
 			// Reset the pending haptic pulse duration since rumble is suppressed.
-			m_pendingHapticPulseDurationSecs = 0;
+			m_pendingHapticDurationSecs = DEFAULT_HAPTIC_DURATION;
+			m_pendingHapticAmplitude = DEFAULT_HAPTIC_AMPLITUDE;
+			m_pendingHapticFrequency = DEFAULT_HAPTIC_FREQUENCY;
 		}
 	}
 
@@ -931,7 +870,7 @@ namespace steamvrbridge {
 
 				UpdateTrackingState();
 				UpdateControllerState();
-				TrackableDevice::Update();
+				ITrackableDevice::Update();
 			}
 
 			// Update the outgoing state
@@ -940,7 +879,7 @@ namespace steamvrbridge {
 	}
 
 	void PSMoveController::RefreshWorldFromDriverPose() {
-		TrackableDevice::RefreshWorldFromDriverPose();
+		ITrackableDevice::RefreshWorldFromDriverPose();
 
 		// Mark the calibration process as done once we have setup the world from driver pose
 		m_trackingStatus = vr::TrackingResult_Running_OK;

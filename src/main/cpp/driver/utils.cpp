@@ -1,6 +1,9 @@
+#define _USE_MATH_DEFINES
+
 #include "utils.h"
 #include "PSMoveClient_CAPI.h"
 #include "constants.h"
+#include "logger.h"
 #include <openvr_driver.h>
 #include <math.h>
 #include <string>
@@ -199,6 +202,91 @@ namespace steamvrbridge {
 		PSMQuatf viewOrientationInverse = PSM_QuatfConjugate(rotation);
 
 		*out_position = PSM_QuatfRotateVector(&viewOrientationInverse, &unrotatedPositionMeters);
+	}
+
+	PSMPosef Utils::GetHMDPoseInMeters() {
+		vr::TrackedDeviceIndex_t hmd_device_index = vr::k_unTrackedDeviceIndexInvalid;
+		if (Utils::GetHMDDeviceIndex(&hmd_device_index)) {
+			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - HMD Device Index= %u\n", hmd_device_index);
+		} else {
+			throw std::exception("CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Device Index\n");
+		}
+
+		PSMPosef hmdPose;
+		if (Utils::GetTrackedDevicePose(hmd_device_index, &hmdPose)) {
+			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - hmd_pose_meters: %s \n", Utils::PSMPosefToString(hmdPose).c_str());
+		} else {
+			throw std::exception("CPSMoveControllerLatest::RealignHMDTrackingSpace() - Failed to get HMD Pose\n");
+		}
+
+		return hmdPose;
+	}
+
+	PSMPosef Utils::RealignHMDTrackingSpace(PSMQuatf controllerOrientationInHmdSpaceQuat,
+											PSMVector3f controllerLocalOffsetFromHmdPosition,
+											PSMControllerID controllerId,
+											PSMPosef hmd_pose_meters,
+											bool useControllerOrientation) {
+
+		Logger::Info("Begin CPSMoveControllerLatest::RealignHMDTrackingSpace()\n");
+
+		// Make the HMD orientation only contain a yaw
+		hmd_pose_meters.Orientation = Utils::ExtractHMDYawQuaternion(hmd_pose_meters.Orientation);
+		Logger::Info("hmd_pose_meters(yaw-only): %s \n", Utils::PSMPosefToString(hmd_pose_meters).c_str());
+
+
+		// Transform the HMD's world space transform to where we expect the controller's world space transform to be.
+		PSMPosef controllerPoseRelativeToHMD =
+			PSM_PosefCreate(&controllerLocalOffsetFromHmdPosition, &controllerOrientationInHmdSpaceQuat);
+
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controllerPoseRelativeToHMD: %s \n", Utils::PSMPosefToString(controllerPoseRelativeToHMD).c_str());
+
+		// Compute the expected controller pose in HMD tracking space (i.e. "World Space")
+		PSMPosef controller_world_space_pose = PSM_PosefConcat(&controllerPoseRelativeToHMD, &hmd_pose_meters);
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_world_space_pose: %s \n", Utils::PSMPosefToString(controller_world_space_pose).c_str());
+
+		/*
+		We now have the transform of the controller in world space -- controller_world_space_pose
+
+		We also have the transform of the controller in driver space -- psmove_pose_meters
+
+		We need the transform that goes from driver space to world space -- driver_pose_to_world_pose
+		psmove_pose_meters * driver_pose_to_world_pose = controller_world_space_pose
+		psmove_pose_meters.inverse() * psmove_pose_meters * driver_pose_to_world_pose = psmove_pose_meters.inverse() * controller_world_space_pose
+		driver_pose_to_world_pose = psmove_pose_meters.inverse() * controller_world_space_pose
+		*/
+
+		// Get the current pose from the controller view instead of using the driver's cached
+		// value because the user may have triggered a pose reset, in which case the driver's
+		// cached pose might not yet be up to date by the time this callback is triggered.
+		PSMPosef controller_pose_meters = *k_psm_pose_identity;
+		PSM_GetControllerPose(controllerId, &controller_pose_meters);
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(raw): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
+
+		// PSMove Position is in cm, but OpenVR stores position in meters
+		controller_pose_meters.Position = PSM_Vector3fScale(&controller_pose_meters.Position, k_fScalePSMoveAPIToMeters);
+
+		if (useControllerOrientation) {
+			// Extract only the yaw from the controller orientation (assume it's mostly held upright)
+			controller_pose_meters.Orientation = Utils::ExtractPSMoveYawQuaternion(controller_pose_meters.Orientation);
+			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(yaw-only): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
+		} else {
+			const PSMVector3f eulerPitch = { (float)M_PI_2, 0.0f, 0.0f };
+
+			controller_pose_meters.Orientation = PSM_QuatfCreateFromAngles(&eulerPitch);
+			Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_meters(no-rotation): %s \n", Utils::PSMPosefToString(controller_pose_meters).c_str());
+		}
+
+		PSMPosef controller_pose_inv = PSM_PosefInverse(&controller_pose_meters);
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - controller_pose_inv: %s \n", Utils::PSMPosefToString(controller_pose_inv).c_str());
+
+		PSMPosef driver_pose_to_world_pose = PSM_PosefConcat(&controller_pose_inv, &controller_world_space_pose);
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - driver_pose_to_world_pose: %s \n", Utils::PSMPosefToString(driver_pose_to_world_pose).c_str());
+
+		PSMPosef test_composed_controller_world_space = PSM_PosefConcat(&controller_pose_meters, &driver_pose_to_world_pose);
+		Logger::Info("CPSMoveControllerLatest::RealignHMDTrackingSpace() - test_composed_controller_world_space: %s \n", Utils::PSMPosefToString(test_composed_controller_world_space).c_str());
+
+		return driver_pose_to_world_pose;
 	}
 
 	//==================================================================================================
