@@ -1297,17 +1297,18 @@ void CServerDriver_PSMoveService::HandleControllerListReponse(
     {
         PSMControllerID psmControllerId = controller_list->controller_id[list_index];
         PSMControllerType psmControllerType = controller_list->controller_type[list_index];
+		PSMControllerHand psmControllerHand = controller_list->controller_hand[list_index];
 		std::string psmControllerSerial(controller_list->controller_serial[list_index]);
 
         switch (psmControllerType)
         {
         case PSMControllerType::PSMController_Move:
 			DriverLog("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate PSMove(%d)\n", psmControllerId);
-            AllocateUniquePSMoveController(psmControllerId, psmControllerSerial);
+            AllocateUniquePSMoveController(psmControllerId, psmControllerHand, psmControllerSerial);
             break;
         case PSMControllerType::PSMController_Virtual:
 			DriverLog("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate VirtualController(%d)\n", psmControllerId);
-            AllocateUniqueVirtualController(psmControllerId, psmControllerSerial);
+            AllocateUniqueVirtualController(psmControllerId, psmControllerHand, psmControllerSerial);
             break;
         case PSMControllerType::PSMController_Navi:
 			// Take care of this is the second pass once all of the PSMove controllers have been setup
@@ -1315,7 +1316,7 @@ void CServerDriver_PSMoveService::HandleControllerListReponse(
             break;
         case PSMControllerType::PSMController_DualShock4:
 			DriverLog("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate PSDualShock4(%d)\n", psmControllerId);
-            AllocateUniqueDualShock4Controller(psmControllerId, psmControllerSerial);
+            AllocateUniqueDualShock4Controller(psmControllerId, psmControllerHand, psmControllerSerial);
             break;
         default:
             break;
@@ -1375,7 +1376,7 @@ static void GenerateControllerSteamVRIdentifier( char *p, int psize, int control
     snprintf(p, psize, "psmove_controller%d", controller);
 }
 
-void CServerDriver_PSMoveService::AllocateUniquePSMoveController(PSMControllerID psmControllerID, const std::string &psmControllerSerial)
+void CServerDriver_PSMoveService::AllocateUniquePSMoveController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial)
 {
     char svrIdentifier[256];
     GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerID);
@@ -1390,7 +1391,11 @@ void CServerDriver_PSMoveService::AllocateUniquePSMoveController(PSMControllerID
 			DriverLog( "added new psmove controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
 
             CPSMoveControllerLatest *TrackedDevice= 
-                new CPSMoveControllerLatest( psmControllerID, PSMControllerType::PSMController_Move, psmSerialNo.c_str());
+                new CPSMoveControllerLatest(
+					psmControllerID,
+					PSMControllerType::PSMController_Move,
+					psmControllerHand,
+					psmSerialNo.c_str());
 			m_vecTrackedDevices.push_back(TrackedDevice);
 
 			if (vr::VRServerDriverHost())
@@ -1405,7 +1410,7 @@ void CServerDriver_PSMoveService::AllocateUniquePSMoveController(PSMControllerID
     }
 }
 
-void CServerDriver_PSMoveService::AllocateUniqueVirtualController(PSMControllerID psmControllerID, const std::string &psmControllerSerial)
+void CServerDriver_PSMoveService::AllocateUniqueVirtualController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial)
 {
     char svrIdentifier[256];
     GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerID);
@@ -1418,7 +1423,11 @@ void CServerDriver_PSMoveService::AllocateUniqueVirtualController(PSMControllerI
 		DriverLog( "added new virtual controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
 
         CPSMoveControllerLatest *TrackedDevice= 
-            new CPSMoveControllerLatest( psmControllerID, PSMControllerType::PSMController_Virtual, psmSerialNo.c_str());
+            new CPSMoveControllerLatest(
+				psmControllerID,
+				PSMControllerType::PSMController_Virtual, 
+				psmControllerHand, 
+				psmSerialNo.c_str());
 		m_vecTrackedDevices.push_back(TrackedDevice);
 
 		if (vr::VRServerDriverHost())
@@ -1428,7 +1437,7 @@ void CServerDriver_PSMoveService::AllocateUniqueVirtualController(PSMControllerI
     }
 }
 
-void CServerDriver_PSMoveService::AllocateUniqueDualShock4Controller(PSMControllerID psmControllerID, const std::string &psmControllerSerial)
+void CServerDriver_PSMoveService::AllocateUniqueDualShock4Controller(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial)
 {
     char svrIdentifier[256];
     GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerID);
@@ -1441,7 +1450,11 @@ void CServerDriver_PSMoveService::AllocateUniqueDualShock4Controller(PSMControll
 		DriverLog( "added new dualshock4 controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
 
         CPSMoveControllerLatest *TrackedDevice= 
-            new CPSMoveControllerLatest(psmControllerID, PSMControllerType::PSMController_DualShock4, psmSerialNo.c_str());
+            new CPSMoveControllerLatest(
+				psmControllerID,
+				PSMControllerType::PSMController_DualShock4,
+				psmControllerHand, 
+				psmSerialNo.c_str());
 		m_vecTrackedDevices.push_back(TrackedDevice);
 
 		if (vr::VRServerDriverHost())
@@ -1767,10 +1780,12 @@ const char *CPSMoveTrackedDeviceLatest::GetSteamVRIdentifier() const
 CPSMoveControllerLatest::CPSMoveControllerLatest( 
 	PSMControllerID psmControllerId, 
 	PSMControllerType psmControllerType,
+	PSMControllerHand psmControllerHand,
 	const char *psmSerialNo)
     : CPSMoveTrackedDeviceLatest()
     , m_nPSMControllerId(psmControllerId)
 	, m_PSMControllerType(psmControllerType)
+	, m_psmControllerHand(psmControllerHand)
     , m_PSMControllerView(nullptr)
     , m_nPSMChildControllerId(-1)
 	, m_PSMChildControllerType(PSMControllerType::PSMController_None)
@@ -2335,6 +2350,16 @@ vr::EVRInitError CPSMoveControllerLatest::Activate(vr::TrackedDeviceIndex_t unOb
 			// We are reporting a "trackpad" type axis for better compatibility with Vive games
 			properties->SetInt32Property(m_ulPropertyContainer, vr::Prop_Axis0Type_Int32, vr::k_eControllerAxis_TrackPad);
 			properties->SetInt32Property(m_ulPropertyContainer, vr::Prop_Axis1Type_Int32, vr::k_eControllerAxis_Trigger);
+
+			switch (m_psmControllerHand)
+			{
+			case PSMControllerHand_Left:
+				properties->SetInt32Property(m_ulPropertyContainer, vr::Prop_ControllerRoleHint_Int32, vr::TrackedControllerRole_LeftHand);
+				break;
+			case PSMControllerHand_Right:
+				properties->SetInt32Property(m_ulPropertyContainer, vr::Prop_ControllerRoleHint_Int32, vr::TrackedControllerRole_RightHand);
+				break;
+			}
 
 			uint64_t ulRetVal= 0;
 			for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_EPSButtonID_Count); ++buttonIndex)
