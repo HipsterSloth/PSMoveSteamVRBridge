@@ -62,6 +62,7 @@ install(DIRECTORY ${PSMOVESERVICE_BIN_DIR}/assets
 install(FILES ${PSMOVESERVICE_BIN_DIR}/PSMoveClient_CAPI.dll
     ${PSMOVESERVICE_BIN_DIR}/PSMoveConfigTool.exe
     ${PSMOVESERVICE_BIN_DIR}/PSMoveService.exe
+	${PSMOVESERVICE_BIN_DIR}/PSMoveServiceAdmin.exe
     ${PSMOVESERVICE_BIN_DIR}/test_camera.exe
     ${PSMOVESERVICE_BIN_DIR}/test_camera_parallel.exe
     ${PSMOVESERVICE_BIN_DIR}/test_console_CAPI.exe
