@@ -3410,9 +3410,13 @@ void CPSMoveControllerLatest::UpdateTrackingState()
 					* abs(pow(abs(physicsData.LinearVelocityCmPerSec.z), m_fLinearVelocityExponent))
 					* k_fScalePSMoveAPIToMeters * m_fLinearVelocityMultiplier;
 
-                m_Pose.vecAcceleration[0] = physicsData.LinearAccelerationCmPerSecSqr.x * k_fScalePSMoveAPIToMeters;
-                m_Pose.vecAcceleration[1] = physicsData.LinearAccelerationCmPerSecSqr.y * k_fScalePSMoveAPIToMeters;
-                m_Pose.vecAcceleration[2] = physicsData.LinearAccelerationCmPerSecSqr.z * k_fScalePSMoveAPIToMeters;
+				// Disable for now to prevent jitter
+                //m_Pose.vecAcceleration[0] = physicsData.LinearAccelerationCmPerSecSqr.x * k_fScalePSMoveAPIToMeters;
+                //m_Pose.vecAcceleration[1] = physicsData.LinearAccelerationCmPerSecSqr.y * k_fScalePSMoveAPIToMeters;
+                //m_Pose.vecAcceleration[2] = physicsData.LinearAccelerationCmPerSecSqr.z * k_fScalePSMoveAPIToMeters;
+                m_Pose.vecAcceleration[0] = 0.f;
+                m_Pose.vecAcceleration[1] = 0.f;
+                m_Pose.vecAcceleration[2] = 0.f;
 
                 m_Pose.vecAngularVelocity[0] = physicsData.AngularVelocityRadPerSec.x;
                 m_Pose.vecAngularVelocity[1] = physicsData.AngularVelocityRadPerSec.y;
