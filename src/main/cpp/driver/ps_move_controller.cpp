@@ -457,25 +457,27 @@ namespace steamvrbridge {
 	// Updates this controllers trackable state for the given controller button id. The mappings should not be configured
 	// via vr_settings.xml anymore as IVRDriverInput is aiming to offer a UI config interface for this in SteamVR Runtime, 
 	// therefore they should be set in stone here.
-	void PSMoveController::UpdateButtonState(ePSButtonID button, bool buttonState) {
+	void PSMoveController::UpdateButtonState(ePSButtonID button, PSMButtonState buttonState) {
+		const bool bIsPressed= (buttonState == PSMButtonState_PRESSED) || (buttonState == PSMButtonState_DOWN);
+
 		switch (button) {
 			case k_EPSButtonID_PS:
-				if (state.system.isPressed != buttonState)
-					state.system.isPressed = buttonState;
+				if (state.system.isPressed != bIsPressed)
+					state.system.isPressed = bIsPressed;
 				break;
 			case k_EPSButtonID_Triangle:
-				if (state.application.isPressed != buttonState)
-					state.application.isPressed = buttonState;
+				if (state.application.isPressed != bIsPressed)
+					state.application.isPressed = bIsPressed;
 				break;
 			case k_EPSButtonID_Cross:
-				if (state.grip.isPressed != buttonState)
-					state.grip.isPressed = buttonState;
+				if (state.grip.isPressed != bIsPressed)
+					state.grip.isPressed = bIsPressed;
 				break;
 			case k_EPSButtonID_Trigger:
-				if (state.trigger.isPressed != buttonState)
-					state.trigger.isPressed = buttonState;
-				if (state.trigger.isTouched != buttonState)
-					state.trigger.isTouched = buttonState;
+				if (state.trigger.isPressed != bIsPressed)
+					state.trigger.isPressed = bIsPressed;
+				if (state.trigger.isTouched != bIsPressed)
+					state.trigger.isTouched = bIsPressed;
 				break;
 			case k_EPSButtonID_Square: // TODO
 				/*if (state.?.isPressed != buttonState)
@@ -486,10 +488,10 @@ namespace steamvrbridge {
 					state. ? .isPressed = buttonState;*/
 				break;
 			case k_EPSButtonID_Move:
-				if (state.trackpad.isPressed != buttonState)
-					state.trackpad.isPressed = buttonState;
-				if (state.trackpad.isTouched != buttonState)
-					state.trackpad.isTouched = buttonState;
+				if (state.trackpad.isPressed != bIsPressed)
+					state.trackpad.isPressed = bIsPressed;
+				if (state.trackpad.isTouched != bIsPressed)
+					state.trackpad.isTouched = bIsPressed;
 				break;
 		}
 	}

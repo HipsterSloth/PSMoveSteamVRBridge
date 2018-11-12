@@ -36,7 +36,7 @@ namespace steamvrbridge {
 
 	private:
 		// IController interface implementation
-		void UpdateButtonState(ePSButtonID button, bool buttonState) override;
+		void UpdateButtonState(ePSButtonID button, PSMButtonState buttonState) override;
 		void UpdateTouchPadDirection() override;
 		void UpdateControllerState() override;
 		void UpdateBatteryChargeState(PSMBatteryState newBatteryEnum) override;

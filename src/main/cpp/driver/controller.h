@@ -43,7 +43,7 @@ namespace steamvrbridge {
 
 	private:
 		// Updates the controllers state for the given button.
-		virtual void UpdateButtonState(ePSButtonID button, bool buttonState) = 0;
+		virtual void UpdateButtonState(ePSButtonID button, PSMButtonState buttonState) = 0;
 
 		// Updates the controller state of the touchpad direction.
 		virtual void UpdateTouchPadDirection() = 0;
