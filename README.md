@@ -1,6 +1,4 @@
-[![Documentation](https://codedocs.xyz/HipsterSloth/PSMoveSteamVRBridge.svg)](https://codedocs.xyz/HipsterSloth/PSMoveSteamVRBridge/)
-
-# PSMoveSteamVRBridge
+# PSMoveSteamVRBridge [![Build status](https://ci.appveyor.com/api/projects/status/k3w5se9j6p5phxeg?svg=true)](https://ci.appveyor.com/project/SuperEvenSteven/psmovesteamvrbridge)  [![Documentation](https://img.shields.io/badge/code-documented-brightgreen.svg)](https://superevensteven.github.io/PSMoveSteamVRBridge/annotated.html)
 PSMoveSteamVRBridge is a client for [PSMoveService](https://github.com/cboulay/PSMoveService) that takes the pose and button data of PSMove/DualShock4/PSNavi controller and forwards it into SteamVR. The [FAQ](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki/Frequently-Asked-Questions) is a good starting point for any specific questions you may have about the project. 
 
 **NOTE** This is alpha software still heavily in development. If you are downloading this project to play games on SteamVR please be aware that this tool may not work for the game you want to play so buyer beware. That said, if you are feeling brave and want to test this we appreciate the feedback about what works and what doesn't.

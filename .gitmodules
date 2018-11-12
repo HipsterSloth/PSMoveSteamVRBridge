@@ -1,3 +1,0 @@
-[submodule "thirdparty/openvr"]
-	path = thirdparty/openvr
-	url = https://github.com/ValveSoftware/openvr.git
