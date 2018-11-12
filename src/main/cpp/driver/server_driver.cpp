@@ -361,16 +361,17 @@ namespace steamvrbridge {
 		for (int list_index = 0; list_index < controller_list->count; ++list_index) {
 			PSMControllerID psmControllerId = controller_list->controller_id[list_index];
 			PSMControllerType psmControllerType = controller_list->controller_type[list_index];
+			PSMControllerHand psmControllerHand = controller_list->controller_hand[list_index];
 			std::string psmControllerSerial(controller_list->controller_serial[list_index]);
 
 			switch (psmControllerType) {
 				case PSMControllerType::PSMController_Move:
 					Logger::Info("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate PSMove(%d)\n", psmControllerId);
-					AllocateUniquePSMoveController(psmControllerId, psmControllerSerial);
+					AllocateUniquePSMoveController(psmControllerId, psmControllerHand, psmControllerSerial);
 					break;
 				case PSMControllerType::PSMController_Virtual:
 					Logger::Info("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate VirtualController(%d)\n", psmControllerId);
-					AllocateUniqueVirtualController(psmControllerId, psmControllerSerial);
+					AllocateUniqueVirtualController(psmControllerId, psmControllerHand, psmControllerSerial);
 					break;
 				case PSMControllerType::PSMController_Navi:
 					// Take care of this is the second pass once all of the PSMove controllers have been setup
@@ -378,7 +379,7 @@ namespace steamvrbridge {
 					break;
 				case PSMControllerType::PSMController_DualShock4:
 					Logger::Info("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate PSDualShock4(%d)\n", psmControllerId);
-					AllocateUniqueDualShock4Controller(psmControllerId, psmControllerSerial);
+					AllocateUniqueDualShock4Controller(psmControllerId, psmControllerHand, psmControllerSerial);
 					break;
 				default:
 					break;
@@ -426,7 +427,7 @@ namespace steamvrbridge {
 		}
 	}
 
-	void CServerDriver_PSMoveService::AllocateUniquePSMoveController(PSMControllerID psmControllerID, const std::string &psmControllerSerial) {
+	void CServerDriver_PSMoveService::AllocateUniquePSMoveController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial) {
 		char svrIdentifier[256];
 		Utils::GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerID);
 
@@ -435,8 +436,18 @@ namespace steamvrbridge {
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
 			if (0 != m_strPSMoveHMDSerialNo.compare(psmSerialNo)) {
-				// default controller role
-				vr::ETrackedControllerRole trackedControllerRole = vr::TrackedControllerRole_LeftHand;
+				vr::ETrackedControllerRole trackedControllerRole;
+				switch (psmControllerHand)
+				{
+				case PSMControllerHand_Left:
+					trackedControllerRole= vr::TrackedControllerRole_LeftHand;
+					break;
+				case PSMControllerHand_Right:
+					trackedControllerRole= vr::TrackedControllerRole_RightHand;
+					break;
+				default:
+					trackedControllerRole= vr::TrackedControllerRole_LeftHand;
+				}
 
 				// if we already have another PS Move controller then set this new controller's role to the right hand
 				for (auto it = m_vecTrackedDevices.begin(); it != m_vecTrackedDevices.end(); ++it) {
@@ -459,7 +470,7 @@ namespace steamvrbridge {
 		}
 	}
 
-	void CServerDriver_PSMoveService::AllocateUniqueVirtualController(PSMControllerID psmControllerID, const std::string &psmControllerSerial) {
+	void CServerDriver_PSMoveService::AllocateUniqueVirtualController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial) {
 		/* TODO Use virtualcontroller.cpp
 		char svrIdentifier[256];
 		Utils::GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerID);
@@ -482,7 +493,7 @@ namespace steamvrbridge {
 		}*/
 	}
 
-	void CServerDriver_PSMoveService::AllocateUniqueDualShock4Controller(PSMControllerID psmControllerID, const std::string &psmControllerSerial) {
+	void CServerDriver_PSMoveService::AllocateUniqueDualShock4Controller(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial) {
 		/* TODO use ds4controller.cpp
 		char svrIdentifier[256];
 		Utils::GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerID);

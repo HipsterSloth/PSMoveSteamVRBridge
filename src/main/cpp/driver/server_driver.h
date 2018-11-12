@@ -38,10 +38,10 @@ namespace steamvrbridge {
 
 	private:
 		vr::ITrackedDeviceServerDriver * FindTrackedDeviceDriver(const char * pchId);
-		void AllocateUniquePSMoveController(PSMControllerID ControllerID, const std::string &ControllerSerial);
-		void AllocateUniqueVirtualController(PSMControllerID psmControllerID, const std::string &psmControllerSerial);
+		void AllocateUniquePSMoveController(PSMControllerID ControllerID, PSMControllerHand psmControllerHand, const std::string &ControllerSerial);
+		void AllocateUniqueVirtualController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial);
 		void AttachPSNaviToParentController(PSMControllerID ControllerID, const std::string &ControllerSerial, const std::string &ParentControllerSerial);
-		void AllocateUniqueDualShock4Controller(PSMControllerID ControllerID, const std::string &ControllerSerial);
+		void AllocateUniqueDualShock4Controller(PSMControllerID ControllerID, PSMControllerHand psmControllerHand, const std::string &ControllerSerial);
 		void AllocateUniquePSMoveTracker(const PSMClientTrackerInfo *trackerInfo);
 		bool ReconnectToPSMoveService();
 
