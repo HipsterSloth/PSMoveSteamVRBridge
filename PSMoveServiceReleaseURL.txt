@@ -1,1 +1,0 @@
-https://github.com/cboulay/PSMoveService/releases/download/v0.9-alpha9.0.1/PSMoveService_0.9_alpha9.0.1.zip
