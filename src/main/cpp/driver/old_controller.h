@@ -7,7 +7,7 @@
 
 namespace steamvrbridge {
 
-	class Controller : public ITrackableDevice
+	class OldController : public TrackableDevice
 	{
 	public:
 		// Mirrors definition in PSMControllerType
@@ -99,8 +99,8 @@ namespace steamvrbridge {
 			k_EVRTouchpadDirection_Count
 		};
 
-		Controller(PSMControllerID psmControllerID, PSMControllerType psmControllerType, const char *psmSerialNo);
-		virtual ~Controller();
+		OldController(PSMControllerID psmControllerID, PSMControllerType psmControllerType, const char *psmSerialNo);
+		virtual ~OldController();
 
 		// Overridden Implementation of vr::ITrackedDeviceServerDriver
 		virtual vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
@@ -189,8 +189,8 @@ namespace steamvrbridge {
 		eVRTouchpadDirection psButtonIDToVrTouchpadDirection[k_EPSControllerType_Count][k_EPSButtonID_Count];
 		void LoadButtonMapping(
 			vr::IVRSettings *pSettings,
-			const Controller::ePSControllerType controllerType,
-			const Controller::ePSButtonID psButtonID,
+			const OldController::ePSControllerType controllerType,
+			const OldController::ePSButtonID psButtonID,
 			const vr::EVRButtonId defaultVRButtonID,
 			const eVRTouchpadDirection defaultTouchpadDirection,
 			int controllerId = -1);

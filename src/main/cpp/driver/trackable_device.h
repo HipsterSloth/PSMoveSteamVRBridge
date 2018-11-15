@@ -1,87 +1,17 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
-#include <map>
 
 namespace steamvrbridge {
 
 	/* A device tracked by OpenVR through its ITrackedDeviceServerDriver interface definition. It implements
 	the required features of an ITrackedDeviceServerDriver and also defines a standard interface for how this
 	class should be used.*/
-	class ITrackableDevice : public vr::ITrackedDeviceServerDriver {
+	class TrackableDevice : public vr::ITrackedDeviceServerDriver {
 	public:
 
-		enum {
-			// buttons
-			k_eButton_Grip,
-			k_eButton_Application,
-			k_eButton_System,
-			k_eButton_Guide,
-			k_eButton_Back,
-
-			// trackpad
-			k_eButton_Trackpad,
-			k_eTouch_Trackpad,
-			k_eTrackpad_X,
-			k_eTrackpad_Y,
-			
-			//trigger
-			k_eButton_Trigger,
-			k_eTouch_Trigger,
-			k_eValue_Trigger
-		} DeviceInput;
-
-		/* Definition of a Tracked Device's State */
-		struct Axis {
-			float x = 0.0f;
-			float y = 0.0f;
-		};
-
-		struct Button {
-			//Button(bool pressedState) { isPressed = pressedState; }
-			bool isPressed = false;
-		};
-
-		struct Trigger {
-			// trigger state
-			bool isPressed = false;
-			bool isTouched = false;
-			float value = 0.0f;
-		};
-
-		struct TrackPad {
-			// trackpad state
-			bool isPressed = false;
-			bool isTouched = false;
-			Axis axis;
-		};
-
-		struct State {
-			Button grip;
-			Button application;
-			Button system;
-			Button back;
-			Trigger trigger;
-			TrackPad trackpad;
-		};
-
-		/* The following represent the input paths that physical hardware
-		can be mapped to in the OpenVR IVRDriverInput interface */
-		const char *k_pch_Trackpad = "/input/trackpad/click";
-		const char *k_pch_Trackpad_Touch = "/input/trackpad/touch";
-		const char *k_pch_Trackpad_X = "/input/trackpad/x";
-		const char *k_pch_Trackpad_Y = "/input/trackpad/y";
-		const char *k_pch_Trackpad_Value = "/input/trigger/value";
-		const char *k_pch_Haptic = "/output/haptic";
-		const char *k_pch_Trigger = "/input/trigger/click";
-		const char *k_pch_Trigger_Touch = "/input/trigger/touch";
-		const char *k_pch_Application = "/input/application_menu/click";
-		const char *k_pch_Back = "/input/back/click";
-		const char *k_pch_Grip = "/input/grip/click";
-		const char *k_pch_System = "/input/system/click";
-
-		ITrackableDevice();
-		virtual ~ITrackableDevice();
+		TrackableDevice();
+		virtual ~TrackableDevice();
 
 		// Shared Implementation of vr::ITrackedDeviceServerDriver
 		virtual vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
@@ -106,9 +36,6 @@ namespace steamvrbridge {
 		// OpenVR Properties
 		vr::PropertyContainerHandle_t m_ulPropertyContainer;
 
-		// State of all buttons/touches/triggers
-		State state;
-
 		// Tracked device identification
 		std::string m_strSteamVRSerialNo;
 
@@ -122,10 +49,5 @@ namespace steamvrbridge {
 		vr::DriverPose_t m_Pose;
 		unsigned short m_firmware_revision;
 		unsigned short m_hardware_revision;
-
-		// Component handle registered upon Activate() and called to update button/touch/axis/haptic events
-		std::map<int, vr::VRInputComponentHandle_t> m_hButtons;
-		std::map<int, vr::VRInputComponentHandle_t> m_hAxes;
-		vr::VRInputComponentHandle_t m_ulHapticComponent;
 	};
 }

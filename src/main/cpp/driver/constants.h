@@ -16,196 +16,423 @@ namespace steamvrbridge {
 	static const float DEFAULT_HAPTIC_FREQUENCY = 200.f;
 
 	/* PSMoveService button IDs*/
-	enum ePSButtonID {
-		k_EPSButtonID_0,
-		k_EPSButtonID_1,
-		k_EPSButtonID_2,
-		k_EPSButtonID_3,
-		k_EPSButtonID_4,
-		k_EPSButtonID_5,
-		k_EPSButtonID_6,
-		k_EPSButtonID_7,
-		k_EPSButtonID_8,
-		k_EPSButtonID_9,
-		k_EPSButtonID_10,
-		k_EPSButtonID_11,
-		k_EPSButtonID_12,
-		k_EPSButtonID_13,
-		k_EPSButtonID_14,
-		k_EPSButtonID_15,
-		k_EPSButtonID_16,
-		k_EPSButtonID_17,
-		k_EPSButtonID_18,
-		k_EPSButtonID_19,
-		k_EPSButtonID_20,
-		k_EPSButtonID_21,
-		k_EPSButtonID_22,
-		k_EPSButtonID_23,
-		k_EPSButtonID_24,
-		k_EPSButtonID_25,
-		k_EPSButtonID_26,
-		k_EPSButtonID_27,
-		k_EPSButtonID_28,
-		k_EPSButtonID_29,
-		k_EPSButtonID_30,
-		k_EPSButtonID_31,
+	enum ePSMButtonID {
+		/* Common Buttons */
+		k_PSMButtonID_PS,
+		k_PSMButtonID_Triangle,
+		k_PSMButtonID_Circle,
+		k_PSMButtonID_Cross,
+		k_PSMButtonID_Square,
+		k_PSMButtonID_DPad_Up,
+		k_PSMButtonID_DPad_Down,
+		k_PSMButtonID_DPad_Left,
+		k_PSMButtonID_DPad_Right,
 
-		k_EPSButtonID_Count,
+		/* PSMove Specific Buttons */
+		k_PSMButtonID_Move,
+		k_PSMButtonID_Select,
+		k_PSMButtonID_Start,
 
-		k_EPSButtonID_PS = k_EPSButtonID_0,
-		k_EPSButtonID_Left = k_EPSButtonID_1,
-		k_EPSButtonID_Up = k_EPSButtonID_2,
-		k_EPSButtonID_Right = k_EPSButtonID_3,
-		k_EPSButtonID_Down = k_EPSButtonID_4,
-		k_EPSButtonID_Move = k_EPSButtonID_5,
-		k_EPSButtonID_Trackpad = k_EPSButtonID_6,
-		k_EPSButtonID_Trigger = k_EPSButtonID_7,
-		k_EPSButtonID_Triangle = k_EPSButtonID_8,
-		k_EPSButtonID_Square = k_EPSButtonID_9,
-		k_EPSButtonID_Circle = k_EPSButtonID_10,
-		k_EPSButtonID_Cross = k_EPSButtonID_11,
-		k_EPSButtonID_Select = k_EPSButtonID_12,
-		k_EPSButtonID_Share = k_EPSButtonID_13,
-		k_EPSButtonID_Start = k_EPSButtonID_14,
-		k_EPSButtonID_Options = k_EPSButtonID_15,
-		k_EPSButtonID_L1 = k_EPSButtonID_16,
-		k_EPSButtonID_L2 = k_EPSButtonID_17,
-		k_EPSButtonID_L3 = k_EPSButtonID_18,
-		k_EPSButtonID_R1 = k_EPSButtonID_19,
-		k_EPSButtonID_R2 = k_EPSButtonID_20,
-		k_EPSButtonID_R3 = k_EPSButtonID_21,
+		/* PSNavi Specific Buttons */
+		k_PSMButtonID_Shoulder,
+		k_PSMButtonID_Joystick,
+
+		/* Dualshock4 Specific Buttons */
+		k_PSMButtonID_Options,
+		k_PSMButtonID_Share,
+		k_PSMButtonID_Touchpad,
+		k_PSMButtonID_LeftJoystick,
+		k_PSMButtonID_RightJoystick,
+		k_PSMButtonID_LeftShoulder,
+		k_PSMButtonID_RightShoulder,
+
+		/* Emulated Trackpad Buttons */
+		k_PSMButtonID_EmulatedTrackpadTouched,
+		k_PSMButtonID_EmulatedTrackpadPressed,
+
+		/* Virtual Controller Specific Buttons */
+		k_PSMButtonID_Virtual_0,
+		k_PSMButtonID_Virtual_1,
+		k_PSMButtonID_Virtual_2,
+		k_PSMButtonID_Virtual_3,
+		k_PSMButtonID_Virtual_4,
+		k_PSMButtonID_Virtual_5,
+		k_PSMButtonID_Virtual_6,
+		k_PSMButtonID_Virtual_7,
+		k_PSMButtonID_Virtual_8,
+		k_PSMButtonID_Virtual_9,
+		k_PSMButtonID_Virtual_10,
+		k_PSMButtonID_Virtual_11,
+		k_PSMButtonID_Virtual_12,
+		k_PSMButtonID_Virtual_13,
+		k_PSMButtonID_Virtual_14,
+		k_PSMButtonID_Virtual_15,
+		k_PSMButtonID_Virtual_16,
+		k_PSMButtonID_Virtual_17,
+		k_PSMButtonID_Virtual_18,
+		k_PSMButtonID_Virtual_19,
+		k_PSMButtonID_Virtual_20,
+		k_PSMButtonID_Virtual_21,
+		k_PSMButtonID_Virtual_22,
+		k_PSMButtonID_Virtual_23,
+		k_PSMButtonID_Virtual_24,
+		k_PSMButtonID_Virtual_25,
+		k_PSMButtonID_Virtual_26,
+		k_PSMButtonID_Virtual_27,
+		k_PSMButtonID_Virtual_28,
+		k_PSMButtonID_Virtual_29,
+		k_PSMButtonID_Virtual_30,
+		k_PSMButtonID_Virtual_31,
+
+		k_PSMButtonID_Count
 	};
 
-	static const char *k_PSButtonNames[k_EPSButtonID_Count] = {
+	static const char *k_PSMButtonNames[k_PSMButtonID_Count] = {
+		/* Common Buttons */
 		"ps",
-		"left",
-		"up",
-		"down",
-		"right",
-		"move",
-		"trackpad",
-		"trigger",
 		"triangle",
-		"square",
 		"circle",
 		"cross",
+		"square",
+		"dpad_up",
+		"dpad_down",
+		"dpad_right",
+		"dpad_left",
+
+		/* PSMove Specific Buttons */
+		"move",
 		"select",
-		"share",
 		"start",
+
+		/* PSNavi Specific Buttons */
+		"shoulder",
+		"joystick",
+
+		/* Dualshock4 Specific Buttons */
 		"options",
-		"l1",
-		"l2",
-		"l3",
-		"r1",
-		"r2",
-		"r3",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
+		"share",
+		"touchpad",
+		"joystick_left",
+		"joystick_right",
+		"shoulder_left",
+		"shoulder_right",
+
+		/* Virtual Controller Specific Buttons */
+		"virtual_button_0",
+		"virtual_button_1",
+		"virtual_button_2",
+		"virtual_button_3",
+		"virtual_button_4",
+		"virtual_button_5",
+		"virtual_button_6",
+		"virtual_button_7",
+		"virtual_button_8",
+		"virtual_button_9",
+		"virtual_button_10",
+		"virtual_button_11",
+		"virtual_button_12",
+		"virtual_button_13",
+		"virtual_button_14",
+		"virtual_button_15",
+		"virtual_button_16",
+		"virtual_button_17",
+		"virtual_button_18",
+		"virtual_button_19",
+		"virtual_button_20",
+		"virtual_button_21",
+		"virtual_button_22",
+		"virtual_button_23",
+		"virtual_button_24",
+		"virtual_button_25",
+		"virtual_button_26",
+		"virtual_button_27",
+		"virtual_button_28",
+		"virtual_button_29",
+		"virtual_button_30",
+		"virtual_button_31"
 	};
 
-	static const char *k_VirtualButtonNames[k_EPSButtonID_Count] = {
-		"gamepad_button_0",
-		"gamepad_button_1",
-		"gamepad_button_2",
-		"gamepad_button_3",
-		"gamepad_button_4",
-		"gamepad_button_5",
-		"gamepad_button_6",
-		"gamepad_button_7",
-		"gamepad_button_8",
-		"gamepad_button_9",
-		"gamepad_button_10",
-		"gamepad_button_11",
-		"gamepad_button_12",
-		"gamepad_button_13",
-		"gamepad_button_14",
-		"gamepad_button_15",
-		"gamepad_button_16",
-		"gamepad_button_17",
-		"gamepad_button_18",
-		"gamepad_button_19",
-		"gamepad_button_20",
-		"gamepad_button_21",
-		"gamepad_button_22",
-		"gamepad_button_23",
-		"gamepad_button_24",
-		"gamepad_button_25",
-		"gamepad_button_26",
-		"gamepad_button_27",
-		"gamepad_button_28",
-		"gamepad_button_29",
-		"gamepad_button_30",
-		"gamepad_button_31"
+	static const char *k_PSMButtonPaths[k_PSMButtonID_Count] = {
+		/* Common Buttons */
+		"/input/ps/click",
+		"/input/triangle/click",
+		"/input/circle/click",
+		"/input/cross/click",
+		"/input/square/click",
+		"/input/dpad_up/click",
+		"/input/dpad_down/click",
+		"/input/dpad_right/click",
+		"/input/dpad_left/click",
+
+		/* PSMove Specific Buttons */
+		"/input/move/click",
+		"/input/select/click",
+		"/input/start/click",
+
+		/* PSNavi Specific Buttons */
+		"/input/shoulder/click",
+		"/input/joystick/click",
+
+		/* Dualshock4 Specific Buttons */
+		"/input/options/click",
+		"/input/share/click",
+		"/input/touchpad/click",
+		"/input/joystick_left/click",
+		"/input/joystick_right/click",
+		"/input/shoulder_left/click",
+		"/input/shoulder_right/click",
+
+		/* Emulated Trackpad Buttons */
+		"/input/emulated_trackpad/touch",
+		"/input/emulated_trackpad/click",
+
+		/* Virtual Controller Specific Buttons */
+		"/input/virtual_button_0/click",
+		"/input/virtual_button_1/click",
+		"/input/virtual_button_2/click",
+		"/input/virtual_button_3/click",
+		"/input/virtual_button_4/click",
+		"/input/virtual_button_5/click",
+		"/input/virtual_button_6/click",
+		"/input/virtual_button_7/click",
+		"/input/virtual_button_8/click",
+		"/input/virtual_button_9/click",
+		"/input/virtual_button_10/click",
+		"/input/virtual_button_11/click",
+		"/input/virtual_button_12/click",
+		"/input/virtual_button_13/click",
+		"/input/virtual_button_14/click",
+		"/input/virtual_button_15/click",
+		"/input/virtual_button_16/click",
+		"/input/virtual_button_17/click",
+		"/input/virtual_button_18/click",
+		"/input/virtual_button_19/click",
+		"/input/virtual_button_20/click",
+		"/input/virtual_button_21/click",
+		"/input/virtual_button_22/click",
+		"/input/virtual_button_23/click",
+		"/input/virtual_button_24/click",
+		"/input/virtual_button_25/click",
+		"/input/virtual_button_26/click",
+		"/input/virtual_button_27/click",
+		"/input/virtual_button_28/click",
+		"/input/virtual_button_29/click",
+		"/input/virtual_button_30/click",
+		"/input/virtual_button_31/click"
+	};
+	
+
+	enum ePSMAxisID {
+		/* Common Axes */
+		k_PSMAxisID_Trigger,
+
+		/* PSNavi Specific Axes */
+		k_PSMAxisID_Joystick_X,
+		k_PSMAxisID_Joystick_Y,
+
+		/* Dualshock4 Specific Axes */
+		k_PSMAxisID_LeftTrigger,
+		k_PSMAxisID_RightTrigger,
+		k_PSMAxisID_LeftJoystick_X,
+		k_PSMAxisID_LeftJoystick_Y,
+		k_PSMAxisID_RightJoystick_X,
+		k_PSMAxisID_RightJoystick_Y,
+
+		/* Emulated Trackpad Specific Axes */
+		k_PSMAxisID_EmulatedTrackpad_X,
+		k_PSMAxisID_EmulatedTrackpad_Y,
+
+		/* Virtual Controller Specific Axes */
+		k_PSMAxisID_Virtual_0,
+		k_PSMAxisID_Virtual_1,
+		k_PSMAxisID_Virtual_2,
+		k_PSMAxisID_Virtual_3,
+		k_PSMAxisID_Virtual_4,
+		k_PSMAxisID_Virtual_5,
+		k_PSMAxisID_Virtual_6,
+		k_PSMAxisID_Virtual_7,
+		k_PSMAxisID_Virtual_8,
+		k_PSMAxisID_Virtual_9,
+		k_PSMAxisID_Virtual_10,
+		k_PSMAxisID_Virtual_11,
+		k_PSMAxisID_Virtual_12,
+		k_PSMAxisID_Virtual_13,
+		k_PSMAxisID_Virtual_14,
+		k_PSMAxisID_Virtual_15,
+		k_PSMAxisID_Virtual_16,
+		k_PSMAxisID_Virtual_17,
+		k_PSMAxisID_Virtual_18,
+		k_PSMAxisID_Virtual_19,
+		k_PSMAxisID_Virtual_20,
+		k_PSMAxisID_Virtual_21,
+		k_PSMAxisID_Virtual_22,
+		k_PSMAxisID_Virtual_23,
+		k_PSMAxisID_Virtual_24,
+		k_PSMAxisID_Virtual_25,
+		k_PSMAxisID_Virtual_26,
+		k_PSMAxisID_Virtual_27,
+		k_PSMAxisID_Virtual_28,
+		k_PSMAxisID_Virtual_29,
+		k_PSMAxisID_Virtual_30,
+		k_PSMAxisID_Virtual_31,
+
+		k_PSMAxisID_Count
 	};
 
-	static const int k_max_vr_buttons = 37;
-	static const char *k_VRButtonNames[k_max_vr_buttons] = {
-		"system",               // k_EButton_System
-		"application_menu",     // k_EButton_ApplicationMenu
-		"grip",                 // k_EButton_Grip
-		"dpad_left",            // k_EButton_DPad_Left
-		"dpad_up",              // k_EButton_DPad_Up
-		"dpad_right",           // k_EButton_DPad_Right
-		"dpad_down",            // k_EButton_DPad_Down
-		"a",                    // k_EButton_A
-		"button_8",              // (vr::EVRButtonId)8
-		"button_9",              // (vr::EVRButtonId)9
-		"button_10",              // (vr::EVRButtonId)10
-		"button_11",              // (vr::EVRButtonId)11
-		"button_12",              // (vr::EVRButtonId)12
-		"button_13",              // (vr::EVRButtonId)13
-		"button_14",              // (vr::EVRButtonId)14
-		"button_15",              // (vr::EVRButtonId)15
-		"button_16",              // (vr::EVRButtonId)16
-		"button_17",              // (vr::EVRButtonId)17
-		"button_18",              // (vr::EVRButtonId)18
-		"button_19",              // (vr::EVRButtonId)19
-		"button_20",              // (vr::EVRButtonId)20
-		"button_21",              // (vr::EVRButtonId)21
-		"button_22",              // (vr::EVRButtonId)22
-		"button_23",              // (vr::EVRButtonId)23
-		"button_24",              // (vr::EVRButtonId)24
-		"button_25",              // (vr::EVRButtonId)25
-		"button_26",              // (vr::EVRButtonId)26
-		"button_27",              // (vr::EVRButtonId)27
-		"button_28",              // (vr::EVRButtonId)28
-		"button_29",              // (vr::EVRButtonId)29
-		"button_30",              // (vr::EVRButtonId)30
-		"touchpad_touched",       // (vr::EVRButtonId)31 used to map to touchpad touched state in vr
-		"touchpad",               // k_EButton_Axis0, k_EButton_SteamVR_Touchpad
-		"trigger",                // k_EButton_Axis1, k_EButton_SteamVR_Trigger
-		"axis_2",                 // k_EButton_Axis2
-		"axis_3",                 // k_EButton_Axis3
-		"axis_4",                 // k_EButton_Axis4
+	static bool k_PSMAxisTwoSided[k_PSMAxisID_Count] = {
+		/* Common Axes */
+		false, // trigger
+
+		/* PSNavi Specific Axes */
+		true, // joystick x
+		true, // joystick y
+
+		/* Dualshock4 Specific Axes */
+		false, // trigger left
+		false, // trigger right
+		true, // joystick left x
+		true, // joystick left y
+		true, // joystick right x
+		true, // joystick right x
+
+		/* Emulated Trackpad Specific Axes */
+		true, // emulated trackpad x
+		true, // emulated trackpad y
+
+		/* Virtual Controller Specific Axes */
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false,  // virtual axis
+		false  // virtual axis
 	};
 
-	enum eVRTouchpadDirection {
-		k_EVRTouchpadDirection_None,
+	static const char *k_PSMAxisPaths[k_PSMAxisID_Count] = {
+		/* Common Axes */
+		"/input/trigger/value",
 
-		k_EVRTouchpadDirection_Left,
-		k_EVRTouchpadDirection_Up,
-		k_EVRTouchpadDirection_Right,
-		k_EVRTouchpadDirection_Down,
+		/* PSNavi Specific Axes */
+		"/input/joystick/x",
+		"/input/joystick/y",
 
-		k_EVRTouchpadDirection_UpLeft,
-		k_EVRTouchpadDirection_UpRight,
-		k_EVRTouchpadDirection_DownLeft,
-		k_EVRTouchpadDirection_DownRight,
+		/* Dualshock4 Specific Axes */
+		"/input/trigger_left/value",
+		"/input/trigger_right/value",
+		"/input/joystick_left/x",
+		"/input/joystick_left/y",
+		"/input/joystick_right/x",
+		"/input/joystick_right/y",
 
-		k_EVRTouchpadDirection_Count
+		/* Emulated Trackpad Specific Axes */
+		"/input/emulated_trackpad/x",
+		"/input/emulated_trackpad/y",
+
+		/* Virtual Controller Specific Axes */
+		"/input/virtual_axis_0/value",
+		"/input/virtual_axis_1/value",
+		"/input/virtual_axis_2/value",
+		"/input/virtual_axis_3/value",
+		"/input/virtual_axis_4/value",
+		"/input/virtual_axis_5/value",
+		"/input/virtual_axis_6/value",
+		"/input/virtual_axis_7/value",
+		"/input/virtual_axis_8/value",
+		"/input/virtual_axis_9/value",
+		"/input/virtual_axis_10/value",
+		"/input/virtual_axis_11/value",
+		"/input/virtual_axis_12/value",
+		"/input/virtual_axis_13/value",
+		"/input/virtual_axis_14/value",
+		"/input/virtual_axis_15/value",
+		"/input/virtual_axis_16/value",
+		"/input/virtual_axis_17/value",
+		"/input/virtual_axis_18/value",
+		"/input/virtual_axis_19/value",
+		"/input/virtual_axis_20/value",
+		"/input/virtual_axis_21/value",
+		"/input/virtual_axis_22/value",
+		"/input/virtual_axis_23/value",
+		"/input/virtual_axis_24/value",
+		"/input/virtual_axis_25/value",
+		"/input/virtual_axis_26/value",
+		"/input/virtual_axis_27/value",
+		"/input/virtual_axis_28/value",
+		"/input/virtual_axis_29/value",
+		"/input/virtual_axis_30/value",
+		"/input/virtual_axis_31/value"
 	};
 
-	static const int k_max_vr_touchpad_directions = k_EVRTouchpadDirection_Count;
+	enum ePSMHapicID {
+		/* Common Rumble */
+		k_PSMHapticID_Rumble,
+
+		/* Dualshock4 Specific Rumble */
+		k_PSMHapticID_BigRumble,
+		k_PSMHapticID_SmallRumble,
+
+		k_PSMHapticID_Count
+	};
+
+	static const char *k_PSMHapticPaths[k_PSMHapticID_Count] = {
+		/* Common Rumble */
+		"/output/rumble",
+
+		/* Dualshock4 Specific Rumble */
+		"/output/big_rumble",
+		"/output/small_rumble",
+	};
+
+	enum eEmulatedTrackpadAction {
+		k_EmulatedTrackpadAction_None,
+
+		k_EmulatedTrackpadAction_Touch,
+		k_EmulatedTrackpadAction_Press,
+
+		k_EmulatedTrackpadAction_Left,
+		k_EmulatedTrackpadAction_Up,
+		k_EmulatedTrackpadAction_Right,
+		k_EmulatedTrackpadAction_Down,
+
+		k_EmulatedTrackpadAction_UpLeft,
+		k_EmulatedTrackpadAction_UpRight,
+		k_EmulatedTrackpadAction_DownLeft,
+		k_EmulatedTrackpadAction_DownRight,
+
+		k_EmulatedTrackpadAction_Count
+	};
+
+	static const int k_max_vr_touchpad_directions = k_EmulatedTrackpadAction_Count;
 	static const char *k_VRTouchpadDirectionNames[k_max_vr_touchpad_directions] = {
 		"none",
+		"touchpad_touch",
+		"touchpad_press",
 		"touchpad_left",
 		"touchpad_up",
 		"touchpad_right",

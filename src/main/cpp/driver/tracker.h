@@ -5,7 +5,7 @@
 namespace steamvrbridge {
 
 	// Represents a PSMoveService Tracker such as a PSEye camera. Implements an OpenVR TrackedDevice
-	class PSMServiceTracker : public ITrackableDevice
+	class PSMServiceTracker : public TrackableDevice
 	{
 	public:
 		PSMServiceTracker(const PSMClientTrackerInfo *trackerInfo);

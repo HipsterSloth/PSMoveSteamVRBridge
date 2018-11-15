@@ -4,17 +4,18 @@
 #include "controller.h"
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
+#include <chrono>
 
 namespace steamvrbridge {
 
 	/* A trackable PS Move controller. The controller class bridges the PSMoveService controller to
 	OpenVR's tracked device.*/
-	class PSMoveController : public ITrackableDevice, public IController {
+	class PSMoveController : public Controller {
 
 	public:
 
 		// Constructor/Destructor
-		PSMoveController(PSMControllerID psmControllerID, PSMControllerType psmControllerType, vr::ETrackedControllerRole trackedControllerRole, const char *psmSerialNo);
+		PSMoveController(PSMControllerID psmControllerID, vr::ETrackedControllerRole trackedControllerRole, const char *psmSerialNo);
 		virtual ~PSMoveController();
 
 		// Overridden Implementation of vr::ITrackedDeviceServerDriver
@@ -30,22 +31,18 @@ namespace steamvrbridge {
 		bool HasPSMControllerId(int ControllerID) const override { return ControllerID == m_nPSMControllerId; }
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }
-		PSMControllerType GetPSMControllerType() const override { return m_PSMControllerType; }
-		void SetPendingHapticVibration(vr::VREvent_HapticVibration_t hapticData) override;
-		void UpdateRumbleState() override;
+		PSMControllerType GetPSMControllerType() const override { return PSMController_Move; }
+		void SetPendingHapticVibration(const vr::VREvent_HapticVibration_t &hapticData) override;
 
 	private:
-		// IController interface implementation
-		void UpdateButtonState(ePSButtonID button, PSMButtonState buttonState) override;
-		void UpdateTouchPadDirection() override;
-		void UpdateControllerState() override;
-		void UpdateBatteryChargeState(PSMBatteryState newBatteryEnum) override;
-		void SetTriggerValue(float latestTriggerValue) override;
-		void UpdateTrackingState() override;
+		void UpdateEmulatedTrackpad();
+		void UpdateBatteryChargeState(PSMBatteryState newBatteryEnum);
+		void UpdateControllerState();
+		void UpdateTrackingState();
+		void UpdateRumbleState();
 
 		// Controller State
 		int m_nPSMControllerId;
-		PSMControllerType m_PSMControllerType;
 		PSMController *m_PSMServiceController;
 		std::string m_strPSMControllerSerialNo;
 
@@ -89,13 +86,10 @@ namespace steamvrbridge {
 		bool m_bResetAlignRequestSent;
 
 		// Button Remapping
-		vr::EVRButtonId psButtonIDToVRButtonID[k_EPSButtonID_Count];
-		eVRTouchpadDirection psButtonIDToVrTouchpadDirection[k_EPSButtonID_Count];
-		void LoadButtonMapping(
+		eEmulatedTrackpadAction psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_Count];
+		void LoadEmulatedTouchpadActions(
 			vr::IVRSettings *pSettings,
-			const ePSButtonID psButtonID,
-			const vr::EVRButtonId defaultVRButtonID,
-			const eVRTouchpadDirection defaultTouchpadDirection,
+			const ePSMButtonID psButtonID,
 			int controllerId = -1);
 
 		// Settings values. Used to determine whether we'll map controller movement after touchpad
@@ -124,23 +118,12 @@ namespace steamvrbridge {
 		// The axis to use for trigger input
 		int m_steamVRTriggerAxisIndex;
 
-		// The axes to use for touchpad input (virtual controller only)
-		int m_virtualTriggerAxisIndex;
-		int m_virtualTouchpadXAxisIndex;
-		int m_virtualTouchpadYAxisIndex;
-
 		// Settings values. Used to adjust throwing power using linear velocity and acceleration.
 		float m_fLinearVelocityMultiplier;
 		float m_fLinearVelocityExponent;
 
-		// The button to use for controller hmd alignment.
-		ePSButtonID m_hmdAlignPSButtonID;
-
 		// Override model to use for the controller.
 		std::string m_overrideModel;
-
-		// Optional solver used to determine hand orientation.
-		class IHandOrientationSolver *m_orientationSolver;
 
 		// Callbacks
 		static void start_controller_response_callback(const PSMResponseMessage *response, void *userdata);

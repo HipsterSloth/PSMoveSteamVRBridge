@@ -21,11 +21,11 @@
 
 namespace steamvrbridge {
 
-	Controller::Controller(
+	OldController::OldController(
 		PSMControllerID psmControllerId,
 		PSMControllerType psmControllerType,
 		const char *psmSerialNo)
-		: ITrackableDevice()
+		: TrackableDevice()
 		, m_nPSMControllerId(psmControllerId)
 		, m_PSMControllerType(psmControllerType)
 		, m_PSMServiceController(nullptr)
@@ -147,20 +147,20 @@ namespace steamvrbridge {
 				char remapButtonToButtonString[32];
 				vr::EVRSettingsError fetchError;
 
-				pSettings->GetString("psnavi_button", k_PSButtonNames[k_EPSButtonID_Up], remapButtonToButtonString, 32, &fetchError);
+				pSettings->GetString("psnavi_button", k_PSMButtonNames[k_EPSButtonID_Up], remapButtonToButtonString, 32, &fetchError);
 				if (fetchError != vr::VRSettingsError_None)
 				{
-					pSettings->GetString("psnavi_touchpad", k_PSButtonNames[k_EPSButtonID_Up], remapButtonToButtonString, 32, &fetchError);
+					pSettings->GetString("psnavi_touchpad", k_PSMButtonNames[k_EPSButtonID_Up], remapButtonToButtonString, 32, &fetchError);
 					if (fetchError != vr::VRSettingsError_None)
 					{
 						m_bUsePSNaviDPadRealign = true;
 					}
 				}
 
-				pSettings->GetString("psnavi_button", k_PSButtonNames[k_EPSButtonID_Down], remapButtonToButtonString, 32, &fetchError);
+				pSettings->GetString("psnavi_button", k_PSMButtonNames[k_EPSButtonID_Down], remapButtonToButtonString, 32, &fetchError);
 				if (fetchError != vr::VRSettingsError_None)
 				{
-					pSettings->GetString("psnavi_touchpad", k_PSButtonNames[k_EPSButtonID_Down], remapButtonToButtonString, 32, &fetchError);
+					pSettings->GetString("psnavi_touchpad", k_PSMButtonNames[k_EPSButtonID_Down], remapButtonToButtonString, 32, &fetchError);
 					if (fetchError != vr::VRSettingsError_None)
 					{
 						m_bUsePSNaviDPadRecenter = true;
@@ -225,7 +225,7 @@ namespace steamvrbridge {
 					LoadButtonMapping(
 						pSettings,
 						k_EPSControllerType_Virtual,
-						(Controller::ePSButtonID)button_index,
+						(OldController::ePSButtonID)button_index,
 						(vr::EVRButtonId)button_index,
 						k_EVRTouchpadDirection_None,
 						psmControllerId);
@@ -246,10 +246,10 @@ namespace steamvrbridge {
 
 					if (fetchError == vr::VRSettingsError_None)
 					{
-						int button_index = Utils::find_index_of_string_in_table(k_VirtualButtonNames, Controller::k_EPSButtonID_Count, alignButtonString);
+						int button_index = Utils::find_index_of_string_in_table(k_PSMButtonNames, k_PSMButtonID_Count, alignButtonString);
 						if (button_index != -1)
 						{
-							m_hmdAlignPSButtonID = static_cast<Controller::ePSButtonID>(button_index);
+							m_hmdAlignPSButtonID = static_cast<OldController::ePSButtonID>(button_index);
 						}
 						else
 						{
@@ -349,7 +349,7 @@ namespace steamvrbridge {
 
 	}
 
-	Controller::~Controller()
+	OldController::~OldController()
 	{
 		if (m_PSMChildControllerView != nullptr)
 		{
@@ -367,10 +367,10 @@ namespace steamvrbridge {
 		}
 	}
 
-	void Controller::LoadButtonMapping(
+	void OldController::LoadButtonMapping(
 		vr::IVRSettings *pSettings,
-		const Controller::ePSControllerType controllerType,
-		const Controller::ePSButtonID psButtonID,
+		const OldController::ePSControllerType controllerType,
+		const OldController::ePSButtonID psButtonID,
 		const vr::EVRButtonId defaultVRButtonID,
 		const eVRTouchpadDirection defaultTouchpadDirection,
 		int controllerId)
@@ -389,23 +389,23 @@ namespace steamvrbridge {
 			const char *szTouchpadSectionName = "";
 			switch (controllerType)
 			{
-			case Controller::k_EPSControllerType_Move:
-				szPSButtonName = k_PSButtonNames[psButtonID];
+			case OldController::k_EPSControllerType_Move:
+				szPSButtonName = k_PSMButtonNames[psButtonID];
 				szButtonSectionName = "psmove";
 				szTouchpadSectionName = "psmove_touchpad_directions";
 				break;
-			case Controller::k_EPSControllerType_DS4:
-				szPSButtonName = k_PSButtonNames[psButtonID];
+			case OldController::k_EPSControllerType_DS4:
+				szPSButtonName = k_PSMButtonNames[psButtonID];
 				szButtonSectionName = "dualshock4_button";
 				szTouchpadSectionName = "dualshock4_touchpad";
 				break;
-			case Controller::k_EPSControllerType_Navi:
-				szPSButtonName = k_PSButtonNames[psButtonID];
+			case OldController::k_EPSControllerType_Navi:
+				szPSButtonName = k_PSMButtonNames[psButtonID];
 				szButtonSectionName = "psnavi_button";
 				szTouchpadSectionName = "psnavi_touchpad";
 				break;
-			case Controller::k_EPSControllerType_Virtual:
-				szPSButtonName = k_VirtualButtonNames[psButtonID];
+			case OldController::k_EPSControllerType_Virtual:
+				szPSButtonName = k_PSMButtonNames[psButtonID];
 				szButtonSectionName = "virtual_button";
 				szTouchpadSectionName = "virtual_touchpad";
 				break;
@@ -415,9 +415,9 @@ namespace steamvrbridge {
 
 			if (fetchError == vr::VRSettingsError_None)
 			{
-				for (int vr_button_index = 0; vr_button_index < k_max_vr_buttons; ++vr_button_index)
+				for (int vr_button_index = 0; vr_button_index < k_PSMButtonID_Count; ++vr_button_index)
 				{
-					if (strcasecmp(remapButtonToButtonString, k_VRButtonNames[vr_button_index]) == 0)
+					if (strcasecmp(remapButtonToButtonString, k_PSMButtonNames[vr_button_index]) == 0)
 					{
 						vrButtonID = static_cast<vr::EVRButtonId>(vr_button_index);
 						break;
@@ -448,9 +448,9 @@ namespace steamvrbridge {
 
 				if (fetchError == vr::VRSettingsError_None)
 				{
-					for (int vr_button_index = 0; vr_button_index < k_max_vr_buttons; ++vr_button_index)
+					for (int vr_button_index = 0; vr_button_index < k_PSMButtonID_Count; ++vr_button_index)
 					{
-						if (strcasecmp(remapButtonToButtonString, k_VRButtonNames[vr_button_index]) == 0)
+						if (strcasecmp(remapButtonToButtonString, k_PSMButtonNames[vr_button_index]) == 0)
 						{
 							vrButtonID = static_cast<vr::EVRButtonId>(vr_button_index);
 							break;
@@ -504,9 +504,9 @@ namespace steamvrbridge {
 		psButtonIDToVrTouchpadDirection[controllerType][psButtonID] = vrTouchpadDirection;
 	}
 
-	vr::EVRInitError Controller::Activate(vr::TrackedDeviceIndex_t unObjectId)
+	vr::EVRInitError OldController::Activate(vr::TrackedDeviceIndex_t unObjectId)
 	{
-		vr::EVRInitError result = ITrackableDevice::Activate(unObjectId);
+		vr::EVRInitError result = TrackableDevice::Activate(unObjectId);
 
 		if (result == vr::VRInitError_None)
 		{
@@ -520,7 +520,7 @@ namespace steamvrbridge {
 				PSMStreamFlags_includePositionData | PSMStreamFlags_includePhysicsData,
 				&requestId) == PSMResult_Success)
 			{
-				PSM_RegisterCallback(requestId, Controller::start_controller_response_callback, this);
+				PSM_RegisterCallback(requestId, OldController::start_controller_response_callback, this);
 			}
 
 			// Setup controller properties
@@ -605,10 +605,10 @@ namespace steamvrbridge {
 		return result;
 	}
 
-	void Controller::start_controller_response_callback(
+	void OldController::start_controller_response_callback(
 		const PSMResponseMessage *response, void *userdata)
 	{
-		Controller *controller = reinterpret_cast<Controller *>(userdata);
+		OldController *controller = reinterpret_cast<OldController *>(userdata);
 
 		if (response->result_code == PSMResult::PSMResult_Success)
 		{
@@ -616,7 +616,7 @@ namespace steamvrbridge {
 		}
 	}
 
-	void Controller::Deactivate()
+	void OldController::Deactivate()
 	{
 		Logger::Info("CPSMoveControllerLatest::Deactivate - Controller stream stopped\n");
 		PSM_StopControllerDataStreamAsync(m_PSMServiceController->ControllerID, nullptr);
@@ -647,7 +647,7 @@ namespace steamvrbridge {
 	//    return true;
 	//}
 
-	void Controller::SendBooleanUpdates(bool pressed, uint64_t ulMask)
+	void OldController::SendBooleanUpdates(bool pressed, uint64_t ulMask)
 	{
 		if (!ulMask)
 			return;
@@ -662,12 +662,12 @@ namespace steamvrbridge {
 			{
 				//( vr::VRServerDriverHost()->*ButtonEvent )( m_unSteamVRTrackedDeviceId, button, 0.0 );
 				// must now call update on the boolean component instead
-				vr::VRDriverInput()->UpdateBooleanComponent(m_hButtons[button], pressed, 0.0);
+				//vr::VRDriverInput()->UpdateBooleanComponent(m_hButtons[button], pressed, 0.0);
 			}
 		}
 	}
 
-	void Controller::SendScalarUpdates(float val, uint64_t ulMask)
+	void OldController::SendScalarUpdates(float val, uint64_t ulMask)
 	{
 		if (!ulMask)
 			return;
@@ -682,12 +682,12 @@ namespace steamvrbridge {
 			{
 				//( vr::VRServerDriverHost()->*ButtonEvent )( m_unSteamVRTrackedDeviceId, button, 0.0 );
 				// must now call update on the scalar component instead
-				vr::VRDriverInput()->UpdateScalarComponent(m_hAxes[button], val, 0.0);
+				//vr::VRDriverInput()->UpdateScalarComponent(m_hAxes[button], val, 0.0);
 			}
 		}
 	}
 
-	void Controller::UpdateControllerState()
+	void OldController::UpdateControllerState()
 	{
 		static const uint64_t s_kTouchpadButtonMask = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad);
 
@@ -1309,7 +1309,7 @@ namespace steamvrbridge {
 		//if()
 	}
 
-	void Controller::UpdateControllerStateFromPsMoveButtonState(
+	void OldController::UpdateControllerStateFromPsMoveButtonState(
 		ePSControllerType controllerType,
 		ePSButtonID buttonId,
 		PSMButtonState buttonState,
@@ -1379,7 +1379,7 @@ namespace steamvrbridge {
 		}
 	}
 
-	void Controller::RealignHMDTrackingSpace()
+	void OldController::RealignHMDTrackingSpace()
 	{
 		if (m_bDisableHMDAlignmentGesture)
 		{
@@ -1501,7 +1501,7 @@ namespace steamvrbridge {
 		g_ServerTrackedDeviceProvider.SetHMDTrackingSpace(driver_pose_to_world_pose);
 	}
 
-	void Controller::UpdateTrackingState()
+	void OldController::UpdateTrackingState()
 	{
 		assert(m_PSMServiceController != nullptr);
 		assert(m_PSMServiceController->IsConnected);
@@ -1796,7 +1796,7 @@ namespace steamvrbridge {
 		}
 	}
 
-	void Controller::UpdateRumbleState()
+	void OldController::UpdateRumbleState()
 	{
 		if (!m_bRumbleSuppressed)
 		{
@@ -1857,7 +1857,7 @@ namespace steamvrbridge {
 		}
 	}
 
-	void Controller::UpdateBatteryChargeState(
+	void OldController::UpdateBatteryChargeState(
 		PSMBatteryState newBatteryEnum)
 	{
 		bool bIsBatteryCharging = false;
@@ -1912,9 +1912,9 @@ namespace steamvrbridge {
 		}
 	}
 
-	void Controller::Update()
+	void OldController::Update()
 	{
-		ITrackableDevice::Update();
+		TrackableDevice::Update();
 
 		if (IsActivated() && m_PSMServiceController->IsConnected)
 		{
@@ -1934,9 +1934,9 @@ namespace steamvrbridge {
 		}
 	}
 
-	void Controller::RefreshWorldFromDriverPose()
+	void OldController::RefreshWorldFromDriverPose()
 	{
-		ITrackableDevice::RefreshWorldFromDriverPose();
+		TrackableDevice::RefreshWorldFromDriverPose();
 
 		// Mark the calibration process as done
 		// once we have setup the world from driver pose
@@ -1944,7 +1944,7 @@ namespace steamvrbridge {
 	}
 
 	// TODO this should be defined as a simpler combine controllers method
-	bool Controller::AttachChildPSMController(
+	bool OldController::AttachChildPSMController(
 		int ChildControllerId,
 		PSMControllerType ChildControllerType,
 		const std::string &ChildControllerSerialNo)
@@ -1962,7 +1962,7 @@ namespace steamvrbridge {
 			PSMRequestID request_id;
 			if (PSM_StartControllerDataStreamAsync(ChildControllerId, PSMStreamFlags_defaultStreamOptions, &request_id))
 			{
-				PSM_RegisterCallback(request_id, Controller::start_controller_response_callback, this);
+				PSM_RegisterCallback(request_id, OldController::start_controller_response_callback, this);
 				bSuccess = true;
 			}
 			else

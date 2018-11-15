@@ -1,13 +1,15 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
 #include "constants.h"
+#include "trackable_device.h"
+
+#include <map>
 
 namespace steamvrbridge {
-
 	/*
 		Interface that defines what a controller is and can do in the context of this driver. (Self-contained header)
 	*/
-	class IController {
+	class Controller : public TrackableDevice {
 
 		/*
 			The following methods must be overridden in order for an implementing object to be considered
@@ -20,8 +22,25 @@ namespace steamvrbridge {
 		*/
 
 	public:
-		// Empty desctructor since this is an interface, does not need to be implemented.
-		virtual ~IController() {};
+
+		/** Controller Interface */
+		Controller();
+		virtual ~Controller();
+
+		bool CreateButtonComponent(ePSMButtonID button_id);
+		bool CreateAxisComponent(ePSMAxisID axis_id);
+		bool CreateHapticComponent(ePSMHapicID haptic_id);
+
+		void UpdateButton(ePSMButtonID button_id, PSMButtonState button_state, double time_offset=0.0);
+		void UpdateAxis(ePSMAxisID axis_id, float axis_value, double time_offset=0.0);
+
+		bool HasButton(ePSMButtonID button_id) const;
+		bool HasAxis(ePSMAxisID axis_id) const;
+
+		bool GetButtonState(ePSMButtonID button_id, PSMButtonState &out_button_state) const;
+		bool GetAxisState(ePSMAxisID axis_id, float &out_axis_value) const;
+
+		bool IsHapticIDForHapticData(ePSMHapicID haptic_id, const vr::VREvent_HapticVibration_t &hapticData) const;
 
 		// Returns true if the controller has a PSM assigned the given ControllerID.
 		virtual bool HasPSMControllerId(int ControllerID) const = 0;
@@ -36,28 +55,32 @@ namespace steamvrbridge {
 		virtual PSMControllerType GetPSMControllerType() const = 0;
 
 		// Sets the controller's pending haptic duration, amplitude, frequency given OpenVR shaptic vibration event data.
-		virtual void SetPendingHapticVibration(vr::VREvent_HapticVibration_t hapticData) = 0;
+		virtual void SetPendingHapticVibration(const vr::VREvent_HapticVibration_t &hapticData) = 0;
 
-		// Updates the rumble state of the controller.
-		virtual void UpdateRumbleState() = 0;
+		/** TrackableDevice Interface */
+		vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
 
 	private:
-		// Updates the controllers state for the given button.
-		virtual void UpdateButtonState(ePSButtonID button, PSMButtonState buttonState) = 0;
+		struct ButtonState
+		{
+			vr::VRInputComponentHandle_t buttonComponentHandle;
+			PSMButtonState lastButtonState;
+		};
 
-		// Updates the controller state of the touchpad direction.
-		virtual void UpdateTouchPadDirection() = 0;
+		struct AxisState
+		{
+			vr::VRInputComponentHandle_t axisComponentHandle;
+			float lastAxisState;
+		};
 
-		// Updates the controllers state. This includes buttons, trackpads and haptics.
-		virtual void UpdateControllerState() = 0;
+		struct HapticState
+		{
+			vr::VRInputComponentHandle_t hapticComponentHandle;
+		};
 
-		// Updates the tracking state of the controller and notifies OpenVR.
-		virtual void UpdateTrackingState() = 0;
-
-		// Updates the controller battery state given the new state and notifies OpenVR.
-		virtual void UpdateBatteryChargeState(PSMBatteryState newBatteryEnum) = 0;
-
-		// Sets the trigger value.
-		virtual void SetTriggerValue(float latestTriggerValue) = 0;
+		// Component handle registered upon Activate() and called to update button/touch/axis/haptic events
+		std::map<ePSMButtonID, ButtonState> m_buttonStates;
+		std::map<ePSMAxisID, AxisState> m_axisStates;
+		std::map<ePSMHapicID, HapticState> m_hapticStates;
 	};
 }

@@ -38,6 +38,7 @@ namespace steamvrbridge {
 
 	private:
 		vr::ITrackedDeviceServerDriver * FindTrackedDeviceDriver(const char * pchId);
+		vr::ETrackedControllerRole AllocateControllerRole(PSMControllerHand psmControllerHand);
 		void AllocateUniquePSMoveController(PSMControllerID ControllerID, PSMControllerHand psmControllerHand, const std::string &ControllerSerial);
 		void AllocateUniqueVirtualController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial);
 		void AttachPSNaviToParentController(PSMControllerID ControllerID, const std::string &ControllerSerial, const std::string &ParentControllerSerial);
@@ -68,7 +69,7 @@ namespace steamvrbridge {
 		bool m_bLaunchedPSMoveMonitor;
 		bool m_bInitialized;
 
-		std::vector< ITrackableDevice * > m_vecTrackedDevices;
+		std::vector< TrackableDevice * > m_vecTrackedDevices;
 
 		// HMD Tracking Space
 		PSMPosef m_worldFromDriverPose;
