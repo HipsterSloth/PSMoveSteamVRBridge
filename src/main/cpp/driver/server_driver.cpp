@@ -1,5 +1,6 @@
 #include "server_driver.h"
 #include "ps_move_controller.h"
+#include "ps_navi_controller.h"
 #include "virtual_controller.h"
 #include "utils.h"
 
@@ -395,14 +396,16 @@ namespace steamvrbridge {
 
 		if (bAnyNaviControllers) {
 			for (int list_index = 0; list_index < controller_list->count; ++list_index) {
-				int controller_id = controller_list->controller_id[list_index];
 				PSMControllerType controller_type = controller_list->controller_type[list_index];
-				std::string ControllerSerial(controller_list->controller_serial[list_index]);
-				std::string ParentControllerSerial(controller_list->parent_controller_serial[list_index]);
 
 				if (controller_type == PSMControllerType::PSMController_Navi) {
-					Logger::Info("CServerDriver_PSMoveService::HandleControllerListReponse - Attach PSNavi(%d)\n", controller_id);
-					AttachPSNaviToParentController(controller_id, ControllerSerial, ParentControllerSerial);
+					int psmControllerId = controller_list->controller_id[list_index];
+					PSMControllerHand psmControllerHand = controller_list->controller_hand[list_index];
+					std::string psmControllerSerial(controller_list->controller_serial[list_index]);
+					std::string psmParentControllerSerial(controller_list->parent_controller_serial[list_index]);
+
+					Logger::Info("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate PSNavi(%d)\n", psmControllerId);
+					AllocateUniquePSNaviController(psmControllerId, psmControllerHand, psmControllerSerial, psmParentControllerSerial);
 				}
 			}
 		}
@@ -532,43 +535,74 @@ namespace steamvrbridge {
 		}*/
 	}
 
-	void CServerDriver_PSMoveService::AttachPSNaviToParentController(PSMControllerID NaviControllerID, const std::string &NaviControllerSerial, const std::string &ParentControllerSerial) {
-		bool bFoundParent = false;
+	void CServerDriver_PSMoveService::AllocateUniquePSNaviController(
+		PSMControllerID psmControllerID, 
+		PSMControllerHand psmControllerHand, 
+		const std::string &psmControllerSerial, 
+		const std::string &psmParentControllerSerial) {
 
-		std::string naviSerialNo = NaviControllerSerial;
-		std::string parentSerialNo = ParentControllerSerial;
-		std::transform(naviSerialNo.begin(), naviSerialNo.end(), naviSerialNo.begin(), ::toupper);
-		std::transform(parentSerialNo.begin(), parentSerialNo.end(), parentSerialNo.begin(), ::toupper);
+		// Try and find the parent controller by serial number
+		Controller *parent_controller = nullptr;
+		if (psmParentControllerSerial.length() > 0)
+		{
+			std::string naviSerialNo = psmControllerSerial;
+			std::string parentSerialNo = psmParentControllerSerial;
+			std::transform(naviSerialNo.begin(), naviSerialNo.end(), naviSerialNo.begin(), ::toupper);
+			std::transform(parentSerialNo.begin(), parentSerialNo.end(), parentSerialNo.begin(), ::toupper);
 
-		for (TrackableDevice *trackedDevice : m_vecTrackedDevices) {
-			if (trackedDevice->GetTrackedDeviceClass() == vr::TrackedDeviceClass_Controller) {
-				PSMoveController *test_controller = static_cast<PSMoveController *>(trackedDevice);
-				const std::string testSerialNo = test_controller->GetPSMControllerSerialNo();
+			for (TrackableDevice *trackedDevice : m_vecTrackedDevices) {
+				if (trackedDevice->GetTrackedDeviceClass() == vr::TrackedDeviceClass_Controller) {
+					Controller *test_controller = static_cast<Controller *>(trackedDevice);
+					const std::string testSerialNo = test_controller->GetPSMControllerSerialNo();
 
-				if (testSerialNo == parentSerialNo) {
-					bFoundParent = true;
+					if (testSerialNo == parentSerialNo) {
+						parent_controller= test_controller;
 
-					if (test_controller->GetPSMControllerType() == PSMController_Move ||
-						test_controller->GetPSMControllerType() == PSMController_Virtual) {
-						/*if (test_controller->AttachChildPSMController(NaviControllerID, PSMController_Navi, naviSerialNo))
-						{
-							Logger::Info("Attached navi controller serial %s to controller serial %s\n", naviSerialNo.c_str(), parentSerialNo.c_str());
-						}
-						else
-						{
-							Logger::Info("Failed to attach navi controller serial %s to controller serial %s\n", naviSerialNo.c_str(), parentSerialNo.c_str());
-						}*/
-					} else {
-						Logger::Info("Failed to attach navi controller serial %s to non-psmove controller serial %s\n", naviSerialNo.c_str(), parentSerialNo.c_str());
+						Logger::Info("Attached navi controller serial %s to controller serial %s\n", 
+							naviSerialNo.c_str(), parentSerialNo.c_str());
+
+						break;
 					}
-
-					break;
 				}
+			}
+
+			if (parent_controller == nullptr) {
+				Logger::Info("Failed to find parent controller serial %s for navi controller serial %s\n", parentSerialNo.c_str(), naviSerialNo.c_str());
 			}
 		}
 
-		if (!bFoundParent) {
-			Logger::Info("Failed to find parent controller serial %s for navi controller serial %s\n", parentSerialNo.c_str(), naviSerialNo.c_str());
+		char svrIdentifier[256];
+		Utils::GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerID);
+
+		if (!FindTrackedDeviceDriver(svrIdentifier)) {
+			std::string psmSerialNo = psmControllerSerial;
+			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
+
+			if (0 != m_strPSMoveHMDSerialNo.compare(psmSerialNo)) {
+				Logger::Info("added new psnavi controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
+
+				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
+				PSNaviController *naviController =
+					new PSNaviController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
+				m_vecTrackedDevices.push_back(naviController);
+
+				if (parent_controller != nullptr)
+				{
+					// Attached controllers aren't registered with SteamVR.
+					// They route their button events to their parent controllers
+					naviController->AttachToController(parent_controller);
+				}
+				else
+				{
+					// Not attached to another controller
+					// So register just like any other controller
+					if (vr::VRServerDriverHost()) {
+						vr::VRServerDriverHost()->TrackedDeviceAdded(naviController->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, naviController);
+					}
+				}
+			} else {
+				Logger::Info("skipped new virtual controller as configured for HMD tracking, serial: %s\n", psmSerialNo.c_str());
+			}
 		}
 	}
 

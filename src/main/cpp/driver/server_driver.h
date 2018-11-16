@@ -41,7 +41,7 @@ namespace steamvrbridge {
 		vr::ETrackedControllerRole AllocateControllerRole(PSMControllerHand psmControllerHand);
 		void AllocateUniquePSMoveController(PSMControllerID ControllerID, PSMControllerHand psmControllerHand, const std::string &ControllerSerial);
 		void AllocateUniqueVirtualController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial);
-		void AttachPSNaviToParentController(PSMControllerID ControllerID, const std::string &ControllerSerial, const std::string &ParentControllerSerial);
+		void AllocateUniquePSNaviController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial, const std::string &psmParentControllerSerial);
 		void AllocateUniqueDualShock4Controller(PSMControllerID ControllerID, PSMControllerHand psmControllerHand, const std::string &ControllerSerial);
 		void AllocateUniquePSMoveTracker(const PSMClientTrackerInfo *trackerInfo);
 		bool ReconnectToPSMoveService();

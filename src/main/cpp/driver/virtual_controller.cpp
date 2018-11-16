@@ -376,6 +376,8 @@ namespace steamvrbridge {
 	void VirtualController::Deactivate() {
 		Logger::Info("CPSMoveControllerLatest::Deactivate - Controller stream stopped\n");
 		PSM_StopControllerDataStreamAsync(m_PSMServiceController->ControllerID, nullptr);
+
+		Controller::Deactivate();
 	}
 
 	void VirtualController::UpdateControllerState() {
