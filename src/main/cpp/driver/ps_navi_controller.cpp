@@ -32,7 +32,6 @@ namespace steamvrbridge {
 		, m_resetAlignButtonPressTime()
 		, m_bResetAlignRequestSent(false)
 		, m_touchpadDirectionsUsed(false)
-		, m_steamVRTriggerAxisIndex(1)
 		, m_lastSanitizedThumbstick_X(0.f)
 		, m_lastSanitizedThumbstick_Y(0.f)
 		, m_thumbstickDeadzone(k_defaultThumbstickDeadZoneRadius)
@@ -76,7 +75,7 @@ namespace steamvrbridge {
 				char modelString[64];
 				vr::EVRSettingsError fetchError;
 
-				pSettings->GetString("navi_controller", "override_model", modelString, 64, &fetchError);
+				pSettings->GetString("navi", "override_model", modelString, 64, &fetchError);
 				if (fetchError == vr::VRSettingsError_None)
 				{
 					m_overrideModel = modelString;
@@ -85,7 +84,7 @@ namespace steamvrbridge {
 
 			// General Settings
 			m_thumbstickDeadzone =
-				fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, "navi_controller_settings", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
+				fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, "navi", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
 		}
 
 		m_trackingStatus = vr::TrackingResult_Running_OK;
@@ -108,8 +107,7 @@ namespace steamvrbridge {
 			vr::EVRSettingsError fetchError;
 
 			const char *szPSButtonName = k_PSMButtonNames[psButtonID];
-			const char *szButtonSectionName = "navi_button";
-			const char *szTouchpadSectionName = "navi_touchpad";
+			const char *szTouchpadSectionName = "navi_emulated_touchpad";
 
 			char remapButtonToTouchpadDirectionString[32];
 			pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
@@ -282,7 +280,7 @@ namespace steamvrbridge {
 	}
 
 	void PSNaviController::Deactivate() {
-		Logger::Info("CPSMoveControllerLatest::Deactivate - Controller stream stopped\n");
+		Logger::Info("PSNaviController::Deactivate - Controller stream stopped\n");
 		PSM_StopControllerDataStreamAsync(m_PSMServiceController->ControllerID, nullptr);
 		Controller::Deactivate();
 	}
@@ -320,8 +318,8 @@ namespace steamvrbridge {
 	{
 		const PSMPSNavi &clientView = m_PSMServiceController->ControllerState.PSNaviState;
 
-		const unsigned char rawThumbStickX = m_PSMServiceController->ControllerState.PSNaviState.Stick_XAxis;
-		const unsigned char rawThumbStickY = m_PSMServiceController->ControllerState.PSNaviState.Stick_YAxis;
+		const unsigned char rawThumbStickX = clientView.Stick_XAxis;
+		const unsigned char rawThumbStickY = clientView.Stick_YAxis;
 		const float thumb_stick_x = ((float)rawThumbStickX - 127.f) / 127.f;
 		const float thumb_stick_y = ((float)rawThumbStickY - 127.f) / 127.f;
 		const float thumb_stick_radius = sqrtf(thumb_stick_x*thumb_stick_x + thumb_stick_y * thumb_stick_y);
@@ -499,10 +497,6 @@ namespace steamvrbridge {
 		// This call posts this pose to shared memory, where all clients will have access to it the next
 		// moment they want to predict a pose.
 		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unSteamVRTrackedDeviceId, m_Pose, sizeof(vr::DriverPose_t));
-	}
-
-	void PSNaviController::SetPendingHapticVibration(const vr::VREvent_HapticVibration_t &hapticData) {
-		// No haptics on the PSNavi!
 	}
 
 	void PSNaviController::Update() {

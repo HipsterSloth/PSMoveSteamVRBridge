@@ -394,8 +394,8 @@ namespace steamvrbridge {
 		k_PSMHapticID_Rumble,
 
 		/* Dualshock4 Specific Rumble */
-		k_PSMHapticID_BigRumble,
-		k_PSMHapticID_SmallRumble,
+		k_PSMHapticID_LeftRumble,
+		k_PSMHapticID_RightRumble,
 
 		k_PSMHapticID_Count
 	};
@@ -405,8 +405,8 @@ namespace steamvrbridge {
 		"/output/rumble",
 
 		/* Dualshock4 Specific Rumble */
-		"/output/big_rumble",
-		"/output/small_rumble",
+		"/output/left_rumble",
+		"/output/right_rumble",
 	};
 
 	enum eEmulatedTrackpadAction {

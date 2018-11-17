@@ -98,6 +98,11 @@ namespace steamvrbridge {
 			{
 				HapticState hapticState;
 				hapticState.hapticComponentHandle= hapticComponentHandle;
+				hapticState.pendingHapticDurationSecs= DEFAULT_HAPTIC_DURATION;
+				hapticState.pendingHapticAmplitude= DEFAULT_HAPTIC_AMPLITUDE;
+				hapticState.pendingHapticFrequency= DEFAULT_HAPTIC_FREQUENCY;
+				hapticState.lastTimeRumbleSent= std::chrono::time_point<std::chrono::high_resolution_clock>();
+				hapticState.lastTimeRumbleSentValid= false;
 
 				m_hapticStates[haptic_id]= hapticState;
 			}
@@ -128,6 +133,23 @@ namespace steamvrbridge {
 		}
 	}
 
+	void Controller::UpdateHaptics(const vr::VREvent_HapticVibration_t &hapticData) {
+		for (auto &it : m_hapticStates)
+		{
+			HapticState &state= it.second;
+
+			if (state.hapticComponentHandle == hapticData.componentHandle)
+			{
+				state.pendingHapticDurationSecs = hapticData.fDurationSeconds;
+				state.pendingHapticAmplitude = hapticData.fAmplitude;
+				state.pendingHapticFrequency = hapticData.fFrequency;
+
+				break;
+			}
+		}
+	}
+
+
 	bool Controller::HasButton(ePSMButtonID button_id) const
 	{
 		return m_buttonStates.count(button_id) != 0;
@@ -136,6 +158,11 @@ namespace steamvrbridge {
 	bool Controller::HasAxis(ePSMAxisID axis_id) const
 	{
 		return m_axisStates.count(axis_id) != 0;
+	}
+
+	bool Controller::HasHapticState(ePSMHapicID haptic_id) const
+	{
+		return m_hapticStates.count(haptic_id) != 0;
 	}
 
 	bool Controller::GetButtonState(ePSMButtonID button_id, PSMButtonState &out_button_state) const
@@ -160,13 +187,12 @@ namespace steamvrbridge {
 		return false;
 	}
 
-	bool Controller::IsHapticIDForHapticData(ePSMHapicID haptic_id, const vr::VREvent_HapticVibration_t &hapticData) const
+	Controller::HapticState * Controller::GetHapticState(ePSMHapicID haptic_id)
 	{
-		if (m_hapticStates.count(haptic_id))
-		{
-			return m_hapticStates.at(haptic_id).hapticComponentHandle == hapticData.componentHandle;
+		if (m_hapticStates.count(haptic_id) != 0) {
+			return &m_hapticStates.at(haptic_id);
 		}
 
-		return false;
+		return nullptr;
 	}
 }

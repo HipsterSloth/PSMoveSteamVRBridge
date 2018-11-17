@@ -1,4 +1,5 @@
 #include "server_driver.h"
+#include "ps_ds4_controller.h"
 #include "ps_move_controller.h"
 #include "ps_navi_controller.h"
 #include "virtual_controller.h"
@@ -180,7 +181,7 @@ namespace steamvrbridge {
 					{
 						Controller *pController = static_cast<Controller *>(*it);
 
-						pController->SetPendingHapticVibration(hapticData);
+						pController->UpdateHaptics(hapticData);
 					}
 			}
 		}
@@ -513,26 +514,28 @@ namespace steamvrbridge {
 	}
 
 	void CServerDriver_PSMoveService::AllocateUniqueDualShock4Controller(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial) {
-		/* TODO use ds4controller.cpp
 		char svrIdentifier[256];
 		Utils::GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerID);
 
-		if (!FindTrackedDeviceDriver(svrIdentifier))
-		{
+		if (!FindTrackedDeviceDriver(svrIdentifier)) {
 			std::string psmSerialNo = psmControllerSerial;
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
-			Logger::Info("added new dualshock4 controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
+			if (0 != m_strPSMoveHMDSerialNo.compare(psmSerialNo)) {
+				Logger::Info("added new dualshock4 controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
 
-			PSMoveController *TrackedDevice =
-				new PSMoveController(psmControllerID, PSMControllerType::PSMController_DualShock4, psmSerialNo.c_str());
-			m_vecTrackedDevices.push_back(TrackedDevice);
+				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
+				PSDualshock4Controller *TrackedDevice =
+					new PSDualshock4Controller(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
+				m_vecTrackedDevices.push_back(TrackedDevice);
 
-			if (vr::VRServerDriverHost())
-			{
-				vr::VRServerDriverHost()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
+				if (vr::VRServerDriverHost()) {
+					vr::VRServerDriverHost()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
+				}
+			} else {
+				Logger::Info("skipped new dualshock4 controller as configured for HMD tracking, serial: %s\n", psmSerialNo.c_str());
 			}
-		}*/
+		}
 	}
 
 	void CServerDriver_PSMoveService::AllocateUniquePSNaviController(

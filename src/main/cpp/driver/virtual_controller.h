@@ -30,7 +30,6 @@ namespace steamvrbridge {
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }
 		PSMControllerType GetPSMControllerType() const override { return PSMController_Virtual; }
-		void SetPendingHapticVibration(const vr::VREvent_HapticVibration_t &hapticData) override;
 
 	private:
 		void UpdateEmulatedTrackpad();

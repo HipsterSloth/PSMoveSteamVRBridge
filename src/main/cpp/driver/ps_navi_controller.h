@@ -34,7 +34,6 @@ namespace steamvrbridge {
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }
 		PSMControllerType GetPSMControllerType() const override { return PSMController_Virtual; }
-		void SetPendingHapticVibration(const vr::VREvent_HapticVibration_t &hapticData) override;
 
 	private:
 		void UpdateThumbstick();
@@ -56,9 +55,6 @@ namespace steamvrbridge {
 		// Used to ignore old state from PSM Service
 		int m_nPoseSequenceNumber;
 
-		// Delay in resetting touchpad position after touchpad press.
-		bool m_bDelayAfterTouchpadPress;
-
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_lastTouchpadPressTime;
 		bool m_touchpadDirectionsUsed;
 
@@ -73,9 +69,6 @@ namespace steamvrbridge {
 			vr::IVRSettings *pSettings,
 			const ePSMButtonID psButtonID,
 			int controllerId = -1);
-
-		// The axis to use for trigger input
-		int m_steamVRTriggerAxisIndex;
 
 		// The last normalized thumbstick values (post dead zone application);
 		float m_lastSanitizedThumbstick_X;

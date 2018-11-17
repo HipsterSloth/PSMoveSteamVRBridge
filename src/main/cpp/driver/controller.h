@@ -6,6 +6,7 @@
 #include <map>
 
 namespace steamvrbridge {
+
 	/*
 		Interface that defines what a controller is and can do in the context of this driver. (Self-contained header)
 	*/
@@ -20,6 +21,16 @@ namespace steamvrbridge {
 			both object state change and OpenVR/PSMS notification whereas functions prefixed with 'Set/Get'
 			suggest object state change only.
 		*/
+	public:
+		struct HapticState
+		{
+			vr::VRInputComponentHandle_t hapticComponentHandle;
+			float pendingHapticDurationSecs;
+			float pendingHapticAmplitude;
+			float pendingHapticFrequency;
+			std::chrono::time_point<std::chrono::high_resolution_clock> lastTimeRumbleSent;
+			bool lastTimeRumbleSentValid;
+		};
 
 	public:
 
@@ -33,14 +44,15 @@ namespace steamvrbridge {
 
 		void UpdateButton(ePSMButtonID button_id, PSMButtonState button_state, double time_offset=0.0);
 		void UpdateAxis(ePSMAxisID axis_id, float axis_value, double time_offset=0.0);
+		void UpdateHaptics(const vr::VREvent_HapticVibration_t &hapticData);
 
 		bool HasButton(ePSMButtonID button_id) const;
 		bool HasAxis(ePSMAxisID axis_id) const;
+		bool HasHapticState(ePSMHapicID haptic_id) const;
 
 		bool GetButtonState(ePSMButtonID button_id, PSMButtonState &out_button_state) const;
 		bool GetAxisState(ePSMAxisID axis_id, float &out_axis_value) const;
-
-		bool IsHapticIDForHapticData(ePSMHapicID haptic_id, const vr::VREvent_HapticVibration_t &hapticData) const;
+		HapticState * GetHapticState(ePSMHapicID haptic_id);
 
 		// Returns true if the controller has a PSM assigned the given ControllerID.
 		virtual bool HasPSMControllerId(int ControllerID) const = 0;
@@ -53,9 +65,6 @@ namespace steamvrbridge {
 
 		// Returns the PSM controller type.
 		virtual PSMControllerType GetPSMControllerType() const = 0;
-
-		// Sets the controller's pending haptic duration, amplitude, frequency given OpenVR shaptic vibration event data.
-		virtual void SetPendingHapticVibration(const vr::VREvent_HapticVibration_t &hapticData) = 0;
 
 		/** TrackableDevice Interface */
 		vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
@@ -71,11 +80,6 @@ namespace steamvrbridge {
 		{
 			vr::VRInputComponentHandle_t axisComponentHandle;
 			float lastAxisState;
-		};
-
-		struct HapticState
-		{
-			vr::VRInputComponentHandle_t hapticComponentHandle;
 		};
 
 		// Component handle registered upon Activate() and called to update button/touch/axis/haptic events

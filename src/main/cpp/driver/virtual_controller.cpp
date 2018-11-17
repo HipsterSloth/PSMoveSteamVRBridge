@@ -80,8 +80,10 @@ namespace steamvrbridge {
 			}
 
 			// Axis mapping
-			m_virtualTouchpadXAxisIndex = SettingsUtil::LoadInt(pSettings, "virtual_axis", "touchpad_x_axis_index", -1);
-			m_virtualTouchpadYAxisIndex = SettingsUtil::LoadInt(pSettings, "virtual_axis", "touchpad_y_axis_index", -1);
+			m_virtualTouchpadXAxisIndex = 
+				SettingsUtil::LoadInt(pSettings, "virtual_controller", "touchpad_x_axis_index", -1);
+			m_virtualTouchpadYAxisIndex = 
+				SettingsUtil::LoadInt(pSettings, "virtual_controller", "touchpad_y_axis_index", -1);
 
 			// HMD align button mapping
 			{
@@ -130,23 +132,27 @@ namespace steamvrbridge {
 
 			// Throwing power settings
 			m_fLinearVelocityMultiplier =
-				SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "linear_velocity_multiplier", 1.f);
+				SettingsUtil::LoadFloat(pSettings, "virtual_controller", "linear_velocity_multiplier", 1.f);
 			m_fLinearVelocityExponent =
-				SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "linear_velocity_exponent", 0.f);
+				SettingsUtil::LoadFloat(pSettings, "virtual_controller", "linear_velocity_exponent", 0.f);
 
 			// General Settings
-			m_bDisableHMDAlignmentGesture = SettingsUtil::LoadBool(pSettings, "virtual_controller_settings", "disable_alignment_gesture", false);
-			m_fVirtuallExtendControllersYMeters = SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_y", 0.0f);
-			m_fVirtuallExtendControllersZMeters = SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "psmove_extend_z", 0.0f);
+			m_bDisableHMDAlignmentGesture = 
+				SettingsUtil::LoadBool(pSettings, "virtual_controller", "disable_alignment_gesture", false);
+			m_fVirtuallExtendControllersYMeters = 
+				SettingsUtil::LoadFloat(pSettings, "virtual_controller", "psmove_extend_y", 0.0f);
+			m_fVirtuallExtendControllersZMeters = 
+				SettingsUtil::LoadFloat(pSettings, "virtual_controller", "psmove_extend_z", 0.0f);
 			m_fControllerMetersInFrontOfHmdAtCalibration =
-				SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
+				SettingsUtil::LoadFloat(pSettings, "virtual_controller", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
 
 			m_thumbstickDeadzone =
-				fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, "virtual_controller_settings", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
-			m_bThumbstickTouchAsPress = SettingsUtil::LoadBool(pSettings, "virtual_controller_settings", "thumbstick_touch_as_press", true);
+				fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, "virtual_controller", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
+			m_bThumbstickTouchAsPress = 
+				SettingsUtil::LoadBool(pSettings, "virtual_controller", "thumbstick_touch_as_press", true);
 
 			// IK solver
-			if (SettingsUtil::LoadBool(pSettings, "virtual_controller_ik", "enable_ik", false))
+			if (SettingsUtil::LoadBool(pSettings, "virtual_controller", "enable_ik", false))
 			{
 				char handString[16];
 				vr::EVRSettingsError fetchError;
@@ -156,7 +162,7 @@ namespace steamvrbridge {
 				{
 					hand = vr::TrackedControllerRole_RightHand;
 
-					pSettings->GetString("virtual_controller_ik", "first_hand", handString, 16, &fetchError);
+					pSettings->GetString("virtual_controller", "first_hand", handString, 16, &fetchError);
 					if (fetchError == vr::VRSettingsError_None)
 					{
 						if (strcasecmp(handString, "left") == 0)
@@ -169,7 +175,7 @@ namespace steamvrbridge {
 				{
 					hand = vr::TrackedControllerRole_LeftHand;
 
-					pSettings->GetString("virtual_controller_ik", "second_hand", handString, 16, &fetchError);
+					pSettings->GetString("virtual_controller", "second_hand", handString, 16, &fetchError);
 					if (fetchError == vr::VRSettingsError_None)
 					{
 						if (strcasecmp(handString, "right") == 0)
@@ -179,10 +185,14 @@ namespace steamvrbridge {
 					}
 				}
 
-				float neckLength = SettingsUtil::LoadFloat(pSettings, "virtual_controller_ik", "neck_length", 0.2f); // meters
-				float halfShoulderLength = SettingsUtil::LoadFloat(pSettings, "virtual_controller_ik", "half_shoulder_length", 0.22f); // meters
-				float upperArmLength = SettingsUtil::LoadFloat(pSettings, "virtual_controller_ik", "upper_arm_length", 0.3f); // meters
-				float lowerArmLength = SettingsUtil::LoadFloat(pSettings, "virtual_controller_ik", "lower_arm_length", 0.35f); // meters
+				float neckLength = 
+					SettingsUtil::LoadFloat(pSettings, "virtual_controller", "neck_length", 0.2f); // meters
+				float halfShoulderLength = 
+					SettingsUtil::LoadFloat(pSettings, "virtual_controller", "half_shoulder_length", 0.22f); // meters
+				float upperArmLength = 
+					SettingsUtil::LoadFloat(pSettings, "virtual_controller", "upper_arm_length", 0.3f); // meters
+				float lowerArmLength = 
+					SettingsUtil::LoadFloat(pSettings, "virtual_controller", "lower_arm_length", 0.35f); // meters
 
 				//TODO: Select solver method
 				//m_orientationSolver = new CFABRIKArmSolver(hand, neckLength, halfShoulderLength, upperArmLength, lowerArmLength);
@@ -220,8 +230,7 @@ namespace steamvrbridge {
 			vr::EVRSettingsError fetchError;
 
 			const char *szPSButtonName = k_PSMButtonNames[psButtonID];
-			const char *szButtonSectionName = "virtual_button";
-			const char *szTouchpadSectionName = "virtual_touchpad";
+			const char *szTouchpadSectionName = "virtual_controller_emulated_touchpad";
 
 			char remapButtonToTouchpadDirectionString[32];
 			pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
@@ -374,7 +383,7 @@ namespace steamvrbridge {
 	}
 
 	void VirtualController::Deactivate() {
-		Logger::Info("CPSMoveControllerLatest::Deactivate - Controller stream stopped\n");
+		Logger::Info("VirtualController::Deactivate - Controller stream stopped\n");
 		PSM_StopControllerDataStreamAsync(m_PSMServiceController->ControllerID, nullptr);
 
 		Controller::Deactivate();
@@ -779,9 +788,6 @@ namespace steamvrbridge {
 		// This call posts this pose to shared memory, where all clients will have access to it the next
 		// moment they want to predict a pose.
 		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unSteamVRTrackedDeviceId, m_Pose, sizeof(vr::DriverPose_t));
-	}
-
-	void VirtualController::SetPendingHapticVibration(const vr::VREvent_HapticVibration_t &hapticData) {
 	}
 
 	void VirtualController::Update() {

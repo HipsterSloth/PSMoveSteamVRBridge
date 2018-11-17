@@ -29,11 +29,6 @@ namespace steamvrbridge {
 		, m_bIsBatteryCharging(false)
 		, m_fBatteryChargeFraction(0.f)
 		, m_bRumbleSuppressed(false)
-		, m_pendingHapticDurationSecs(DEFAULT_HAPTIC_DURATION)
-		, m_pendingHapticAmplitude(DEFAULT_HAPTIC_AMPLITUDE)
-		, m_pendingHapticFrequency(DEFAULT_HAPTIC_FREQUENCY)
-		, m_lastTimeRumbleSent()
-		, m_lastTimeRumbleSentValid(false)
 		, m_resetPoseButtonPressTime()
 		, m_bResetPoseRequestSent(false)
 		, m_resetAlignButtonPressTime()
@@ -87,25 +82,31 @@ namespace steamvrbridge {
 
 			// Touch pad settings
 			m_bDelayAfterTouchpadPress =
-				SettingsUtil::LoadBool(pSettings, "psmove_touchpad", "delay_after_touchpad_press", m_bDelayAfterTouchpadPress);
+				SettingsUtil::LoadBool(pSettings, "psmove", "delay_after_touchpad_press", m_bDelayAfterTouchpadPress);
 			m_fMetersPerTouchpadAxisUnits =
 				SettingsUtil::LoadFloat(pSettings, "psmove", "meters_per_touchpad_units", .075f);
 
 			// Throwing power settings
 			m_fLinearVelocityMultiplier =
-				SettingsUtil::LoadFloat(pSettings, "psmove_settings", "linear_velocity_multiplier", 1.f);
+				SettingsUtil::LoadFloat(pSettings, "psmove", "linear_velocity_multiplier", 1.f);
 			m_fLinearVelocityExponent =
-				SettingsUtil::LoadFloat(pSettings, "psmove_settings", "linear_velocity_exponent", 0.f);
+				SettingsUtil::LoadFloat(pSettings, "psmove", "linear_velocity_exponent", 0.f);
 
 			// General Settings
-			m_bRumbleSuppressed = SettingsUtil::LoadBool(pSettings, "psmove_settings", "rumble_suppressed", m_bRumbleSuppressed);
-			m_fVirtuallExtendControllersYMeters = SettingsUtil::LoadFloat(pSettings, "psmove_settings", "psmove_extend_y", 0.0f);
-			m_fVirtuallExtendControllersZMeters = SettingsUtil::LoadFloat(pSettings, "psmove_settings", "psmove_extend_z", 0.0f);
-			m_fVirtuallyRotateController = SettingsUtil::LoadBool(pSettings, "psmove_settings", "psmove_rotate", false);
+			m_bRumbleSuppressed = 
+				SettingsUtil::LoadBool(pSettings, "psmove", "rumble_suppressed", m_bRumbleSuppressed);
+			m_fVirtuallExtendControllersYMeters =
+				SettingsUtil::LoadFloat(pSettings, "psmove", "psmove_extend_y", 0.0f);
+			m_fVirtuallExtendControllersZMeters = 
+				SettingsUtil::LoadFloat(pSettings, "psmove", "psmove_extend_z", 0.0f);
+			m_fVirtuallyRotateController = 
+				SettingsUtil::LoadBool(pSettings, "psmove", "psmove_rotate", false);
 			m_fControllerMetersInFrontOfHmdAtCalibration =
 				SettingsUtil::LoadFloat(pSettings, "psmove", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
-			m_bDisableHMDAlignmentGesture = SettingsUtil::LoadBool(pSettings, "psmove_settings", "disable_alignment_gesture", false);
-			m_bUseControllerOrientationInHMDAlignment = SettingsUtil::LoadBool(pSettings, "psmove_settings", "use_orientation_in_alignment", true);
+			m_bDisableHMDAlignmentGesture = 
+				SettingsUtil::LoadBool(pSettings, "psmove", "disable_alignment_gesture", false);
+			m_bUseControllerOrientationInHMDAlignment = 
+				SettingsUtil::LoadBool(pSettings, "psmove", "use_orientation_in_alignment", true);
 
 			Logger::Logger::Info("m_fControllerMetersInFrontOfHmdAtCalibration(psmove): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
 		}
@@ -130,8 +131,7 @@ namespace steamvrbridge {
 			vr::EVRSettingsError fetchError;
 
 			const char *szPSButtonName = k_PSMButtonNames[psButtonID];
-			const char *szButtonSectionName = "psmove";
-			const char *szTouchpadSectionName = "psmove_touchpad_directions";
+			const char *szTouchpadSectionName = "psmove_emulated_touchpad";
 
 			char remapButtonToTouchpadDirectionString[32];
 			pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
@@ -223,30 +223,6 @@ namespace steamvrbridge {
 				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "vr_controller_vive_1_5");
 				//vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
 			}
-
-			// Create buttons components
-			Controller::CreateButtonComponent(k_PSMButtonID_PS);
-			Controller::CreateButtonComponent(k_PSMButtonID_Triangle);
-			Controller::CreateButtonComponent(k_PSMButtonID_Circle);
-			Controller::CreateButtonComponent(k_PSMButtonID_Cross);
-			Controller::CreateButtonComponent(k_PSMButtonID_Square);
-			Controller::CreateButtonComponent(k_PSMButtonID_Move);
-			Controller::CreateButtonComponent(k_PSMButtonID_Select);
-			Controller::CreateButtonComponent(k_PSMButtonID_Start);
-
-			// Create axis components
-			Controller::CreateAxisComponent(k_PSMAxisID_Trigger);
-
-			// [optional] Create components for emulated trackpad
-			for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-				if (psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
-					Controller::CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
-					Controller::CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
-					Controller::CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
-					Controller::CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_Y);
-					break;
-				}
-			}
 		}
 
 		return result;
@@ -257,7 +233,34 @@ namespace steamvrbridge {
 		PSMoveController *controller = reinterpret_cast<PSMoveController *>(userdata);
 
 		if (response->result_code == PSMResult::PSMResult_Success) {
-			Logger::Info("CPSMoveControllerLatest::start_controller_response_callback - Controller stream started\n");
+			Logger::Info("PSMoveController::start_controller_response_callback - Controller stream started\n");
+
+			// Create buttons components
+			controller->CreateButtonComponent(k_PSMButtonID_PS);
+			controller->CreateButtonComponent(k_PSMButtonID_Triangle);
+			controller->CreateButtonComponent(k_PSMButtonID_Circle);
+			controller->CreateButtonComponent(k_PSMButtonID_Cross);
+			controller->CreateButtonComponent(k_PSMButtonID_Square);
+			controller->CreateButtonComponent(k_PSMButtonID_Move);
+			controller->CreateButtonComponent(k_PSMButtonID_Select);
+			controller->CreateButtonComponent(k_PSMButtonID_Start);
+
+			// Create axis components
+			controller->CreateAxisComponent(k_PSMAxisID_Trigger);
+
+			// [optional] Create components for emulated trackpad
+			for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
+				if (controller->psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
+					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
+					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
+					controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
+					controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_Y);
+					break;
+				}
+			}
+
+			// Create haptic components
+			controller->CreateHapticComponent(k_PSMHapticID_Rumble);
 		}
 	}
 
@@ -328,7 +331,7 @@ namespace steamvrbridge {
 			PSMVector3f controllerBallPointedUpEuler = { (float)M_PI_2, 0.0f, 0.0f };
 			PSMQuatf controllerBallPointedUpQuat = PSM_QuatfCreateFromAngles(&controllerBallPointedUpEuler);
 
-			Logger::Info("CPSMoveControllerLatest::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
+			Logger::Info("PSMoveController::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
 
 			PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, &controllerBallPointedUpQuat, nullptr);
 			m_bResetPoseRequestSent = true;
@@ -359,7 +362,7 @@ namespace steamvrbridge {
 
 			m_bResetAlignRequestSent = true;
 		} else if (bRecenterRequestTriggered) {
-			Logger::Info("CPSMoveControllerLatest::UpdateControllerState(): Calling ClientPSMoveAPI::reset_orientation() in response to controller button press.\n");
+			Logger::Info("PSMoveController::UpdateControllerState(): Calling ClientPSMoveAPI::reset_orientation() in response to controller button press.\n");
 
 			PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, k_psm_quaternion_identity, nullptr);
 			m_bResetPoseRequestSent = true;
@@ -676,37 +679,29 @@ namespace steamvrbridge {
 			m_Pose.vecAngularAcceleration[2] = physicsData.AngularAccelerationRadPerSecSqr.z;
 		}*/
 
-		m_Pose.poseIsValid =
-			m_PSMServiceController->ControllerState.PSMoveState.bIsPositionValid &&
-			m_PSMServiceController->ControllerState.PSMoveState.bIsOrientationValid;
+		m_Pose.poseIsValid = view.bIsPositionValid && view.bIsOrientationValid;
 
 		// This call posts this pose to shared memory, where all clients will have access to it the next
 		// moment they want to predict a pose.
 		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unSteamVRTrackedDeviceId, m_Pose, sizeof(vr::DriverPose_t));
 	}
 
-	void PSMoveController::SetPendingHapticVibration(const vr::VREvent_HapticVibration_t &hapticData) {
-
-		if (IsHapticIDForHapticData(k_PSMHapticID_Rumble, hapticData))
-		{
-			m_pendingHapticDurationSecs = hapticData.fDurationSeconds;
-			m_pendingHapticAmplitude = hapticData.fAmplitude;
-			m_pendingHapticFrequency = hapticData.fFrequency;
-		}
-	}
-
 	// TODO - Make use of amplitude and frequency for Buffered Haptics, will give us patterning and panning vibration (for ds4?).
 	// See: https://developer.oculus.com/documentation/pcsdk/latest/concepts/dg-input-touch-haptic/
 	void PSMoveController::UpdateRumbleState() {
-		if (!m_bRumbleSuppressed) {
+		Controller::HapticState *haptic_state= GetHapticState(k_PSMHapticID_Rumble);
 
+		if (haptic_state == nullptr)
+			return;
+
+		if (!m_bRumbleSuppressed) {
 			// pulse duration - the length of each pulse
 			// amplitude - strength of vibration
 			// frequency - speed of each pulse
 
-
 			// convert to microseconds, the max duration received from OpenVR appears to be 5 micro seconds
-			uint16_t pendingHapticPulseDurationMicroSecs = static_cast<uint16_t>(m_pendingHapticDurationSecs * 1000000);
+			uint16_t pendingHapticPulseDurationMicroSecs = 
+				static_cast<uint16_t>(haptic_state->pendingHapticDurationSecs * 1000000);
 
 			const float k_max_rumble_update_rate = 33.f; // Don't bother trying to update the rumble faster than 30fps (33ms)
 			const float k_max_pulse_microseconds = 5000.f; // Docs suggest max pulse duration of 5ms, but we'll call 1ms max
@@ -714,22 +709,28 @@ namespace steamvrbridge {
 			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 			bool bTimoutElapsed = true;
 
-			if (m_lastTimeRumbleSentValid) {
-				std::chrono::duration<double, std::milli> timeSinceLastSend = now - m_lastTimeRumbleSent;
+			if (haptic_state->lastTimeRumbleSentValid) {
+				std::chrono::duration<double, std::milli> timeSinceLastSend = now - haptic_state->lastTimeRumbleSent;
 
 				bTimoutElapsed = timeSinceLastSend.count() >= k_max_rumble_update_rate;
 			}
 
 			// See if a rumble request hasn't come too recently
 			if (bTimoutElapsed) {
-				float rumble_fraction = (static_cast<float>(pendingHapticPulseDurationMicroSecs) / k_max_pulse_microseconds) * m_pendingHapticAmplitude;
+				float rumble_fraction = 
+					(static_cast<float>(pendingHapticPulseDurationMicroSecs) / k_max_pulse_microseconds) 
+					* haptic_state->pendingHapticAmplitude;
 
 				if (rumble_fraction > 0)
-					steamvrbridge::Logger::Debug("PSMoveController::UpdateRumble: m_pendingHapticPulseDurationSecs=%f ,pendingHapticPulseDurationMicroSecs=%d, rumble_fraction=%f\n", m_pendingHapticDurationSecs, pendingHapticPulseDurationMicroSecs, rumble_fraction);
+				{
+					steamvrbridge::Logger::Debug(
+						"PSMoveController::UpdateRumble: m_pendingHapticPulseDurationSecs=%f, pendingHapticPulseDurationMicroSecs=%d, rumble_fraction=%f\n", 
+						haptic_state->pendingHapticDurationSecs, pendingHapticPulseDurationMicroSecs, rumble_fraction);
+				}
 
 				// Unless a zero rumble intensity was explicitly set, 
 				// don't rumble less than 35% (no enough to feel)
-				if (m_pendingHapticDurationSecs != 0) {
+				if (haptic_state->pendingHapticDurationSecs != 0) {
 					if (rumble_fraction < 0.35f) {
 						// rumble values less 35% isn't noticeable
 						rumble_fraction = 0.35f;
@@ -745,23 +746,23 @@ namespace steamvrbridge {
 				PSM_SetControllerRumble(m_PSMServiceController->ControllerID, PSMControllerRumbleChannel_All, rumble_fraction);
 
 				// Remember the last rumble we went and when we sent it
-				m_lastTimeRumbleSent = now;
-				m_lastTimeRumbleSentValid = true;
+				haptic_state->lastTimeRumbleSent = now;
+				haptic_state->lastTimeRumbleSentValid = true;
 
 				// Reset the pending haptic pulse duration.
 				// If another call to TriggerHapticPulse() is made later, it will stomp this value.
 				// If no future haptic event is received by ServerDriver then the next call to UpdateRumbleState()
 				// in k_max_rumble_update_rate milliseconds will set the rumble_fraction to 0.f
 				// This effectively makes the shortest rumble pulse k_max_rumble_update_rate milliseconds.
-				m_pendingHapticDurationSecs = DEFAULT_HAPTIC_DURATION;
-				m_pendingHapticAmplitude = DEFAULT_HAPTIC_AMPLITUDE;
-				m_pendingHapticFrequency = DEFAULT_HAPTIC_FREQUENCY;
+				haptic_state->pendingHapticDurationSecs = DEFAULT_HAPTIC_DURATION;
+				haptic_state->pendingHapticAmplitude = DEFAULT_HAPTIC_AMPLITUDE;
+				haptic_state->pendingHapticFrequency = DEFAULT_HAPTIC_FREQUENCY;
 			}
 		} else {
 			// Reset the pending haptic pulse duration since rumble is suppressed.
-			m_pendingHapticDurationSecs = DEFAULT_HAPTIC_DURATION;
-			m_pendingHapticAmplitude = DEFAULT_HAPTIC_AMPLITUDE;
-			m_pendingHapticFrequency = DEFAULT_HAPTIC_FREQUENCY;
+			haptic_state->pendingHapticDurationSecs = DEFAULT_HAPTIC_DURATION;
+			haptic_state->pendingHapticAmplitude = DEFAULT_HAPTIC_AMPLITUDE;
+			haptic_state->pendingHapticFrequency = DEFAULT_HAPTIC_FREQUENCY;
 		}
 	}
 

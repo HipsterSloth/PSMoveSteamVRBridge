@@ -32,7 +32,6 @@ namespace steamvrbridge {
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }
 		PSMControllerType GetPSMControllerType() const override { return PSMController_Move; }
-		void SetPendingHapticVibration(const vr::VREvent_HapticVibration_t &hapticData) override;
 
 	private:
 		void UpdateEmulatedTrackpad();
@@ -58,11 +57,6 @@ namespace steamvrbridge {
 
 		// Rumble state
 		bool m_bRumbleSuppressed;
-		float m_pendingHapticDurationSecs;
-		float m_pendingHapticAmplitude;
-		float m_pendingHapticFrequency;
-		std::chrono::time_point<std::chrono::high_resolution_clock> m_lastTimeRumbleSent;
-		bool m_lastTimeRumbleSentValid;
 
 		// Virtual extend controller in meters.
 		float m_fVirtuallExtendControllersYMeters;
