@@ -25,11 +25,13 @@ namespace steamvrbridge {
 		void Deactivate() override;
 
 		// TrackableDevice interface implementation
+		void LoadSettings(vr::IVRSettings *pSettings) override;
 		vr::ETrackedDeviceClass GetTrackedDeviceClass() const override { return vr::TrackedDeviceClass_Controller; }
 		void Update() override;
 		void RefreshWorldFromDriverPose() override;
 
 		// IController interface implementation
+		const char *GetControllerSettingsPrefix() const override { return "psnavi"; }
 		bool HasPSMControllerId(int ControllerID) const override { return ControllerID == m_nPSMControllerId; }
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }
@@ -62,13 +64,6 @@ namespace steamvrbridge {
 		bool m_bResetPoseRequestSent;
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_resetAlignButtonPressTime;
 		bool m_bResetAlignRequestSent;
-
-		// Button Remapping
-		eEmulatedTrackpadAction psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_Count];
-		void LoadEmulatedTouchpadActions(
-			vr::IVRSettings *pSettings,
-			const ePSMButtonID psButtonID,
-			int controllerId = -1);
 
 		// The last normalized thumbstick values (post dead zone application);
 		float m_lastSanitizedThumbstick_X;

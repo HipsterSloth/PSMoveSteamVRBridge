@@ -10,12 +10,6 @@
 #include "trackable_device.h"
 #include <assert.h>
 
-#if _MSC_VER
-#define strcasecmp(a, b) stricmp(a,b)
-#pragma warning (disable: 4996) // 'This function or variable may be unsafe': snprintf
-#define snprintf _snprintf
-#endif
-
 namespace steamvrbridge {
 
 	PSDualshock4Controller::PSDualshock4Controller(
@@ -43,8 +37,7 @@ namespace steamvrbridge {
 		, m_thumbstickDeadzone(k_defaultThumbstickDeadZoneRadius)
 		, m_fLinearVelocityMultiplier(1.f)
 		, m_fLinearVelocityExponent(0.f)
-		, m_hmdAlignPSButtonID(k_PSMButtonID_Select)
-		, m_overrideModel("") {
+		, m_hmdAlignPSButtonID(k_PSMButtonID_Select) {
 		char svrIdentifier[256];
 		Utils::GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerId);
 		m_strSteamVRSerialNo = svrIdentifier;
@@ -61,72 +54,10 @@ namespace steamvrbridge {
 
 		m_TrackedControllerRole = trackedControllerRole;
 
-		// Load config from steamvr.vrsettings
-		vr::IVRSettings *pSettings = vr::VRSettings();
-
 		// Map every button to not be associated with any touchpad direction, initially
-		memset(psButtonIDToEmulatedTouchpadAction, k_EmulatedTrackpadAction_None, k_PSMButtonID_Count * sizeof(vr::EVRButtonId));
-
-		if (pSettings != nullptr) {
-			// DS4 controller button -> fake touchpad mappings
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_PS, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Triangle, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Circle, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Cross, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Square, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Left, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Up, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Right, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Down, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Options, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Share, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Touchpad, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_LeftJoystick, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_RightJoystick, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_LeftShoulder, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_RightShoulder, psmControllerId);
-
-			// Get the controller override model to use, if any
-			{
-				char modelString[64];
-				vr::EVRSettingsError fetchError;
-
-				pSettings->GetString("ds4", "override_model", modelString, 64, &fetchError);
-				if (fetchError == vr::VRSettingsError_None)
-				{
-					m_overrideModel = modelString;
-				}
-			}
-
-			// Throwing power settings
-			m_fLinearVelocityMultiplier =
-				SettingsUtil::LoadFloat(pSettings, "ds4", "linear_velocity_multiplier", 1.f);
-			m_fLinearVelocityExponent =
-				SettingsUtil::LoadFloat(pSettings, "ds4", "linear_velocity_exponent", 0.f);
-
-			// General Settings
-			m_bRumbleSuppressed= 
-				SettingsUtil::LoadBool(pSettings, "ds4", "rumble_suppressed", m_bRumbleSuppressed);
-			m_fVirtuallExtendControllersYMeters = 
-				SettingsUtil::LoadFloat(pSettings, "ds4", "extend_y", 0.0f);
-			m_fVirtuallExtendControllersZMeters = 
-				SettingsUtil::LoadFloat(pSettings, "ds4", "extend_z", 0.0f);
-			m_fVirtuallyRotateController = 
-				SettingsUtil::LoadBool(pSettings, "ds4", "rotate", false);
-            m_bDisableHMDAlignmentGesture= 
-				SettingsUtil::LoadBool(pSettings, "ds4", "disable_alignment_gesture", false);
-			m_bUseControllerOrientationInHMDAlignment= 
-				SettingsUtil::LoadBool(pSettings, "ds4", "use_orientation_in_alignment", true);
-            m_bDisableHMDAlignmentGesture= 
-				SettingsUtil::LoadBool(pSettings, "ds4", "disable_alignment_gesture", false);
-			m_fControllerMetersInFrontOfHmdAtCalibration= 
-				SettingsUtil::LoadFloat(pSettings, "ds4", "calibration_cm_offset", 16.f) / 100.f;
-			m_thumbstickDeadzone =
-				fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, "ds4", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
-		}
+		memset(m_psButtonIDToEmulatedTouchpadAction, k_EmulatedTrackpadAction_None, k_PSMButtonID_Count * sizeof(vr::EVRButtonId));
 
 		m_trackingStatus = vr::TrackingResult_Running_OK;
-
 	}
 
 	PSDualshock4Controller::~PSDualshock4Controller() {
@@ -134,52 +65,52 @@ namespace steamvrbridge {
 		m_PSMServiceController = nullptr;
 	}
 
-	void PSDualshock4Controller::LoadEmulatedTouchpadActions(
-		vr::IVRSettings *pSettings,
-		const ePSMButtonID psButtonID,
-		int controllerId) {
+	void PSDualshock4Controller::LoadSettings(vr::IVRSettings *pSettings) {
+		Controller::LoadSettings(pSettings);
 
-		eEmulatedTrackpadAction vrTouchpadDirection = k_EmulatedTrackpadAction_None;
+		const char * szModelName= GetControllerSettingsPrefix();
 
-		if (pSettings != nullptr) {
-			vr::EVRSettingsError fetchError;
+		// DS4 controller button -> fake touchpad mappings
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_PS, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Triangle, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Circle, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Cross, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Square, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Left, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Up, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Right, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Down, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Options, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Share, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Touchpad, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_LeftJoystick, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_RightJoystick, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_LeftShoulder, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_RightShoulder, m_nPSMControllerId);
 
-			const char *szPSButtonName = k_PSMButtonNames[psButtonID];
-			const char *szTouchpadSectionName = "ds4_emulated_touchpad";
+		// Throwing power settings
+		m_fLinearVelocityMultiplier =
+			SettingsUtil::LoadFloat(pSettings, szModelName, "linear_velocity_multiplier", 1.f);
+		m_fLinearVelocityExponent =
+			SettingsUtil::LoadFloat(pSettings, szModelName, "linear_velocity_exponent", 0.f);
 
-			char remapButtonToTouchpadDirectionString[32];
-			pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
-
-			if (fetchError == vr::VRSettingsError_None) {
-				for (int vr_touchpad_direction_index = 0; vr_touchpad_direction_index < k_max_vr_touchpad_directions; ++vr_touchpad_direction_index) {
-					if (strcasecmp(remapButtonToTouchpadDirectionString, k_VRTouchpadDirectionNames[vr_touchpad_direction_index]) == 0) {
-						vrTouchpadDirection = static_cast<eEmulatedTrackpadAction>(vr_touchpad_direction_index);
-						break;
-					}
-				}
-			}
-
-			if (controllerId >= 0 && controllerId <= 9) {
-				char buffer[64];
-				snprintf(buffer, sizeof(buffer), "%s_%d", szTouchpadSectionName, controllerId);
-
-				szTouchpadSectionName = buffer;
-				pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
-
-				if (fetchError == vr::VRSettingsError_None) {
-					for (int vr_touchpad_direction_index = 0; vr_touchpad_direction_index < k_max_vr_touchpad_directions; ++vr_touchpad_direction_index) {
-						if (strcasecmp(remapButtonToTouchpadDirectionString, k_VRTouchpadDirectionNames[vr_touchpad_direction_index]) == 0) {
-							vrTouchpadDirection = static_cast<eEmulatedTrackpadAction>(vr_touchpad_direction_index);
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		// Save the mapping
-		assert(psButtonID >= 0 && psButtonID < k_PSMButtonID_Count);
-		psButtonIDToEmulatedTouchpadAction[psButtonID] = vrTouchpadDirection;
+		// General Settings
+		m_bRumbleSuppressed= 
+			SettingsUtil::LoadBool(pSettings, szModelName, "rumble_suppressed", m_bRumbleSuppressed);
+		m_fVirtuallExtendControllersYMeters = 
+			SettingsUtil::LoadFloat(pSettings, szModelName, "extend_y", 0.0f);
+		m_fVirtuallExtendControllersZMeters = 
+			SettingsUtil::LoadFloat(pSettings, szModelName, "extend_z", 0.0f);
+		m_fVirtuallyRotateController = 
+			SettingsUtil::LoadBool(pSettings, szModelName, "rotate", false);
+        m_bDisableHMDAlignmentGesture= 
+			SettingsUtil::LoadBool(pSettings, szModelName, "disable_alignment_gesture", false);
+		m_bUseControllerOrientationInHMDAlignment= 
+			SettingsUtil::LoadBool(pSettings, szModelName, "use_orientation_in_alignment", true);
+		m_fControllerMetersInFrontOfHmdAtCalibration= 
+			SettingsUtil::LoadFloat(pSettings, szModelName, "calibration_cm_offset", 16.f) / 100.f;
+		m_thumbstickDeadzone =
+			fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, szModelName, "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
 	}
 
 	vr::EVRInitError PSDualshock4Controller::Activate(vr::TrackedDeviceIndex_t unObjectId) {
@@ -202,14 +133,14 @@ namespace steamvrbridge {
 			{
 				vr::CVRPropertyHelpers *properties = vr::VRProperties();
 
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String, "{psmove}controller_status_off.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String, "{psmove}controller_status_ready.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearchingAlert_String, "{psmove}controller_status_ready_alert.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReady_String, "{psmove}controller_status_ready.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReadyAlert_String, "{psmove}controller_status_ready_alert.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceNotReady_String, "{psmove}controller_status_error.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String, "{psmove}controller_status_ready.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String, "{psmove}controller_status_ready_low.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String, "{psmove}gamepad_status_off.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String, "{psmove}gamepad_status_ready.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearchingAlert_String, "{psmove}gamepad_status_ready_alert.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReady_String, "{psmove}gamepad_status_ready.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReadyAlert_String, "{psmove}gamepad_status_ready_alert.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceNotReady_String, "{psmove}gamepad_status_error.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String, "{psmove}gamepad_status_ready.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String, "{psmove}gamepad_status_ready_low.png");
 
 				properties->SetBoolProperty(m_ulPropertyContainer, vr::Prop_WillDriftInYaw_Bool, true);
 				properties->SetBoolProperty(m_ulPropertyContainer, vr::Prop_DeviceIsWireless_Bool, true);
@@ -222,29 +153,20 @@ namespace steamvrbridge {
 				// still refer to SteamVR models like "generic_hmd".
 				if (m_overrideModel.length() > 0)
 				{
-					//properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, m_overrideModel.c_str());
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModeLabel_String, m_overrideModel.c_str());
+					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, m_overrideModel.c_str());
 				}
 				else
 				{
-					char model_label[32] = "\0";
-					snprintf(model_label, sizeof(model_label), "dualshock4_%d", m_PSMServiceController->ControllerID);
-
-					//properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "vr_controller_01_mrhat");
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModeLabel_String, model_label);
+					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}dualshock4_controller");
 				}
 
 				// Set device properties
 				vr::VRProperties()->SetInt32Property(m_ulPropertyContainer, vr::Prop_ControllerRoleHint_Int32, m_TrackedControllerRole);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "HTC");
-
-				// Fake Vive for motion controllers
+				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "Sony");
 				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, 1313);
 				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, 1315);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "PS Move");
+				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "Dualshock 4");
 				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_strPSMControllerSerialNo.c_str());
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "vr_controller_vive_1_5");
-				//vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
 			}
 		}
 
@@ -287,7 +209,7 @@ namespace steamvrbridge {
 
 			// [optional] Create components for emulated trackpad
 			for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-				if (controller->psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
+				if (controller->m_psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
 					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
 					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
 					controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
@@ -470,7 +392,7 @@ namespace steamvrbridge {
 		// Find the highest priority emulated touch pad action (if any)
 		eEmulatedTrackpadAction highestPriorityAction= k_EmulatedTrackpadAction_None;
 		for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-			eEmulatedTrackpadAction action= psButtonIDToEmulatedTouchpadAction[buttonIndex];
+			eEmulatedTrackpadAction action= m_psButtonIDToEmulatedTouchpadAction[buttonIndex];
 			if (action != k_EmulatedTrackpadAction_None) {
 				PSMButtonState button_state= PSMButtonState_UP;
 				if (Controller::GetButtonState((ePSMButtonID)buttonIndex, button_state))
@@ -545,7 +467,7 @@ namespace steamvrbridge {
 				touchpad_y = -0.707f;
 				break;
 			}		
-		} else if (psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_LeftJoystick] != k_EmulatedTrackpadAction_None) {
+		} else if (m_psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_LeftJoystick] != k_EmulatedTrackpadAction_None) {
 			// Consider the touchpad pressed if the left thumbstick is deflected at all.
 			const bool bIsTouched= fabsf(m_lastSanitizedLeftThumbstick_X) + fabsf(m_lastSanitizedLeftThumbstick_Y) > 0.f;
 
@@ -556,7 +478,7 @@ namespace steamvrbridge {
 				touchpad_x= m_lastSanitizedLeftThumbstick_X;
 				touchpad_y= m_lastSanitizedLeftThumbstick_Y;
 			}
-		} else if (psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_RightJoystick] != k_EmulatedTrackpadAction_None) {
+		} else if (m_psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_RightJoystick] != k_EmulatedTrackpadAction_None) {
 			// Consider the touchpad pressed if the right thumbstick is deflected at all.
 			const bool bIsTouched= fabsf(m_lastSanitizedRightThumbstick_X) + fabsf(m_lastSanitizedRightThumbstick_Y) > 0.f;
 

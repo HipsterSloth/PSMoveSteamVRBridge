@@ -52,96 +52,12 @@ namespace steamvrbridge {
 
 		m_TrackedControllerRole = trackedControllerRole;
 
-		// Load config from steamvr.vrsettings
-		vr::IVRSettings *pSettings = vr::VRSettings();
-
-		// Map every button to not be associated with any touchpad direction, initially
-		memset(psButtonIDToEmulatedTouchpadAction, k_EmulatedTrackpadAction_None, k_PSMButtonID_Count * sizeof(vr::EVRButtonId));
-
-		if (pSettings != nullptr) {
-			// PSNavi controller button -> fake touchpad mappings
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_PS, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Left, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Up, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Right, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Down, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Circle, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Cross, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Joystick, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Shoulder, psmControllerId);
-
-			// Get the controller override model to use, if any
-			{
-				char modelString[64];
-				vr::EVRSettingsError fetchError;
-
-				pSettings->GetString("navi", "override_model", modelString, 64, &fetchError);
-				if (fetchError == vr::VRSettingsError_None)
-				{
-					m_overrideModel = modelString;
-				}
-			}
-
-			// General Settings
-			m_thumbstickDeadzone =
-				fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, "navi", "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
-		}
-
 		m_trackingStatus = vr::TrackingResult_Running_OK;
-
 	}
 
 	PSNaviController::~PSNaviController() {
 		PSM_FreeControllerListener(m_PSMServiceController->ControllerID);
 		m_PSMServiceController = nullptr;
-	}
-
-	void PSNaviController::LoadEmulatedTouchpadActions(
-		vr::IVRSettings *pSettings,
-		const ePSMButtonID psButtonID,
-		int controllerId) {
-
-		eEmulatedTrackpadAction vrTouchpadDirection = k_EmulatedTrackpadAction_None;
-
-		if (pSettings != nullptr) {
-			vr::EVRSettingsError fetchError;
-
-			const char *szPSButtonName = k_PSMButtonNames[psButtonID];
-			const char *szTouchpadSectionName = "navi_emulated_touchpad";
-
-			char remapButtonToTouchpadDirectionString[32];
-			pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
-
-			if (fetchError == vr::VRSettingsError_None) {
-				for (int vr_touchpad_direction_index = 0; vr_touchpad_direction_index < k_max_vr_touchpad_directions; ++vr_touchpad_direction_index) {
-					if (strcasecmp(remapButtonToTouchpadDirectionString, k_VRTouchpadDirectionNames[vr_touchpad_direction_index]) == 0) {
-						vrTouchpadDirection = static_cast<eEmulatedTrackpadAction>(vr_touchpad_direction_index);
-						break;
-					}
-				}
-			}
-
-			if (controllerId >= 0 && controllerId <= 9) {
-				char buffer[64];
-				snprintf(buffer, sizeof(buffer), "%s_%d", szTouchpadSectionName, controllerId);
-
-				szTouchpadSectionName = buffer;
-				pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
-
-				if (fetchError == vr::VRSettingsError_None) {
-					for (int vr_touchpad_direction_index = 0; vr_touchpad_direction_index < k_max_vr_touchpad_directions; ++vr_touchpad_direction_index) {
-						if (strcasecmp(remapButtonToTouchpadDirectionString, k_VRTouchpadDirectionNames[vr_touchpad_direction_index]) == 0) {
-							vrTouchpadDirection = static_cast<eEmulatedTrackpadAction>(vr_touchpad_direction_index);
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		// Save the mapping
-		assert(psButtonID >= 0 && psButtonID < k_PSMButtonID_Count);
-		psButtonIDToEmulatedTouchpadAction[psButtonID] = vrTouchpadDirection;
 	}
 
 	void PSNaviController::AttachToController(Controller *parent_controller)
@@ -165,6 +81,27 @@ namespace steamvrbridge {
 			Logger::Error("PSNaviController::AttachToController() - Can't attach PSNavi(%s) since it's already been Activated!",
 				m_strPSMControllerSerialNo.c_str());
 		}
+	}
+
+	void PSNaviController::LoadSettings(vr::IVRSettings *pSettings) {
+		Controller::LoadSettings(pSettings);
+
+		const char * szModelName= GetControllerSettingsPrefix();
+
+		// PSNavi controller button -> fake touchpad mappings
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_PS, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Left, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Up, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Right, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Down, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Circle, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Cross, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Joystick, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Shoulder, m_nPSMControllerId);
+
+		// General Settings
+		m_thumbstickDeadzone =
+			fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, szModelName, "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
 	}
 
 	vr::EVRInitError PSNaviController::Activate(vr::TrackedDeviceIndex_t unObjectId) {
@@ -193,14 +130,14 @@ namespace steamvrbridge {
 			{
 				vr::CVRPropertyHelpers *properties = vr::VRProperties();
 
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String, "{psmove}controller_status_off.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String, "{psmove}controller_status_ready.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearchingAlert_String, "{psmove}controller_status_ready_alert.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReady_String, "{psmove}controller_status_ready.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReadyAlert_String, "{psmove}controller_status_ready_alert.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceNotReady_String, "{psmove}controller_status_error.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String, "{psmove}controller_status_ready.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String, "{psmove}controller_status_ready_low.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String, "{psmove}psnavi_status_off.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String, "{psmove}psnavi_status_ready.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearchingAlert_String, "{psmove}psnavi_status_ready_alert.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReady_String, "{psmove}psnavi_status_ready.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReadyAlert_String, "{psmove}psnavi_status_ready_alert.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceNotReady_String, "{psmove}psnavi_status_error.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String, "{psmove}psnavi_status_ready.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String, "{psmove}psnavi_status_ready_low.png");
 
 				properties->SetBoolProperty(m_ulPropertyContainer, vr::Prop_WillDriftInYaw_Bool, false);
 				properties->SetBoolProperty(m_ulPropertyContainer, vr::Prop_DeviceIsWireless_Bool, true);
@@ -213,29 +150,20 @@ namespace steamvrbridge {
 				// still refer to SteamVR models like "generic_hmd".
 				if (m_overrideModel.length() > 0)
 				{
-					//properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, m_overrideModel.c_str());
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModeLabel_String, m_overrideModel.c_str());
+					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, m_overrideModel.c_str());
 				}
 				else
 				{
-					char model_label[32] = "\0";
-					snprintf(model_label, sizeof(model_label), "virtual_%d", m_PSMServiceController->ControllerID);
-
-					//properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "vr_controller_01_mrhat");
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModeLabel_String, model_label);
+					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}navi_controller");
 				}
 
 				// Set device properties
 				vr::VRProperties()->SetInt32Property(m_ulPropertyContainer, vr::Prop_ControllerRoleHint_Int32, m_TrackedControllerRole);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "HTC");
-
-				// Fake Vive for motion controllers
+				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "Sony");
 				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, 1313);
 				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, 1315);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "PS Move");
+				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "PS Navi");
 				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_strPSMControllerSerialNo.c_str());
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "vr_controller_vive_1_5");
-				//vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
 			}
 		}
 
@@ -268,7 +196,7 @@ namespace steamvrbridge {
 
 			// [optional] Create components for emulated trackpad
 			for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-				if (controller->psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
+				if (controller->m_psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
 					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
 					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
 					controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
@@ -353,7 +281,7 @@ namespace steamvrbridge {
 		// Find the highest priority emulated touch pad action (if any)
 		eEmulatedTrackpadAction highestPriorityAction= k_EmulatedTrackpadAction_None;
 		for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-			eEmulatedTrackpadAction action= psButtonIDToEmulatedTouchpadAction[buttonIndex];
+			eEmulatedTrackpadAction action= m_psButtonIDToEmulatedTouchpadAction[buttonIndex];
 			if (action != k_EmulatedTrackpadAction_None) {
 				PSMButtonState button_state= PSMButtonState_UP;
 				if (Controller::GetButtonState((ePSMButtonID)buttonIndex, button_state))

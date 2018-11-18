@@ -35,7 +35,7 @@ namespace steamvrbridge {
 		, m_bResetAlignRequestSent(false)
 		, m_fVirtuallExtendControllersZMeters(0.0f)
 		, m_fVirtuallExtendControllersYMeters(0.0f)
-		, m_fVirtuallyRotateController(false)
+		, m_fZRotate90Degrees(false)
 		, m_bDelayAfterTouchpadPress(false)
 		, m_bTouchpadWasActive(false)
 		, m_fControllerMetersInFrontOfHmdAtCalibration(0.f)
@@ -63,56 +63,10 @@ namespace steamvrbridge {
 
 		m_TrackedControllerRole = trackedControllerRole;
 
-		// Load config from steamvr.vrsettings
-		vr::IVRSettings *pSettings = vr::VRSettings();
-
 		// Map every button to not be associated with any touchpad direction, initially
-		memset(psButtonIDToEmulatedTouchpadAction, k_EmulatedTrackpadAction_None, k_PSMButtonID_Count * sizeof(vr::EVRButtonId));
-
-		if (pSettings != nullptr) {
-			//PSMove controller button -> fake touchpad mappings
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_PS, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Move, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Triangle, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Square, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Circle, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Cross, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Select, psmControllerId);
-			LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Start, psmControllerId);
-
-			// Touch pad settings
-			m_bDelayAfterTouchpadPress =
-				SettingsUtil::LoadBool(pSettings, "psmove", "delay_after_touchpad_press", m_bDelayAfterTouchpadPress);
-			m_fMetersPerTouchpadAxisUnits =
-				SettingsUtil::LoadFloat(pSettings, "psmove", "meters_per_touchpad_units", .075f);
-
-			// Throwing power settings
-			m_fLinearVelocityMultiplier =
-				SettingsUtil::LoadFloat(pSettings, "psmove", "linear_velocity_multiplier", 1.f);
-			m_fLinearVelocityExponent =
-				SettingsUtil::LoadFloat(pSettings, "psmove", "linear_velocity_exponent", 0.f);
-
-			// General Settings
-			m_bRumbleSuppressed = 
-				SettingsUtil::LoadBool(pSettings, "psmove", "rumble_suppressed", m_bRumbleSuppressed);
-			m_fVirtuallExtendControllersYMeters =
-				SettingsUtil::LoadFloat(pSettings, "psmove", "psmove_extend_y", 0.0f);
-			m_fVirtuallExtendControllersZMeters = 
-				SettingsUtil::LoadFloat(pSettings, "psmove", "psmove_extend_z", 0.0f);
-			m_fVirtuallyRotateController = 
-				SettingsUtil::LoadBool(pSettings, "psmove", "psmove_rotate", false);
-			m_fControllerMetersInFrontOfHmdAtCalibration =
-				SettingsUtil::LoadFloat(pSettings, "psmove", "m_fControllerMetersInFrontOfHmdAtCallibration", 0.06f);
-			m_bDisableHMDAlignmentGesture = 
-				SettingsUtil::LoadBool(pSettings, "psmove", "disable_alignment_gesture", false);
-			m_bUseControllerOrientationInHMDAlignment = 
-				SettingsUtil::LoadBool(pSettings, "psmove", "use_orientation_in_alignment", true);
-
-			Logger::Logger::Info("m_fControllerMetersInFrontOfHmdAtCalibration(psmove): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
-		}
+		memset(m_psButtonIDToEmulatedTouchpadAction, k_EmulatedTrackpadAction_None, k_PSMButtonID_Count * sizeof(vr::EVRButtonId));
 
 		m_trackingStatus = m_bDisableHMDAlignmentGesture ? vr::TrackingResult_Running_OK : vr::TrackingResult_Uninitialized;
-
 	}
 
 	PSMoveController::~PSMoveController() {
@@ -120,52 +74,50 @@ namespace steamvrbridge {
 		m_PSMServiceController = nullptr;
 	}
 
-	void PSMoveController::LoadEmulatedTouchpadActions(
-		vr::IVRSettings *pSettings,
-		const ePSMButtonID psButtonID,
-		int controllerId) {
+	void PSMoveController::LoadSettings(vr::IVRSettings *pSettings) {
+		Controller::LoadSettings(pSettings);
 
-		eEmulatedTrackpadAction vrTouchpadDirection = k_EmulatedTrackpadAction_None;
+		const char * szModelName= GetControllerSettingsPrefix();
 
-		if (pSettings != nullptr) {
-			vr::EVRSettingsError fetchError;
+		//PSMove controller button -> fake touchpad mappings
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_PS, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Move, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Triangle, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Square, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Circle, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Cross, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Select, m_nPSMControllerId);
+		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Start, m_nPSMControllerId);
 
-			const char *szPSButtonName = k_PSMButtonNames[psButtonID];
-			const char *szTouchpadSectionName = "psmove_emulated_touchpad";
+		// Touch pad settings
+		m_bDelayAfterTouchpadPress =
+			SettingsUtil::LoadBool(pSettings, szModelName, "delay_after_touchpad_press", m_bDelayAfterTouchpadPress);
+		m_fMetersPerTouchpadAxisUnits =
+			SettingsUtil::LoadFloat(pSettings, szModelName, "cm_per_touchpad_units", 7.5f) / 100.f;
 
-			char remapButtonToTouchpadDirectionString[32];
-			pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
+		// Throwing power settings
+		m_fLinearVelocityMultiplier =
+			SettingsUtil::LoadFloat(pSettings, szModelName, "linear_velocity_multiplier", 1.f);
+		m_fLinearVelocityExponent =
+			SettingsUtil::LoadFloat(pSettings, szModelName, "linear_velocity_exponent", 0.f);
 
-			if (fetchError == vr::VRSettingsError_None) {
-				for (int vr_touchpad_direction_index = 0; vr_touchpad_direction_index < k_max_vr_touchpad_directions; ++vr_touchpad_direction_index) {
-					if (strcasecmp(remapButtonToTouchpadDirectionString, k_VRTouchpadDirectionNames[vr_touchpad_direction_index]) == 0) {
-						vrTouchpadDirection = static_cast<eEmulatedTrackpadAction>(vr_touchpad_direction_index);
-						break;
-					}
-				}
-			}
+		// General Settings
+		m_bRumbleSuppressed = 
+			SettingsUtil::LoadBool(pSettings, szModelName, "rumble_suppressed", m_bRumbleSuppressed);
+		m_fVirtuallExtendControllersYMeters =
+			SettingsUtil::LoadFloat(pSettings, szModelName, "extend_y", 0.0f);
+		m_fVirtuallExtendControllersZMeters = 
+			SettingsUtil::LoadFloat(pSettings, szModelName, "extend_z", 0.0f);
+		m_fZRotate90Degrees = 
+			SettingsUtil::LoadBool(pSettings, szModelName, "rotate_z_90", false);
+		m_fControllerMetersInFrontOfHmdAtCalibration =
+			SettingsUtil::LoadFloat(pSettings, szModelName, "calibration_cm_offset", 6.f) / 100.f;
+		m_bDisableHMDAlignmentGesture = 
+			SettingsUtil::LoadBool(pSettings, szModelName, "disable_alignment_gesture", false);
+		m_bUseControllerOrientationInHMDAlignment = 
+			SettingsUtil::LoadBool(pSettings, szModelName, "use_orientation_in_alignment", true);
 
-			if (controllerId >= 0 && controllerId <= 9) {
-				char buffer[64];
-				snprintf(buffer, sizeof(buffer), "%s_%d", szTouchpadSectionName, controllerId);
-
-				szTouchpadSectionName = buffer;
-				pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
-
-				if (fetchError == vr::VRSettingsError_None) {
-					for (int vr_touchpad_direction_index = 0; vr_touchpad_direction_index < k_max_vr_touchpad_directions; ++vr_touchpad_direction_index) {
-						if (strcasecmp(remapButtonToTouchpadDirectionString, k_VRTouchpadDirectionNames[vr_touchpad_direction_index]) == 0) {
-							vrTouchpadDirection = static_cast<eEmulatedTrackpadAction>(vr_touchpad_direction_index);
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		// Save the mapping
-		assert(psButtonID >= 0 && psButtonID < k_PSMButtonID_Count);
-		psButtonIDToEmulatedTouchpadAction[psButtonID] = vrTouchpadDirection;
+		Logger::Logger::Info("m_fControllerMetersInFrontOfHmdAtCalibration(psmove): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
 	}
 
 	vr::EVRInitError PSMoveController::Activate(vr::TrackedDeviceIndex_t unObjectId) {
@@ -188,14 +140,14 @@ namespace steamvrbridge {
 			{
 				vr::CVRPropertyHelpers *properties = vr::VRProperties();
 
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String, "{psmove}controller_status_off.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String, "{psmove}controller_status_ready.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearchingAlert_String, "{psmove}controller_status_ready_alert.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReady_String, "{psmove}controller_status_ready.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReadyAlert_String, "{psmove}controller_status_ready_alert.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceNotReady_String, "{psmove}controller_status_error.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String, "{psmove}controller_status_ready.png");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String, "{psmove}controller_status_ready_low.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String, "{psmove}psmove_status_off.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String, "{psmove}psmove_status_ready.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearchingAlert_String, "{psmove}psmove_status_ready_alert.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReady_String, "{psmove}psmove_status_ready.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReadyAlert_String, "{psmove}psmove_status_ready_alert.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceNotReady_String, "{psmove}psmove_status_error.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String, "{psmove}psmove_status_ready.png");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String, "{psmove}psmove_status_ready_low.png");
 
 				properties->SetBoolProperty(m_ulPropertyContainer, vr::Prop_WillDriftInYaw_Bool, false);
 				properties->SetBoolProperty(m_ulPropertyContainer, vr::Prop_DeviceIsWireless_Bool, true);
@@ -206,22 +158,23 @@ namespace steamvrbridge {
 				// The {psmove} syntax lets us refer to rendermodels that are installed
 				// in the driver's own resources/rendermodels directory.  The driver can
 				// still refer to SteamVR models like "generic_hmd".
-				char model_label[32] = "\0";
-				snprintf(model_label, sizeof(model_label), "psmove_%d", m_PSMServiceController->ControllerID);
-				//properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModeLabel_String, model_label);
+				if (m_overrideModel.length() > 0)
+				{
+					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, m_overrideModel.c_str());
+				}
+				else
+				{
+					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
+				}
+
 
 				// Set device properties
 				vr::VRProperties()->SetInt32Property(m_ulPropertyContainer, vr::Prop_ControllerRoleHint_Int32, m_TrackedControllerRole);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "HTC");
-
-				// Fake Vive for motion controllers
+				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "Sony");
 				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, 1313);
 				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, 1315);
 				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "PS Move");
 				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_strPSMControllerSerialNo.c_str());
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "vr_controller_vive_1_5");
-				//vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
 			}
 		}
 
@@ -250,7 +203,7 @@ namespace steamvrbridge {
 
 			// [optional] Create components for emulated trackpad
 			for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-				if (controller->psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
+				if (controller->m_psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
 					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
 					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
 					controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
@@ -438,7 +391,7 @@ namespace steamvrbridge {
 		// Find the highest priority emulated touch pad action (if any)
 		eEmulatedTrackpadAction highestPriorityAction= k_EmulatedTrackpadAction_None;
 		for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-			eEmulatedTrackpadAction action= psButtonIDToEmulatedTouchpadAction[buttonIndex];
+			eEmulatedTrackpadAction action= m_psButtonIDToEmulatedTouchpadAction[buttonIndex];
 			if (action != k_EmulatedTrackpadAction_None) {
 				PSMButtonState button_state= PSMButtonState_UP;
 				if (Controller::GetButtonState((ePSMButtonID)buttonIndex, button_state))
@@ -646,10 +599,10 @@ namespace steamvrbridge {
 		{
 			const PSMQuatf &orientation = view.Pose.Orientation;
 
-			m_Pose.qRotation.w = m_fVirtuallyRotateController ? -orientation.w : orientation.w;
+			m_Pose.qRotation.w = m_fZRotate90Degrees ? -orientation.w : orientation.w;
 			m_Pose.qRotation.x = orientation.x;
 			m_Pose.qRotation.y = orientation.y;
-			m_Pose.qRotation.z = m_fVirtuallyRotateController ? -orientation.z : orientation.z;
+			m_Pose.qRotation.z = m_fZRotate90Degrees ? -orientation.z : orientation.z;
 		}
 
 		// Set the physics state of the controller

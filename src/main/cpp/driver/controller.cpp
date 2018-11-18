@@ -3,16 +3,83 @@
 #include "logger.h"
 #include "driver.h"
 
+#include <assert.h>
+
 namespace steamvrbridge {
 
 	Controller::Controller() 
-	: TrackableDevice() {
-
+	: TrackableDevice()
+	, m_overrideModel("") {
+		// Initially no button maps to any enumulated touchpad action
+		memset(m_psButtonIDToEmulatedTouchpadAction, k_EmulatedTrackpadAction_None, k_PSMButtonID_Count * sizeof(vr::EVRButtonId));
 	}
 
-	Controller::~Controller()
-	{
+	Controller::~Controller() {
+	}
 
+	void Controller::LoadSettings(vr::IVRSettings *pSettings) {
+		TrackableDevice::LoadSettings(pSettings);
+
+		// Get the controller override model to use, if any
+		char modelString[64];
+		vr::EVRSettingsError fetchError;
+
+		pSettings->GetString(GetControllerSettingsPrefix(), "override_model", modelString, 64, &fetchError);
+		if (fetchError == vr::VRSettingsError_None)
+		{
+			m_overrideModel = modelString;
+		}
+	}
+
+	void Controller::LoadEmulatedTouchpadActions(
+		vr::IVRSettings *pSettings,
+		const ePSMButtonID psButtonID,
+		int controllerId) {
+
+		eEmulatedTrackpadAction vrTouchpadDirection = k_EmulatedTrackpadAction_None;
+
+		if (pSettings != nullptr) {
+			vr::EVRSettingsError fetchError;
+
+			const char *szPSButtonName = k_PSMButtonNames[psButtonID];
+
+			char szTouchpadSectionName[64];
+			snprintf(szTouchpadSectionName, sizeof(szTouchpadSectionName), "%s_emulated_touchpad", GetControllerSettingsPrefix());
+
+			char remapButtonToTouchpadDirectionString[32];
+			pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
+
+			if (fetchError == vr::VRSettingsError_None) {
+				for (int vr_touchpad_direction_index = 0; vr_touchpad_direction_index < k_max_vr_touchpad_directions; ++vr_touchpad_direction_index) {
+					if (strcasecmp(remapButtonToTouchpadDirectionString, k_VRTouchpadDirectionNames[vr_touchpad_direction_index]) == 0) {
+						vrTouchpadDirection = static_cast<eEmulatedTrackpadAction>(vr_touchpad_direction_index);
+						break;
+					}
+				}
+			}
+
+			if (controllerId >= 0 && controllerId <= 9) {
+				char szTouchpadSectionControllerName[64];
+				snprintf(szTouchpadSectionControllerName, sizeof(szTouchpadSectionControllerName), 
+					"%s_%d", szTouchpadSectionName, controllerId);
+
+				pSettings->GetString(
+					szTouchpadSectionControllerName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
+
+				if (fetchError == vr::VRSettingsError_None) {
+					for (int vr_touchpad_direction_index = 0; vr_touchpad_direction_index < k_max_vr_touchpad_directions; ++vr_touchpad_direction_index) {
+						if (strcasecmp(remapButtonToTouchpadDirectionString, k_VRTouchpadDirectionNames[vr_touchpad_direction_index]) == 0) {
+							vrTouchpadDirection = static_cast<eEmulatedTrackpadAction>(vr_touchpad_direction_index);
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		// Save the mapping
+		assert(psButtonID >= 0 && psButtonID < k_PSMButtonID_Count);
+		m_psButtonIDToEmulatedTouchpadAction[psButtonID] = vrTouchpadDirection;
 	}
 
 	// Shared Implementation of vr::ITrackedDeviceServerDriver
@@ -24,7 +91,9 @@ namespace steamvrbridge {
 			vr::CVRPropertyHelpers *properties = vr::VRProperties();
 		
 			// Configure JSON controller configuration input profile
-			vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_InputProfilePath_String, "{psmove}/input/controller_profile.json");
+			char szProfilePath[128];
+			snprintf(szProfilePath, sizeof(szProfilePath), "{psmove}/input/%s_profile.json", GetControllerSettingsPrefix());
+			vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_InputProfilePath_String, szProfilePath);
 		}
 
 		return result_code;

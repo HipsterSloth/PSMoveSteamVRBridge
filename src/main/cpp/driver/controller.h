@@ -37,7 +37,7 @@ namespace steamvrbridge {
 		/** Controller Interface */
 		Controller();
 		virtual ~Controller();
-
+		
 		bool CreateButtonComponent(ePSMButtonID button_id);
 		bool CreateAxisComponent(ePSMAxisID axis_id);
 		bool CreateHapticComponent(ePSMHapicID haptic_id);
@@ -54,6 +54,9 @@ namespace steamvrbridge {
 		bool GetAxisState(ePSMAxisID axis_id, float &out_axis_value) const;
 		HapticState * GetHapticState(ePSMHapicID haptic_id);
 
+		// Returns the controller name used to look-up the input profile.
+		virtual const char *GetControllerSettingsPrefix() const = 0;
+
 		// Returns true if the controller has a PSM assigned the given ControllerID.
 		virtual bool HasPSMControllerId(int ControllerID) const = 0;
 
@@ -67,6 +70,8 @@ namespace steamvrbridge {
 		virtual PSMControllerType GetPSMControllerType() const = 0;
 
 		/** TrackableDevice Interface */
+		void LoadSettings(vr::IVRSettings *pSettings) override;
+		void LoadEmulatedTouchpadActions(vr::IVRSettings *pSettings, const ePSMButtonID psButtonID, int controllerId=-1);
 		vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
 
 	private:
@@ -86,5 +91,12 @@ namespace steamvrbridge {
 		std::map<ePSMButtonID, ButtonState> m_buttonStates;
 		std::map<ePSMAxisID, AxisState> m_axisStates;
 		std::map<ePSMHapicID, HapticState> m_hapticStates;
+
+	protected:
+		// Used to map buttons to the emulated touchpad
+		eEmulatedTrackpadAction m_psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_Count];
+
+		// Override model to use for the controller.
+		std::string m_overrideModel;
 	};
 }

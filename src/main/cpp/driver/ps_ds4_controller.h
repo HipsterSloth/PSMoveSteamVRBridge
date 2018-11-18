@@ -21,11 +21,13 @@ namespace steamvrbridge {
 		void Deactivate() override;
 
 		// TrackableDevice interface implementation
+		void LoadSettings(vr::IVRSettings *pSettings) override;
 		vr::ETrackedDeviceClass GetTrackedDeviceClass() const override { return vr::TrackedDeviceClass_Controller; }
 		void Update() override;
 		void RefreshWorldFromDriverPose() override;
 
 		// IController interface implementation
+		const char *GetControllerSettingsPrefix() const override { return "ds4"; }
 		bool HasPSMControllerId(int ControllerID) const override { return ControllerID == m_nPSMControllerId; }
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }
@@ -73,13 +75,6 @@ namespace steamvrbridge {
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_resetAlignButtonPressTime;
 		bool m_bResetAlignRequestSent;
 
-		// Button Remapping
-		eEmulatedTrackpadAction psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_Count];
-		void LoadEmulatedTouchpadActions(
-			vr::IVRSettings *pSettings,
-			const ePSMButtonID psButtonID,
-			int controllerId = -1);
-
 		// Settings value: used to determine how many meters in front of the HMD the controller
 		// is held when it's being calibrated.
 		float m_fControllerMetersInFrontOfHmdAtCalibration;
@@ -105,9 +100,6 @@ namespace steamvrbridge {
 
 		// The button to use for controller hmd alignment
 		ePSMButtonID m_hmdAlignPSButtonID;
-
-		// Override model to use for the controller.
-		std::string m_overrideModel;
 
 		// Callbacks
 		static void start_controller_response_callback(const PSMResponseMessage *response, void *userdata);

@@ -22,6 +22,7 @@ namespace steamvrbridge {
 		virtual vr::DriverPose_t GetPose() override;
 
 		// TrackedDevice Interface
+		virtual void LoadSettings(vr::IVRSettings *pSettings);
 		virtual vr::ETrackedDeviceClass GetTrackedDeviceClass() const;
 		virtual vr::ETrackedControllerRole GetTrackedDeviceRole() const;
 		virtual bool IsActivated() const;

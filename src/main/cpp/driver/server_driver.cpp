@@ -42,10 +42,10 @@ namespace steamvrbridge {
 				char buf[256];
 				vr::EVRSettingsError fetchError;
 
-				pSettings->GetString("psmove_settings", "psmove_filter_hmd_serial", buf, sizeof(buf), &fetchError);
+				pSettings->GetString("psmoveservice", "filter_virtual_hmd_serial", buf, sizeof(buf), &fetchError);
 				if (fetchError == vr::VRSettingsError_None) {
-					m_strPSMoveHMDSerialNo = buf;
-					std::transform(m_strPSMoveHMDSerialNo.begin(), m_strPSMoveHMDSerialNo.end(), m_strPSMoveHMDSerialNo.begin(), ::toupper);
+					m_strVirtualHMDSerialNo = buf;
+					std::transform(m_strVirtualHMDSerialNo.begin(), m_strVirtualHMDSerialNo.end(), m_strVirtualHMDSerialNo.begin(), ::toupper);
 				}
 
 				pSettings->GetString("psmoveservice", "server_address", buf, sizeof(buf), &fetchError);
@@ -471,12 +471,14 @@ namespace steamvrbridge {
 			std::string psmSerialNo = psmControllerSerial;
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
-			if (0 != m_strPSMoveHMDSerialNo.compare(psmSerialNo)) {
+			if (0 != m_strVirtualHMDSerialNo.compare(psmSerialNo)) {
 				Logger::Info("added new psmove controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
 
 				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
 				PSMoveController *TrackedDevice =
 					new PSMoveController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
+				TrackedDevice->LoadSettings(vr::VRSettings());
+
 				m_vecTrackedDevices.push_back(TrackedDevice);
 
 				if (vr::VRServerDriverHost()) {
@@ -496,12 +498,14 @@ namespace steamvrbridge {
 			std::string psmSerialNo = psmControllerSerial;
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
-			if (0 != m_strPSMoveHMDSerialNo.compare(psmSerialNo)) {
+			if (0 != m_strVirtualHMDSerialNo.compare(psmSerialNo)) {
 				Logger::Info("added new virtual controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
 
 				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
 				VirtualController *TrackedDevice =
 					new VirtualController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
+				TrackedDevice->LoadSettings(vr::VRSettings());
+
 				m_vecTrackedDevices.push_back(TrackedDevice);
 
 				if (vr::VRServerDriverHost()) {
@@ -521,12 +525,14 @@ namespace steamvrbridge {
 			std::string psmSerialNo = psmControllerSerial;
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
-			if (0 != m_strPSMoveHMDSerialNo.compare(psmSerialNo)) {
+			if (0 != m_strVirtualHMDSerialNo.compare(psmSerialNo)) {
 				Logger::Info("added new dualshock4 controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
 
 				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
 				PSDualshock4Controller *TrackedDevice =
 					new PSDualshock4Controller(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
+				TrackedDevice->LoadSettings(vr::VRSettings());
+
 				m_vecTrackedDevices.push_back(TrackedDevice);
 
 				if (vr::VRServerDriverHost()) {
@@ -581,12 +587,14 @@ namespace steamvrbridge {
 			std::string psmSerialNo = psmControllerSerial;
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
-			if (0 != m_strPSMoveHMDSerialNo.compare(psmSerialNo)) {
+			if (0 != m_strVirtualHMDSerialNo.compare(psmSerialNo)) {
 				Logger::Info("added new psnavi controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
 
 				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
 				PSNaviController *naviController =
 					new PSNaviController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
+				naviController->LoadSettings(vr::VRSettings());
+
 				m_vecTrackedDevices.push_back(naviController);
 
 				if (parent_controller != nullptr)
@@ -616,6 +624,8 @@ namespace steamvrbridge {
 		if (!FindTrackedDeviceDriver(svrIdentifier)) {
 			Logger::Info("added new tracker device %s\n", svrIdentifier);
 			PSMServiceTracker *TrackerDevice = new PSMServiceTracker(trackerInfo);
+			TrackerDevice->LoadSettings(vr::VRSettings());
+
 			m_vecTrackedDevices.push_back(TrackerDevice);
 
 			if (vr::VRServerDriverHost()) {
@@ -623,7 +633,6 @@ namespace steamvrbridge {
 			}
 		}
 	}
-
 
 	// The monitor_psmove is a companion program which can display overlay prompts for us
 	// and tell us the pose of the HMD at the moment we want to calibrate.

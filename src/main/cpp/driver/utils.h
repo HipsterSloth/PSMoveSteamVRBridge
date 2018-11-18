@@ -2,6 +2,7 @@
 #include "openvr_driver.h"
 #include "PSMoveClient_CAPI.h"
 #include <string>
+
 // Platform specific includes
 #if defined( _WIN32 )
 #include <windows.h>
@@ -9,6 +10,12 @@
 #define getcwd _getcwd // suppress "deprecation" warning
 #else
 #include <unistd.h>
+#endif
+
+#if _MSC_VER
+#define strcasecmp(a, b) stricmp(a,b)
+#pragma warning (disable: 4996) // 'This function or variable may be unsafe': snprintf
+#define snprintf _snprintf
 #endif
 
 namespace steamvrbridge {

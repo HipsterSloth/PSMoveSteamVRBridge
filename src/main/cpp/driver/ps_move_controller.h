@@ -23,11 +23,13 @@ namespace steamvrbridge {
 		void Deactivate() override;
 
 		// TrackableDevice interface implementation
+		void LoadSettings(vr::IVRSettings *pSettings) override;
 		vr::ETrackedDeviceClass GetTrackedDeviceClass() const override { return vr::TrackedDeviceClass_Controller; }
 		void Update() override;
 		void RefreshWorldFromDriverPose() override;
 
 		// IController interface implementation
+		const char *GetControllerSettingsPrefix() const override { return "psmove"; }
 		bool HasPSMControllerId(int ControllerID) const override { return ControllerID == m_nPSMControllerId; }
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }
@@ -62,8 +64,8 @@ namespace steamvrbridge {
 		float m_fVirtuallExtendControllersYMeters;
 		float m_fVirtuallExtendControllersZMeters;
 
-		// Virtually rotate controller.
-		bool m_fVirtuallyRotateController;
+		// Rotate controllers orientation 90 degrees about the z-axis (for gun style games).
+		bool m_fZRotate90Degrees;
 
 		// Delay in resetting touchpad position after touchpad press.
 		bool m_bDelayAfterTouchpadPress;
@@ -79,16 +81,8 @@ namespace steamvrbridge {
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_resetAlignButtonPressTime;
 		bool m_bResetAlignRequestSent;
 
-		// Button Remapping
-		eEmulatedTrackpadAction psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_Count];
-		void LoadEmulatedTouchpadActions(
-			vr::IVRSettings *pSettings,
-			const ePSMButtonID psButtonID,
-			int controllerId = -1);
-
 		// Settings values. Used to determine whether we'll map controller movement after touchpad
 		// presses to touchpad axis values.
-		bool m_bUseSpatialOffsetAfterTouchpadPressAsTouchpadAxis;
 		float m_fMetersPerTouchpadAxisUnits;
 
 		// Settings value: used to determine how many meters in front of the HMD the controller

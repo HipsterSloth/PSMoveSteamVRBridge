@@ -1,0 +1,118 @@
+{
+   "jsonid" : "input_profile",
+   "legacy_binding" : "none",
+   "legacy_profile" : "none",
+   "controller_type" : "playstation_dualshock4",
+   "input_bindingui_mode" : "single_device",
+   "input_bindingui_right" : {
+      "image" : "{gamepad}/icons/ds4.svg"
+   },
+   "input_source" : {
+      "/input/ps" : {
+         "binding_image_point" : [ 53,42 ],
+         "type" : "button",
+         "order" : 1
+      },
+      "/input/triangle" : {
+         "binding_image_point" : [ 10,40 ],
+         "type" : "button",
+         "order" : 2
+      },
+      "/input/circle" : {
+         "binding_image_point" : [ 9,44 ],
+         "type" : "button",
+         "order" : 3
+      },
+      "/input/cross" : {
+         "binding_image_point" : [ 20,46 ],
+         "type" : "button",
+         "order" : 4
+      },
+      "/input/square" : {
+         "binding_image_point" : [ 22,42 ],
+         "type" : "button",
+         "order" : 5
+      },
+      "/input/dpad_up" : {
+         "binding_image_point" : [ 71,33 ],
+         "type" : "button",
+         "order" : 6
+      },
+      "/input/dpad_down" : {
+         "binding_image_point" : [ 77,39 ],
+         "type" : "button",
+         "order" : 7
+      },
+      "/input/dpad_right" : {
+         "binding_image_point" : [ 69,37 ],
+         "type" : "button",
+         "order" : 8
+      },
+      "/input/dpad_left" : {
+         "binding_image_point" : [ 80,36 ],
+         "type" : "button",
+         "order" : 9
+      },
+      "/input/options" : {
+         "binding_image_point" : [ 17,36 ],
+         "type" : "button",
+         "order" : 10
+      },
+      "/input/share" : {
+         "binding_image_point" : [ 56,31 ],
+         "type" : "button",
+         "order" : 11
+      },
+      "/input/touchpad" : {
+         "binding_image_point" : [ 37,35 ],
+         "type" : "button",
+         "order" : 12
+      },
+      "/input/shoulder_left" : {
+         "binding_image_point" : [ 65,18 ],
+         "type" : "button",
+         "order" : 13
+      },
+      "/input/shoulder_right" : {
+         "binding_image_point" : [ 5,26 ],
+         "type" : "button",
+         "order" : 14
+      },    
+      "/input/trigger_left" : {
+         "binding_image_point" : [ 65, 6 ],
+         "type" : "trigger",
+         "order" : 15
+      },
+      "/input/trigger_right" : {
+         "binding_image_point" : [ 7, 15 ],
+         "type" : "trigger",
+         "order" : 16
+      },    
+      "/input/joystick_left" : {
+         "binding_image_point" : [ 67, 48 ],
+         "type" : "joystick",
+         "order" : 17
+      },
+      "/input/joystick_right" : {
+         "binding_image_point" : [ 36, 51 ],
+         "type" : "joystick",
+         "order" : 18
+      },
+      "/input/emulated_trackpad" : {
+         "type" : "trackpad",
+         "order" : 19
+      },
+      "/output/left_rumble" : {
+        "type" : "vibration",
+        "binding_image_point" : [ 105, 23 ]
+      },
+      "/output/right_rumble" : {
+        "type" : "vibration",
+        "binding_image_point" : [ 33, 35 ]
+      },      
+      "/pose/raw" : {
+          "type" : "pose",
+          "binding_image_point" : [ 39, 19 ]
+      }      
+   }
+}

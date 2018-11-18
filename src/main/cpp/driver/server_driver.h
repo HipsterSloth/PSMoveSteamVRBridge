@@ -62,7 +62,7 @@ namespace steamvrbridge {
 
 		void LaunchPSMoveMonitor_Internal(const char * pchDriverInstallDir);
 
-		std::string m_strPSMoveHMDSerialNo;
+		std::string m_strVirtualHMDSerialNo;
 		std::string m_strPSMoveServiceAddress;
 		std::string m_strServerPort;
 
