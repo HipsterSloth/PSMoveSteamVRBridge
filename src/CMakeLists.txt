@@ -57,37 +57,35 @@ list(APPEND PSM_MONITOR_REQ_LIBS ${PSM_LIBRARIES})
 
 # Shared library: defines what is compiled, what output type it is and what libs/includes it needs
 add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver.cpp 
-								 ${PROJECT_SRC_DIR}/logger.cpp
-								 ${PROJECT_SRC_DIR}/old_controller.cpp
-								 ${PROJECT_SRC_DIR}/server_driver.cpp
-								 ${PROJECT_SRC_DIR}/trackable_device.cpp
-								 ${PROJECT_SRC_DIR}/tracker.cpp
-								 ${PROJECT_SRC_DIR}/utils.cpp
-								 ${PROJECT_SRC_DIR}/watchdog.cpp
-								 ${PROJECT_SRC_DIR}/facing_handsolver.cpp
-								 ${PROJECT_SRC_DIR}/ps_move_controller.cpp
-								 ${PROJECT_SRC_DIR}/ps_navi_controller.cpp
-								 ${PROJECT_SRC_DIR}/ps_ds4_controller.cpp
-								 ${PROJECT_SRC_DIR}/virtual_controller.cpp
-								 ${PROJECT_SRC_DIR}/ps_combined_controller.cpp
-								 ${PROJECT_SRC_DIR}/settings_util.cpp
-								 ${PROJECT_SRC_DIR}/driver.h
-								 ${PROJECT_SRC_DIR}/logger.h
-								 ${PROJECT_SRC_DIR}/controller.h
-								 ${PROJECT_SRC_DIR}/old_controller.h
-								 ${PROJECT_SRC_DIR}/server_driver.h
-								 ${PROJECT_SRC_DIR}/trackable_device.h
-								 ${PROJECT_SRC_DIR}/tracker.h
-								 ${PROJECT_SRC_DIR}/utils.h
-								 ${PROJECT_SRC_DIR}/watchdog.h
-								 ${PROJECT_SRC_DIR}/facing_handsolver.h
 								 ${PROJECT_SRC_DIR}/constants.h
-								 ${PROJECT_SRC_DIR}/ps_move_controller.h
-								 ${PROJECT_SRC_DIR}/ps_navi_controller.h
+								 ${PROJECT_SRC_DIR}/controller.h
+								 ${PROJECT_SRC_DIR}/controller.cpp
+								 ${PROJECT_SRC_DIR}/driver.h
+								 ${PROJECT_SRC_DIR}/driver.cpp
+								 ${PROJECT_SRC_DIR}/facing_handsolver.h
+								 ${PROJECT_SRC_DIR}/facing_handsolver.cpp
+								 ${PROJECT_SRC_DIR}/logger.h
+								 ${PROJECT_SRC_DIR}/logger.cpp
 								 ${PROJECT_SRC_DIR}/ps_ds4_controller.h
-								 ${PROJECT_SRC_DIR}/virtual_controller.h
-								 ${PROJECT_SRC_DIR}/ps_combined_controller.h
+								 ${PROJECT_SRC_DIR}/ps_ds4_controller.cpp
+								 ${PROJECT_SRC_DIR}/ps_move_controller.h
+								 ${PROJECT_SRC_DIR}/ps_move_controller.cpp
+								 ${PROJECT_SRC_DIR}/ps_navi_controller.h
+								 ${PROJECT_SRC_DIR}/ps_navi_controller.cpp
+								 ${PROJECT_SRC_DIR}/server_driver.h
+								 ${PROJECT_SRC_DIR}/server_driver.cpp
 								 ${PROJECT_SRC_DIR}/settings_util.h
+								 ${PROJECT_SRC_DIR}/settings_util.cpp
+								 ${PROJECT_SRC_DIR}/trackable_device.h
+								 ${PROJECT_SRC_DIR}/trackable_device.cpp
+								 ${PROJECT_SRC_DIR}/tracker.h
+								 ${PROJECT_SRC_DIR}/tracker.cpp
+								 ${PROJECT_SRC_DIR}/utils.h
+								 ${PROJECT_SRC_DIR}/utils.cpp
+								 ${PROJECT_SRC_DIR}/virtual_controller.h
+								 ${PROJECT_SRC_DIR}/virtual_controller.cpp
+								 ${PROJECT_SRC_DIR}/watchdog.h
+								 ${PROJECT_SRC_DIR}/watchdog.cpp
 								 )
 target_include_directories(driver_psmove PUBLIC ${OPENVR_PLUGIN_INCL_DIRS} ${PSM_PLUGIN_INCL_DIRS} )
 target_link_libraries(driver_psmove ${OPENVR_PLUGIN_REQ_LIBS} ${PSM_PLUGIN_REQ_LIBS})
@@ -170,12 +168,19 @@ IF(${WIN32})
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/icons
 		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}/resources
-		FILES_MATCHING PATTERN "*.png" 
+		FILES_MATCHING PATTERN "*.png" PATTERN "*.svg"
 	)
 
 	#  Copy the driver input controller profile resources
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/input
+		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}/resources
+		FILES_MATCHING PATTERN "*.json" 
+	)
+
+	#  Copy the driver localization resources
+	install(
+		DIRECTORY ${ROOT_DIR}/src/main/resources/localization
 		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}/resources
 		FILES_MATCHING PATTERN "*.json" 
 	)
