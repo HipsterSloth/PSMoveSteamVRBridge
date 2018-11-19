@@ -211,7 +211,7 @@ namespace steamvrbridge {
 		if (result == vr::VRInitError_None) {
 			Logger::Info("VirtualController::Activate - Controller %d Activated\n", unObjectId);
 
-			g_ServerTrackedDeviceProvider.LaunchPSMoveMonitor();
+			CServerDriver_PSMoveService::getInstance()->LaunchPSMoveMonitor();
 
 			PSMRequestID requestId;
 			if (PSM_StartControllerDataStreamAsync(
@@ -351,7 +351,7 @@ namespace steamvrbridge {
 																		m_PSMServiceController->ControllerID,
 																		hmdPose,
 																		false);
-				g_ServerTrackedDeviceProvider.SetHMDTrackingSpace(realignedPose);
+				CServerDriver_PSMoveService::getInstance()->SetHMDTrackingSpace(realignedPose);
 			} catch (std::exception & e) {
 				// Log an error message and safely carry on
 				Logger::Error(e.what());

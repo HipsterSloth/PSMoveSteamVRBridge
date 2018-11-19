@@ -25,18 +25,6 @@ Platform specific definitions
 namespace steamvrbridge {
 	
 	/* 
-		IServerTrackedDeviceProvider implementation as per:
-		https://github.com/ValveSoftware/openvr/wiki/IServerTrackedDeviceProvider_Overview 
-	*/
-	static CServerDriver_PSMoveService g_ServerTrackedDeviceProvider;
-	
-	/*  
-		IClientTrackedDeviceProvider implementation as per: 
-		https://github.com/ValveSoftware/openvr/wiki/IClientTrackedDeviceProvider_Overview 
-	*/
-	static CWatchdogDriver_PSMoveService g_WatchdogDriverPSMoveService;
-
-	/* 
 		Factory driver function as per :
 		https://github.com/ValveSoftware/openvr/wiki/Driver-Factory-Function
 	*/

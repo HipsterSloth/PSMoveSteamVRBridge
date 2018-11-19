@@ -16,11 +16,23 @@
 
 namespace steamvrbridge {
 
+	/* 
+		IServerTrackedDeviceProvider implementation as per:
+		https://github.com/ValveSoftware/openvr/wiki/IServerTrackedDeviceProvider_Overview 
+	*/
 	class CServerDriver_PSMoveService : public vr::IServerTrackedDeviceProvider
 	{
 	public:
 		CServerDriver_PSMoveService();
 		virtual ~CServerDriver_PSMoveService();
+
+		static CServerDriver_PSMoveService *getInstance()
+		{
+			if (m_instance == nullptr)
+				m_instance= new CServerDriver_PSMoveService();
+
+			return m_instance;
+		}
 
 		// Inherited via IServerTrackedDeviceProvider
 		virtual vr::EVRInitError Init(vr::IVRDriverContext *pDriverContext) override;
@@ -73,5 +85,8 @@ namespace steamvrbridge {
 
 		// HMD Tracking Space
 		PSMPosef m_worldFromDriverPose;
+
+		// Singleton instance of CServerDriver_PSMoveService
+		static CServerDriver_PSMoveService *m_instance;
 	};
 }

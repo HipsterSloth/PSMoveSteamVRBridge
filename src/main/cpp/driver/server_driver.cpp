@@ -13,6 +13,8 @@
 
 namespace steamvrbridge {
 
+	CServerDriver_PSMoveService * CServerDriver_PSMoveService::m_instance = nullptr;
+
 	CServerDriver_PSMoveService::CServerDriver_PSMoveService()
 		: m_bLaunchedPSMoveMonitor(false)
 		, m_bInitialized(false) {
@@ -21,8 +23,9 @@ namespace steamvrbridge {
 	}
 
 	CServerDriver_PSMoveService::~CServerDriver_PSMoveService() {
-		// 10/10/2015 benj:  vrserver is exiting without calling Cleanup() to balance Init()
-		// causing std::thread to call std::terminate
+		if (m_instance == this)
+			m_instance = nullptr;
+
 		Cleanup();
 	}
 

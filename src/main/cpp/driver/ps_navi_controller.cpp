@@ -116,7 +116,7 @@ namespace steamvrbridge {
 		if (result == vr::VRInitError_None) {
 			Logger::Info("PSNaviController::Activate - Controller %d Activated\n", unObjectId);
 
-			g_ServerTrackedDeviceProvider.LaunchPSMoveMonitor();
+			CServerDriver_PSMoveService::getInstance()->LaunchPSMoveMonitor();
 
 			PSMRequestID requestId;
 			if (PSM_StartControllerDataStreamAsync(

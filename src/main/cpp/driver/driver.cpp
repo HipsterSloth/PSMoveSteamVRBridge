@@ -14,13 +14,13 @@ namespace steamvrbridge {
 		// When the steamvr runtime requests the server tracked device provider implementation, 
 		// return our server tracked device provider.
 		if (0 == strcmp(vr::IServerTrackedDeviceProvider_Version, pInterfaceName)) {
-			return &g_ServerTrackedDeviceProvider;
+			return CServerDriver_PSMoveService::getInstance();
 		}
 		
 		// When the steamvr runtime requests the watchdog provider implementation, 
 		// return our watchdog provider.
 		if (0 == strcmp(vr::IVRWatchdogProvider_Version, pInterfaceName)) {
-			return &g_WatchdogDriverPSMoveService;
+			return CWatchdogDriver_PSMoveService::getInstance();
 		}
 
 		// If we get to this point it means we had neither implementations and set the returncode

@@ -97,7 +97,7 @@ namespace steamvrbridge {
 	void TrackableDevice::RefreshWorldFromDriverPose() {
 		steamvrbridge::Logger::Info("Begin CServerDriver_PSMoveService::RefreshWorldFromDriverPose() for device %s\n", GetSteamVRIdentifier());
 
-		const PSMPosef worldFromDriverPose = steamvrbridge::g_ServerTrackedDeviceProvider.GetWorldFromDriverPose();
+		const PSMPosef worldFromDriverPose = CServerDriver_PSMoveService::getInstance()->GetWorldFromDriverPose();
 
 		steamvrbridge::Logger::Info("worldFromDriverPose: %s \n", steamvrbridge::Utils::PSMPosefToString(worldFromDriverPose).c_str());
 

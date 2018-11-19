@@ -9,11 +9,22 @@
 
 namespace steamvrbridge {
 
-	//-- definitions -----
+	/*  
+		IClientTrackedDeviceProvider implementation as per: 
+		https://github.com/ValveSoftware/openvr/wiki/IClientTrackedDeviceProvider_Overview 
+	*/
 	class CWatchdogDriver_PSMoveService : public vr::IVRWatchdogProvider
 	{
 	public:
 		CWatchdogDriver_PSMoveService();
+		virtual ~CWatchdogDriver_PSMoveService();
+
+		static CWatchdogDriver_PSMoveService * getInstance() {
+			if (m_instance == nullptr)
+				m_instance = new CWatchdogDriver_PSMoveService();
+
+			return m_instance;
+		}
 
 		// Inherited via IClientTrackedDeviceProvider
 		virtual vr::EVRInitError Init(vr::IVRDriverContext *pDriverContext);
@@ -36,5 +47,7 @@ namespace steamvrbridge {
 		std::string m_strServerPort;
 
 		PSMControllerList controllerList;
+
+		static CWatchdogDriver_PSMoveService * m_instance;
 	};
 }

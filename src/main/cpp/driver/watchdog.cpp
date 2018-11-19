@@ -4,6 +4,8 @@
 
 namespace steamvrbridge {
 
+	CWatchdogDriver_PSMoveService * CWatchdogDriver_PSMoveService::m_instance = nullptr;
+
 	CWatchdogDriver_PSMoveService::CWatchdogDriver_PSMoveService()
 		: m_pLogger(nullptr)
 		, m_loggerMutex()
@@ -13,6 +15,11 @@ namespace steamvrbridge {
 	{
 		m_strPSMoveServiceAddress = PSMOVESERVICE_DEFAULT_ADDRESS;
 		m_strServerPort = PSMOVESERVICE_DEFAULT_PORT;
+	}
+
+	CWatchdogDriver_PSMoveService::~CWatchdogDriver_PSMoveService() {
+		if (m_instance == this)
+			m_instance= nullptr;
 	}
 
 	vr::EVRInitError CWatchdogDriver_PSMoveService::Init(vr::IVRDriverContext *pDriverContext)
