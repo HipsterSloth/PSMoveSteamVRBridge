@@ -1,7 +1,7 @@
 @echo off
-call SteamVR_SetDriverVarsWin64.bat
+call SteamVR_SetDriverVars.bat
 
-echo "Listing SteamVR Win64 driver..."
+echo "Listing registered SteamVR drivers..."
 "%STEAMVR_RUNTIME_DIR%\bin\win64\vrpathreg" show
 
 echo "Done"
