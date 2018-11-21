@@ -143,25 +143,18 @@ IF(${WIN32})
 		FILES_MATCHING PATTERN "*.dll" PATTERN "*.pdb"
 	)
 	
-	# Copy PSMoveClient library
+	# Copy PSMoveService binaries and assets
 	install(
-		FILES ${PSM_BINARIES_DIR}/PSMoveClient_CAPI.dll
-	    DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME} 
-		OPTIONAL
+		DIRECTORY ${PSM_BINARIES_DIR}/
+	  DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME} 
+    FILES_MATCHING PATTERN "*.exe" PATTERN "*.dll" PATTERN "*.ttf" PATTERN "*.jpg"
 	)
-	
-	# Copy the PSMoveService assets folder
-	install(
-		DIRECTORY ${PSM_BINARIES_DIR}/assets
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME} 
-		OPTIONAL
-	)
-	
+		
 	# Copy the post-installation scripts the user will use to install the driver on their PC
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/scripts/installer
 		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}
-		FILES_MATCHING PATTERN "*${ARCH_LABEL}.bat"
+		FILES_MATCHING PATTERN "*.bat" PATTERN "*.ps1"
 	)
 	
 	#  Copy the driver icon resources
@@ -203,13 +196,6 @@ IF(${WIN32})
 	install(
 		FILES ${ROOT_DIR}/src/main/resources/configuration/driver.vrdrivermanifest
 		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}
-	)
-	
-	# Copy the driver configuration folder
-	install(
-		DIRECTORY ${ROOT_DIR}/src/main/resources/configuration
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}
-		FILES_MATCHING PATTERN "*.vricons" PATTERN
 	)
 	
 ELSE() #Linux/Darwin
