@@ -9,19 +9,19 @@ message(STATUS "Running cmake in ${CMAKE_CURRENT_LIST_DIR}")
 # Shared architecture label used for install folder locations
 if (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		set(ARCH_LABEL "Win64")
+		set(ARCH_LABEL "win64")
 	elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		set(ARCH_LABEL "OSX64")
+		set(ARCH_LABEL "osx64")
 	else()
-		set(ARCH_LABEL "Linux64")
+		set(ARCH_LABEL "linux64")
 	endif()
 else()
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		set(ARCH_LABEL "Win32")
+		set(ARCH_LABEL "win32")
 	elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		set(ARCH_LABEL "OSX32")
+		set(ARCH_LABEL "osx32")
 	else()
-		set(ARCH_LABEL "Linux32")
+		set(ARCH_LABEL "linux32")
 	endif()
 endif()
 
@@ -100,102 +100,108 @@ target_link_libraries(monitor_psmove ${OPENVR_MONITOR_REQ_LIBS} ${PSM_PLUGIN_REQ
 #          and models get packaged up with the final release.                                #
 ##############################################################################################
 IF(${WIN32})
+  set(PROJECT_INSTALL_DIR ${ROOT_DIR}/${TARGET_BUILD_DIR}/${PSM_DRIVER_PROJECT_NAME})
+  set(STEAMVR_DRIVER_INSTALL_DIR ${PROJECT_INSTALL_DIR}/drivers/psmove)
+  set(STEAMVR_DRIVER_RESOURCES_DIR ${STEAMVR_DRIVER_INSTALL_DIR}/resources)
+  set(STEAMVR_DRIVER_BIN_DIR ${STEAMVR_DRIVER_INSTALL_DIR}/bin/${ARCH_LABEL})
+
 	# Install required system libraries
 	IF(${BUILD_TYPE} MATCHES "Debug" OR ${BUILD_TYPE} MATCHES "debug")
 		message("Including debug dependencies")
 		set(CMAKE_INSTALL_DEBUG_LIBRARIES TRUE)
-		set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME})
+		set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ${STEAMVR_DRIVER_BIN_DIR})
 		INCLUDE(InstallRequiredSystemLibraries)
 	ENDIF()
 	
-
 	# Copy driver library
 	install(
 		TARGETS driver_psmove
-		RUNTIME DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}
-		LIBRARY DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/lib
-		ARCHIVE DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/lib
+		RUNTIME DESTINATION ${STEAMVR_DRIVER_BIN_DIR}
 	)
 	
 	# Copy Program DataBase(*.pdb) file for the driver's psmove binary (only required for debugging)
 	install(FILES $<TARGET_PDB_FILE:driver_psmove> 
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME} OPTIONAL)
+		DESTINATION ${STEAMVR_DRIVER_BIN_DIR} OPTIONAL)
 	
 	# Copy monitor binary
 	install(
 		TARGETS monitor_psmove
-		RUNTIME DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}
-		LIBRARY DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/lib
-		ARCHIVE DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/lib
+		RUNTIME DESTINATION ${STEAMVR_DRIVER_BIN_DIR}
 	)    
 	
 	# Copy Program DataBase(*.pdb) file for the driver's monitor binary (only required for debugging)
 	install(
 		FILES $<TARGET_PDB_FILE:monitor_psmove> 
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME} 
+		DESTINATION ${STEAMVR_DRIVER_BIN_DIR} 
 		OPTIONAL
 	)
+  
+	# Copy PSMoveService Client DLL (used by driver_psmove)
+	install(
+		FILES ${PSM_BINARIES_DIR}/PSMoveClient_CAPI.dll
+		DESTINATION ${STEAMVR_DRIVER_BIN_DIR}  
+  )
 	
 	# Copy OpenVR library
 	install(
 		DIRECTORY ${OPENVR_BINARIES_DIR}/ 
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}
+		DESTINATION ${STEAMVR_DRIVER_BIN_DIR}
 		FILES_MATCHING PATTERN "*.dll" PATTERN "*.pdb"
 	)
 	
 	# Copy PSMoveService binaries and assets
 	install(
 		DIRECTORY ${PSM_BINARIES_DIR}/
-	  DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME} 
-    FILES_MATCHING PATTERN "*.exe" PATTERN "*.dll" PATTERN "*.ttf" PATTERN "*.jpg"
+	  DESTINATION ${PROJECT_INSTALL_DIR}
+    FILES_MATCHING PATTERN "*.exe" PATTERN "*.ttf" PATTERN "*.jpg"
 	)
-		
+  		
 	# Copy the post-installation scripts the user will use to install the driver on their PC
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/scripts/installer
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}
+		DESTINATION ${PROJECT_INSTALL_DIR}
 		FILES_MATCHING PATTERN "*.bat" PATTERN "*.ps1"
 	)
 	
 	#  Copy the driver icon resources
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/icons
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}/resources
+		DESTINATION ${STEAMVR_DRIVER_RESOURCES_DIR}
 		FILES_MATCHING PATTERN "*.png" PATTERN "*.svg"
 	)
 
 	#  Copy the driver input controller profile resources
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/input
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}/resources
+		DESTINATION ${STEAMVR_DRIVER_RESOURCES_DIR}
 		FILES_MATCHING PATTERN "*.json" 
 	)
 
 	#  Copy the driver localization resources
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/localization
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}/resources
+		DESTINATION ${STEAMVR_DRIVER_RESOURCES_DIR}
 		FILES_MATCHING PATTERN "*.json" 
 	)
 	
 	#  Copy the driver overlay resources
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/overlays
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}/resources
+		DESTINATION ${STEAMVR_DRIVER_RESOURCES_DIR}
 		FILES_MATCHING PATTERN "*.png" 
 	)
 	
 	#  Copy the driver rendermodel resources
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/rendermodels
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}/resources
+		DESTINATION ${STEAMVR_DRIVER_RESOURCES_DIR}
 		FILES_MATCHING PATTERN "*.png" PATTERN "*.tga" PATTERN "*.json" PATTERN "*.obj" PATTERN "*.mtl"
 	)
 	
 	# Copy driver vr manifest
 	install(
 		FILES ${ROOT_DIR}/src/main/resources/configuration/driver.vrdrivermanifest
-		DESTINATION ${ROOT_DIR}/${TARGET_BUILD_DIR}/${ARCH_LABEL}/${PSM_DRIVER_PROJECT_NAME}
+		DESTINATION ${STEAMVR_DRIVER_INSTALL_DIR}
 	)
 	
 ELSE() #Linux/Darwin

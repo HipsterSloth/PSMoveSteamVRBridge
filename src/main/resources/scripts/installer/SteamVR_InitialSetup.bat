@@ -32,7 +32,7 @@ goto write_set_drivers_script
 :write_set_drivers_script
 echo "Found SteamVR Runtime Dir: %STEAMVR_RUNTIME_DIR%"
 
-pushd %~dp0..
+pushd %~dp0..\drivers\psmove
 set DRIVER_ABS_PATH=%CD%
 popd
 
@@ -42,8 +42,12 @@ echo @echo off >> SteamVR_SetDriverVars.bat
 echo set INSTALL_DIR=%DRIVER_ABS_PATH%>> SteamVR_SetDriverVars.bat
 echo set STEAMVR_RUNTIME_DIR=%STEAMVR_RUNTIME_DIR%>> SteamVR_SetDriverVars.bat
 
-:: Copy over the openvr drivers
-call SteamVR_ReregisterDrivers.bat
+:: Rnregister any existing psmove drivers
+set "suppressPause=1"
+call SteamVR_UnregisterDrivers.bat
+
+:: Register the new psmove drivers
+call SteamVR_RegisterDrivers.bat
 pause
 goto exit
 
