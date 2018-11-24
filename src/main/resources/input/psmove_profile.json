@@ -73,5 +73,9 @@
 	"default_bindings": [{
 		"app_key": "openvr.component.vrcompositor",
 		"binding_url": "vrcompositor_bindings_psmove.json"
-	}]
+	},
+  {
+		"app_key": "openvr.tool.steamvr_environments",
+		"binding_url": "steamvr_environments_bindings_psmove.json"  
+  }]
 }

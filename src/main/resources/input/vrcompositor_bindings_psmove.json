@@ -22,7 +22,7 @@
 							"output": "/actions/dualanalog/in/lefttouch"
 						}
 					},
-					"mode": "joystick",
+					"mode": "trackpad",
 					"path": "/user/hand/left/input/emulated_trackpad"
 				},
 				{
@@ -46,7 +46,7 @@
 							"output": "/actions/dualanalog/in/righttouch"
 						}
 					},
-					"mode": "joystick",
+					"mode": "trackpad",
 					"path": "/user/hand/right/input/emulated_trackpad"
 				},
 				{
@@ -138,7 +138,7 @@
 							"output": "/actions/lasermouse/in/trackpadtouch"
 						}
 					},
-					"mode": "joystick",
+					"mode": "trackpad",
 					"path": "/user/hand/left/input/emulated_trackpad"
 				}
 			],
