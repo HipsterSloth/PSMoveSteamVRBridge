@@ -72,7 +72,7 @@ namespace steamvrbridge {
 			if (PSM_StartControllerDataStreamAsync(
 				m_PSMServiceController->ControllerID,
 				PSMStreamFlags_includePositionData | PSMStreamFlags_includePhysicsData,
-				&requestId) == PSMResult_Success) {
+				&requestId) != PSMResult_Error) {
 				PSM_RegisterCallback(requestId, PSNaviController::start_controller_response_callback, this);
 			}
 		}
@@ -122,7 +122,7 @@ namespace steamvrbridge {
 			if (PSM_StartControllerDataStreamAsync(
 				m_PSMServiceController->ControllerID,
 				PSMStreamFlags_includePositionData | PSMStreamFlags_includePhysicsData,
-				&requestId) == PSMResult_Success) {
+				&requestId) != PSMResult_Error) {
 				PSM_RegisterCallback(requestId, PSNaviController::start_controller_response_callback, this);
 			}
 

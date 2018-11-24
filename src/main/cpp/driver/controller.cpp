@@ -87,7 +87,7 @@ namespace steamvrbridge {
 
 		vr::EVRInitError result_code= TrackableDevice::Activate(unObjectId);
 
-		if (result_code != vr::EVRInitError::VRInitError_None) {
+		if (result_code == vr::EVRInitError::VRInitError_None) {
 			vr::CVRPropertyHelpers *properties = vr::VRProperties();
 		
 			// Configure JSON controller configuration input profile
