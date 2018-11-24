@@ -153,7 +153,7 @@ IF(${WIN32})
 	install(
 		DIRECTORY ${PSM_BINARIES_DIR}/
 	  DESTINATION ${PROJECT_INSTALL_DIR}
-    FILES_MATCHING PATTERN "*.exe" PATTERN "*.ttf" PATTERN "*.jpg"
+    FILES_MATCHING PATTERN "*.exe" PATTERN "*.dll" PATTERN "*.ttf" PATTERN "*.jpg"
 	)
   		
 	# Copy the post-installation scripts the user will use to install the driver on their PC
