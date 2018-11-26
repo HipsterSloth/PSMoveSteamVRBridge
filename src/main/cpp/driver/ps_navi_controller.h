@@ -31,7 +31,7 @@ namespace steamvrbridge {
 		void RefreshWorldFromDriverPose() override;
 
 		// IController interface implementation
-		const char *GetControllerSettingsPrefix() const override { return "psnavi"; }
+		const char *GetControllerSettingsPrefix() const override { return "playstation_navi"; }
 		bool HasPSMControllerId(int ControllerID) const override { return ControllerID == m_nPSMControllerId; }
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }

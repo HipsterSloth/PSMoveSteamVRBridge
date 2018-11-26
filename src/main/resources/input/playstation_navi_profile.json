@@ -11,11 +11,16 @@
       "image" : "{gamepad}/icons/psnavi.svg"
    },   
    "input_source" : {
-      "/input/ps" : {
+      "/input/system" : {
          "binding_image_point" : [ 26,56 ],
          "type" : "button",
         "order" : 1
       },
+      "/input/ps" : {
+         "binding_image_point" : [ 26,56 ],
+         "type" : "button",
+        "order" : 1
+      },      
       "/input/circle" : {
          "binding_image_point" : [ 36,84 ],
          "type" : "button",
@@ -56,7 +61,8 @@
          "type" : "trigger",
          "order" : 9
       },
-      "/input/emulated_trackpad" : {
+      "/input/trackpad" : {
+         "binding_image_point" : [ 26,56 ],
          "type" : "trackpad",
          "order" : 10
       }

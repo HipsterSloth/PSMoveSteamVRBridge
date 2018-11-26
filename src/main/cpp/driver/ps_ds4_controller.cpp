@@ -165,7 +165,7 @@ namespace steamvrbridge {
 				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "Sony");
 				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, 1313);
 				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, 1315);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "Dualshock 4");
+				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "Dualshock4");
 				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_strPSMControllerSerialNo.c_str());
 			}
 		}
@@ -180,6 +180,9 @@ namespace steamvrbridge {
 		if (response->result_code == PSMResult::PSMResult_Success) {
 
 			Logger::Info("PSDualshock4Controller::start_controller_response_callback - Controller stream started\n");
+
+			// Create the special case system button (bound to PS button)
+			controller->CreateButtonComponent(k_PSMButtonID_System);
 
 			// Create buttons components
 			controller->CreateButtonComponent(k_PSMButtonID_PS);
@@ -207,16 +210,11 @@ namespace steamvrbridge {
 			controller->CreateAxisComponent(k_PSMAxisID_RightJoystick_X);
 			controller->CreateAxisComponent(k_PSMAxisID_RightJoystick_Y);
 
-			// [optional] Create components for emulated trackpad
-			for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-				if (controller->m_psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
-					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
-					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
-					controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
-					controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_Y);
-					break;
-				}
-			}
+			// Create components for emulated trackpad
+			controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
+			controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
+			controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
+			controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_Y);
 
 			// Create haptic components
 			controller->CreateHapticComponent(k_PSMHapticID_LeftRumble);
@@ -313,6 +311,9 @@ namespace steamvrbridge {
 		}
 		else
 		{
+			// System Button hard-coded to PS button
+			Controller::UpdateButton(k_PSMButtonID_System, clientView.PSButton);
+
 			// Process all the native buttons 
 			Controller::UpdateButton(k_PSMButtonID_PS, clientView.PSButton);
 			Controller::UpdateButton(k_PSMButtonID_Triangle, clientView.TriangleButton);

@@ -17,6 +17,9 @@ namespace steamvrbridge {
 
 	/* PSMoveService button IDs*/
 	enum ePSMButtonID {
+		/* Special-Case System Button (bound to PS button by default) */
+		k_PSMButtonID_System,
+		
 		/* Common Buttons */
 		k_PSMButtonID_PS,
 		k_PSMButtonID_Triangle,
@@ -88,6 +91,9 @@ namespace steamvrbridge {
 	};
 
 	static const char *k_PSMButtonNames[k_PSMButtonID_Count] = {
+		/* System Button */
+		"system",
+
 		/* Common Buttons */
 		"ps",
 		"triangle",
@@ -153,6 +159,9 @@ namespace steamvrbridge {
 	};
 
 	static const char *k_PSMButtonPaths[k_PSMButtonID_Count] = {
+		/* System Button */
+		"/input/system/click",
+
 		/* Common Buttons */
 		"/input/ps/click",
 		"/input/triangle/click",
@@ -183,8 +192,8 @@ namespace steamvrbridge {
 		"/input/shoulder_right/click",
 
 		/* Emulated Trackpad Buttons */
-		"/input/emulated_trackpad/touch",
-		"/input/emulated_trackpad/click",
+		"/input/trackpad/touch",
+		"/input/trackpad/click",
 
 		/* Virtual Controller Specific Buttons */
 		"/input/virtual_button_0/click",
@@ -351,8 +360,8 @@ namespace steamvrbridge {
 		"/input/joystick_right/y",
 
 		/* Emulated Trackpad Specific Axes */
-		"/input/emulated_trackpad/x",
-		"/input/emulated_trackpad/y",
+		"/input/trackpad/x",
+		"/input/trackpad/y",
 
 		/* Virtual Controller Specific Axes */
 		"/input/virtual_axis_0/value",
@@ -402,7 +411,7 @@ namespace steamvrbridge {
 
 	static const char *k_PSMHapticPaths[k_PSMHapticID_Count] = {
 		/* Common Rumble */
-		"/output/rumble",
+		"/output/haptic",
 
 		/* Dualshock4 Specific Rumble */
 		"/output/left_rumble",

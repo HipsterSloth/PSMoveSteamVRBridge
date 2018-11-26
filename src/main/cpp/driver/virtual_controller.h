@@ -107,8 +107,11 @@ namespace steamvrbridge {
 		float m_fLinearVelocityMultiplier;
 		float m_fLinearVelocityExponent;
 
+		// The button to use as the system button
+		ePSMButtonID m_systemButtonID;
+
 		// The button to use for controller hmd alignment
-		ePSMButtonID m_hmdAlignPSButtonID;
+		ePSMButtonID m_hmdAlignButtonID;
 
 		// Override model to use for the controller.
 		std::string m_overrideModel;

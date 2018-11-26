@@ -178,6 +178,9 @@ namespace steamvrbridge {
 
 			Logger::Info("PSNaviController::start_controller_response_callback - Controller stream started\n");
 
+			// Create the special case system button (bound to PS button)
+			controller->CreateButtonComponent(k_PSMButtonID_System);
+
 			// Create buttons components
 			controller->CreateButtonComponent(k_PSMButtonID_PS);
 			controller->CreateButtonComponent(k_PSMButtonID_Circle);
@@ -195,15 +198,10 @@ namespace steamvrbridge {
 			controller->CreateAxisComponent(k_PSMAxisID_Joystick_Y);
 
 			// [optional] Create components for emulated trackpad
-			for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-				if (controller->m_psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
-					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
-					controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
-					controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
-					controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_Y);
-					break;
-				}
-			}		
+			controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
+			controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
+			controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
+			controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_Y);
 		}
 	}
 
@@ -220,6 +218,9 @@ namespace steamvrbridge {
 		assert(m_PSMServiceController->IsConnected);
 
 		const PSMPSNavi &clientView = m_PSMServiceController->ControllerState.PSNaviState;
+
+		// System Button hard-coded to PS button
+		Controller::UpdateButton(k_PSMButtonID_System, clientView.PSButton);
 
 		// Process all the native buttons 
 		Controller::UpdateButton(k_PSMButtonID_PS, clientView.PSButton);

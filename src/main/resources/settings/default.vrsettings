@@ -1,5 +1,5 @@
 {
-	"ds4" : {
+	"playstation_dualshock4" : {
 		"rumble_suppressed" : false,
 		"extend_y" : 0.0,
 		"extend_z" : 0.0,
@@ -11,13 +11,13 @@
     "use_orientation_in_alignment" : true,
     "thumbstick_deadzone_radius" : 0.1
 	},
-	"ds4_emulated_touchpad" : {
+	"playstation_dualshock4_touchpad" : {
 		"dpad_down": "touchpad_down",
 		"dpad_left": "touchpad_left",
 		"dpad_right": "touchpad_right",
 		"dpad_up": "touchpad_up"
 	},
-	"psmove" : {
+	"playstation_move" : {
 		"rumble_suppressed" : false,
 		"extend_y" : 0.0,
 		"extend_z" : 0.0,
@@ -30,13 +30,13 @@
     "disable_alignment_gesture" : false,
     "use_orientation_in_alignment" : true
 	},
-	"psmove_emulated_touchpad" : {
+	"playstation_move_touchpad" : {
     "move": "touchpad_press"
 	},
-	"psnavi" : {
+	"playstation_navi" : {
     "thumbstick_deadzone_radius" : 0.1
 	},
-	"psnavi_emulated_touchpad" : {
+	"playstation_navi_touchpad" : {
     "joystick": "touchpad_press"
 	},
 	"virtual_controller" : {
@@ -53,7 +53,7 @@
     "upper_arm_length" : 0.3,
     "lower_arm_length" : 0.35
 	},
-	"virtual_controller_emulated_touchpad" : {
+	"virtual_controller_touchpad" : {
     "virtual_button_6": "touchpad_press"
 	}  
 }

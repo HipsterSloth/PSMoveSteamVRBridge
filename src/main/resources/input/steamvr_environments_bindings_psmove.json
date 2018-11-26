@@ -1,398 +1,381 @@
 {
-	"bindings": {
-		"/actions/default": {
-			"sources": [{
-					"inputs": {
-						"pull": {
-							"output": "/actions/default/in/handcurl"
-						}
-					},
-					"mode": "trigger",
-					"path": "/user/hand/left/input/trigger"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/use"
-						}
-					},
-					"mode": "button",
-					"parameters": {
-						"haptic_amplitude": "0"
-					},
-					"path": "/user/hand/left/input/trigger"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/lclick"
-						}
-					},
-					"mode": "button",
-					"parameters": {
-						"haptic_amplitude": "0"
-					},
-					"path": "/user/hand/left/input/trigger"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/showinventory"
-						}
-					},
-					"mode": "button",
-					"parameters": {
-						"haptic_amplitude": "0"
-					},
-					"path": "/user/hand/left/input/select"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/togglemenu"
-						}
-					},
-					"mode": "button",
-					"path": "/user/hand/left/input/square"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/rclick"
-						}
-					},
-					"mode": "button",
-					"path": "/user/hand/left/input/cross"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/pad"
-						},
-						"position": {
-							"output": "/actions/default/in/trackpad"
-						},
-						"touch": {
-							"output": "/actions/default/in/padtouch"
-						}
-					},
-					"mode": "trackpad",
-					"path": "/user/hand/left/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"scroll": {
-							"output": "/actions/default/in/scroll"
-						}
-					},
-					"mode": "trackpad_scroll",
-					"path": "/user/hand/left/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"pull": {
-							"output": "/actions/default/in/handcurl"
-						}
-					},
-					"mode": "trigger",
-					"path": "/user/hand/right/input/trigger"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/use"
-						}
-					},
-					"mode": "button",
-					"parameters": {
-						"haptic_amplitude": "0"
-					},
-					"path": "/user/hand/right/input/trigger"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/lclick"
-						}
-					},
-					"mode": "button",
-					"parameters": {
-						"haptic_amplitude": "0"
-					},
-					"path": "/user/hand/right/input/trigger"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/pad"
-						},
-						"position": {
-							"output": "/actions/default/in/trackpad"
-						},
-						"touch": {
-							"output": "/actions/default/in/padtouch"
-						}
-					},
-					"mode": "trackpad",
-					"path": "/user/hand/right/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/togglemenu"
-						}
-					},
-					"mode": "button",
-					"path": "/user/hand/right/input/square"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/rclick"
-						}
-					},
-					"mode": "button",
-					"path": "/user/hand/right/input/cross"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/default/in/showinventory"
-						}
-					},
-					"mode": "button",
-					"parameters": {
-						"haptic_amplitude": "0"
-					},
-					"path": "/user/hand/right/input/select"
-				},
-				{
-					"inputs": {
-						"scroll": {
-							"output": "/actions/default/in/scroll"
-						}
-					},
-					"mode": "trackpad_scroll",
-					"path": "/user/hand/right/input/emulated_trackpad"
-				}
-			]
-		},
-		"/actions/move": {
-			"sources": [{
-					"inputs": {
-						"east": {
-							"output": "/actions/move/in/turnright"
-						},
-						"north": {
-							"output": "/actions/move/in/teleport"
-						},
-						"west": {
-							"output": "/actions/move/in/turnleft"
-						}
-					},
-					"mode": "dpad_touch",
-					"parameters": {
-						"deadzone_pct": "90",
-						"overlap_pct": "0"
-					},
-					"path": "/user/hand/left/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"east": {
-							"output": "/actions/move/in/turnright"
-						},
-						"north": {
-							"output": "/actions/move/in/teleport"
-						},
-						"west": {
-							"output": "/actions/move/in/turnleft"
-						}
-					},
-					"mode": "dpad_touch",
-					"parameters": {
-						"deadzone_pct": "90",
-						"overlap_pct": "0"
-					},
-					"path": "/user/hand/right/input/emulated_trackpad"
-				}
-			]
-		},
-		"/actions/prop_tool": {
-			"sources": [{
-					"inputs": {
-						"click": {
-							"output": "/actions/prop_tool/in/use"
-						}
-					},
-					"mode": "button",
-					"path": "/user/hand/left/input/trigger"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/prop_tool/in/pad"
-						},
-						"position": {
-							"output": "/actions/prop_tool/in/trackpad"
-						},
-						"touch": {
-							"output": "/actions/prop_tool/in/padtouch"
-						}
-					},
-					"mode": "trackpad",
-					"path": "/user/hand/left/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"east": {
-							"output": "/actions/prop_tool/in/padright"
-						},
-						"north": {
-							"output": "/actions/prop_tool/in/padup"
-						},
-						"south": {
-							"output": "/actions/prop_tool/in/paddown"
-						},
-						"west": {
-							"output": "/actions/prop_tool/in/padleft"
-						}
-					},
-					"mode": "dpad_touch",
-					"parameters": {
-						"deadzone_pct": "90",
-						"overlap_pct": "0"
-					},
-					"path": "/user/hand/left/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/prop_tool/in/menu"
-						}
-					},
-					"mode": "button",
-					"path": "/user/hand/left/input/square"
-				},
-				{
-					"inputs": {
-						"position": {
-							"output": "/actions/prop_tool/in/joystick"
-						}
-					},
-					"mode": "trackpad",
-					"path": "/user/hand/left/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"pull": {
-							"output": "/actions/prop_tool/in/trigger"
-						}
-					},
-					"mode": "trigger",
-					"path": "/user/hand/left/input/trigger"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/prop_tool/in/drop"
-						}
-					},
-					"mode": "button",
-					"parameters": {
-						"haptic_amplitude": "0"
-					},
-					"path": "/user/hand/left/input/select"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/prop_tool/in/use"
-						}
-					},
-					"mode": "button",
-					"path": "/user/hand/right/input/trigger"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/prop_tool/in/pad"
-						},
-						"position": {
-							"output": "/actions/prop_tool/in/trackpad"
-						},
-						"touch": {
-							"output": "/actions/prop_tool/in/padtouch"
-						}
-					},
-					"mode": "trackpad",
-					"path": "/user/hand/right/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"pull": {
-							"output": "/actions/prop_tool/in/trigger"
-						}
-					},
-					"mode": "trigger",
-					"path": "/user/hand/right/input/trigger"
-				},
-				{
-					"inputs": {
-						"position": {
-							"output": "/actions/prop_tool/in/joystick"
-						}
-					},
-					"mode": "trackpad",
-					"path": "/user/hand/right/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"east": {
-							"output": "/actions/prop_tool/in/padright"
-						},
-						"north": {
-							"output": "/actions/prop_tool/in/padup"
-						},
-						"south": {
-							"output": "/actions/prop_tool/in/paddown"
-						},
-						"west": {
-							"output": "/actions/prop_tool/in/padleft"
-						}
-					},
-					"mode": "dpad_touch",
-					"parameters": {
-						"deadzone_pct": "90",
-						"overlap_pct": "0"
-					},
-					"path": "/user/hand/right/input/emulated_trackpad"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/prop_tool/in/menu"
-						}
-					},
-					"mode": "button",
-					"path": "/user/hand/right/input/square"
-				},
-				{
-					"inputs": {
-						"click": {
-							"output": "/actions/prop_tool/in/drop"
-						}
-					},
-					"mode": "button",
-					"parameters": {
-						"haptic_amplitude": "0"
-					},
-					"path": "/user/hand/right/input/select"
-				}
-			]
-		}
-	},
-	"controller_type": "playstation_move",
-	"description": "",
-	"name": "SteamVR Home bindings for Playstation Move"
+   "bindings" : {
+      "/actions/default" : {
+         "sources" : [
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/togglemenu"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/triangle"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/togglemenu"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/triangle"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/showinventory"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/select"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/lclick"
+                  }
+               },
+               "mode" : "button",
+               "parameters" : {
+                  "haptic_amplitude" : "0"
+               },
+               "path" : "/user/hand/right/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "pull" : {
+                     "output" : "/actions/default/in/handcurl"
+                  }
+               },
+               "mode" : "trigger",
+               "path" : "/user/hand/right/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/pad"
+                  },
+                  "position" : {
+                     "output" : "/actions/default/in/trackpad"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/padtouch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "south" : {
+                     "output" : "/actions/default/in/rclick"
+                  }
+               },
+               "mode" : "dpad_click",
+               "parameters" : {
+                  "sub_mode" : "click"
+               },
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/pad"
+                  },
+                  "position" : {
+                     "output" : "/actions/default/in/trackpad"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/padtouch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "pull" : {
+                     "output" : "/actions/default/in/handcurl"
+                  }
+               },
+               "mode" : "trigger",
+               "path" : "/user/hand/left/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/lclick"
+                  }
+               },
+               "mode" : "button",
+               "parameters" : {
+                  "haptic_amplitude" : "0"
+               },
+               "path" : "/user/hand/left/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/showinventory"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/select"
+            },
+            {
+               "inputs" : {
+                  "south" : {
+                     "output" : "/actions/default/in/rclick"
+                  }
+               },
+               "mode" : "dpad_click",
+               "parameters" : {
+                  "sub_mode" : "click"
+               },
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "scroll" : {
+                     "output" : "/actions/default/in/scroll"
+                  }
+               },
+               "mode" : "trackpad_scroll",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "scroll" : {
+                     "output" : "/actions/default/in/scroll"
+                  }
+               },
+               "mode" : "trackpad_scroll",
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/use"
+                  }
+               },
+               "mode" : "button",
+               "parameters" : {
+                  "haptic_amplitude" : "0"
+               },
+               "path" : "/user/hand/right/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/use"
+                  }
+               },
+               "mode" : "button",
+               "parameters" : {
+                  "haptic_amplitude" : "0"
+               },
+               "path" : "/user/hand/left/input/trigger"
+            }
+         ]
+      },
+      "/actions/move" : {
+         "sources" : [
+            {
+               "inputs" : {
+                  "center" : {
+                     "output" : "/actions/move/in/teleport"
+                  },
+                  "east" : {
+                     "output" : "/actions/move/in/turnright"
+                  },
+                  "north" : {
+                     "output" : "/actions/move/in/teleport"
+                  },
+                  "west" : {
+                     "output" : "/actions/move/in/turnleft"
+                  }
+               },
+               "mode" : "dpad_click",
+               "parameters" : {
+                  "deadzone_pct" : "50",
+                  "overlap_pct" : "0"
+               },
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "center" : {
+                     "output" : "/actions/move/in/teleport"
+                  },
+                  "east" : {
+                     "output" : "/actions/move/in/turnright"
+                  },
+                  "north" : {
+                     "output" : "/actions/move/in/teleport"
+                  },
+                  "west" : {
+                     "output" : "/actions/move/in/turnleft"
+                  }
+               },
+               "mode" : "dpad_click",
+               "parameters" : {
+                  "deadzone_pct" : "50",
+                  "overlap_pct" : "0"
+               },
+               "path" : "/user/hand/left/input/trackpad"
+            }
+         ]
+      },
+      "/actions/prop_tool" : {
+         "sources" : [
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/prop_tool/in/drop"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/select"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/prop_tool/in/menu"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/triangle"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/prop_tool/in/pad"
+                  },
+                  "position" : {
+                     "output" : "/actions/prop_tool/in/trackpad"
+                  },
+                  "touch" : {
+                     "output" : "/actions/prop_tool/in/padtouch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "east" : {
+                     "output" : "/actions/prop_tool/in/padright"
+                  },
+                  "north" : {
+                     "output" : "/actions/prop_tool/in/padup"
+                  },
+                  "south" : {
+                     "output" : "/actions/prop_tool/in/paddown"
+                  },
+                  "west" : {
+                     "output" : "/actions/prop_tool/in/padleft"
+                  }
+               },
+               "mode" : "dpad_click",
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/prop_tool/in/use"
+                  },
+                  "pull" : {
+                     "output" : "/actions/prop_tool/in/trigger"
+                  }
+               },
+               "mode" : "trigger",
+               "path" : "/user/hand/right/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "position" : {
+                     "output" : "/actions/prop_tool/in/joystick"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/prop_tool/in/menu"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/triangle"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/prop_tool/in/pad"
+                  },
+                  "position" : {
+                     "output" : "/actions/prop_tool/in/trackpad"
+                  },
+                  "touch" : {
+                     "output" : "/actions/prop_tool/in/padtouch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "position" : {
+                     "output" : "/actions/prop_tool/in/joystick"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "east" : {
+                     "output" : "/actions/prop_tool/in/padright"
+                  },
+                  "north" : {
+                     "output" : "/actions/prop_tool/in/padup"
+                  },
+                  "south" : {
+                     "output" : "/actions/prop_tool/in/paddown"
+                  },
+                  "west" : {
+                     "output" : "/actions/prop_tool/in/padleft"
+                  }
+               },
+               "mode" : "dpad_click",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/prop_tool/in/use"
+                  },
+                  "pull" : {
+                     "output" : "/actions/prop_tool/in/trigger"
+                  }
+               },
+               "mode" : "trigger",
+               "path" : "/user/hand/left/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/prop_tool/in/drop"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/select"
+            }
+         ]
+      }
+   },
+   "controller_type" : "playstation_move",
+   "description" : "Default PlayStation Move bindings for SteamVR Home",
+   "name" : "PlayStation Move Bindings"
 }

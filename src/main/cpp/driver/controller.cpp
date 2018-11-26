@@ -44,7 +44,7 @@ namespace steamvrbridge {
 			const char *szPSButtonName = k_PSMButtonNames[psButtonID];
 
 			char szTouchpadSectionName[64];
-			snprintf(szTouchpadSectionName, sizeof(szTouchpadSectionName), "%s_emulated_touchpad", GetControllerSettingsPrefix());
+			snprintf(szTouchpadSectionName, sizeof(szTouchpadSectionName), "%s_trackpad", GetControllerSettingsPrefix());
 
 			char remapButtonToTouchpadDirectionString[32];
 			pSettings->GetString(szTouchpadSectionName, szPSButtonName, remapButtonToTouchpadDirectionString, 32, &fetchError);
@@ -93,7 +93,7 @@ namespace steamvrbridge {
 			// Configure JSON controller configuration input profile
 			char szProfilePath[128];
 			snprintf(szProfilePath, sizeof(szProfilePath), "{psmove}/input/%s_profile.json", GetControllerSettingsPrefix());
-			vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_InputProfilePath_String, szProfilePath);
+			properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_InputProfilePath_String, szProfilePath);
 		}
 
 		return result_code;
@@ -161,7 +161,7 @@ namespace steamvrbridge {
 			vr::VRInputComponentHandle_t hapticComponentHandle;
 			vr::EVRInputError result_code=
 				vr::VRDriverInput()->CreateHapticComponent(
-					m_ulPropertyContainer, k_PSMButtonPaths[haptic_id], &hapticComponentHandle);
+					m_ulPropertyContainer, k_PSMHapticPaths[haptic_id], &hapticComponentHandle);
 
 			if (result_code == vr::EVRInputError::VRInputError_None)
 			{

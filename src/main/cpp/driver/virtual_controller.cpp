@@ -46,7 +46,8 @@ namespace steamvrbridge {
 		, m_bThumbstickTouchAsPress(true)
 		, m_fLinearVelocityMultiplier(1.f)
 		, m_fLinearVelocityExponent(0.f)
-		, m_hmdAlignPSButtonID(k_PSMButtonID_Select)
+		, m_systemButtonID(k_PSMButtonID_Virtual_14) // "Jewel" button on a xbox 360 controller
+		, m_hmdAlignButtonID(k_PSMButtonID_Virtual_5) // "Back" button on a xbox 360 controller
 		, m_overrideModel("")
 		, m_orientationSolver(nullptr) {
 		char svrIdentifier[256];
@@ -97,12 +98,32 @@ namespace steamvrbridge {
 		m_virtualTouchpadYAxisIndex = 
 			SettingsUtil::LoadInt(pSettings, szModelName, "touchpad_y_axis_index", -1);
 
+		// System button mapping
+		{
+			char systemButtonString[32];
+			vr::EVRSettingsError fetchError;
+
+			pSettings->GetString(szModelName, "system_button", systemButtonString, 32, &fetchError);
+
+			if (fetchError == vr::VRSettingsError_None)
+			{
+				int button_index = Utils::find_index_of_string_in_table(k_PSMButtonNames, k_PSMButtonID_Count, systemButtonString);
+				if (button_index != -1)
+				{
+					m_systemButtonID = static_cast<ePSMButtonID>(button_index);
+				}
+				else
+				{
+					Logger::Info("Invalid virtual controller system button: %s\n", systemButtonString);
+				}
+			}
+		}
+
 		// HMD align button mapping
 		{
 			char alignButtonString[32];
 			vr::EVRSettingsError fetchError;
 
-			m_hmdAlignPSButtonID = k_PSMButtonID_Virtual_0;
 			pSettings->GetString(szModelName, "hmd_align_button", alignButtonString, 32, &fetchError);
 
 			if (fetchError == vr::VRSettingsError_None)
@@ -110,14 +131,9 @@ namespace steamvrbridge {
 				int button_index = Utils::find_index_of_string_in_table(k_PSMButtonNames, k_PSMButtonID_Count, alignButtonString);
 				if (button_index != -1)
 				{
-					m_hmdAlignPSButtonID = static_cast<ePSMButtonID>(button_index);
+					m_hmdAlignButtonID = static_cast<ePSMButtonID>(button_index);
 				}
 				else
-				{
-					Logger::Info("Invalid virtual controller hmd align button: %s\n", alignButtonString);
-				}
-
-				if (m_hmdAlignPSButtonID == -1)
 				{
 					Logger::Info("Invalid virtual controller hmd align button: %s\n", alignButtonString);
 				}
@@ -276,40 +292,26 @@ namespace steamvrbridge {
 
 			Logger::Info("VirtualController::start_controller_response_callback - Controller stream started\n");
 
+			// Create a system button (bound to one of the virtual buttons)
+			controller->CreateButtonComponent(k_PSMButtonID_System);
+
 			// Create buttons components
-			for (int button_index = 0; button_index < VirtualController->numButtons; ++button_index)
+			for (int button_id = k_PSMButtonID_Virtual_0; button_id <= k_PSMButtonID_Virtual_31; ++button_id)
 			{
-				controller->CreateButtonComponent((ePSMButtonID)(k_PSMButtonID_Virtual_0+button_index));
+				controller->CreateButtonComponent((ePSMButtonID)button_id);
 			}
 
 			// Create axis components
-			for (int axis_index = 0; axis_index < VirtualController->numAxes; ++axis_index)
+			for (int axis_id = k_PSMAxisID_Virtual_0; axis_id <= k_PSMAxisID_Virtual_31; ++axis_id)
 			{
-				controller->CreateAxisComponent((ePSMAxisID)(k_PSMButtonID_Virtual_0+axis_index));
+				controller->CreateAxisComponent((ePSMAxisID)axis_id);
 			}
 
-
-			// [optional] Create components for emulated trackpad
-			bool bUsesVirtualTrackpad= 
-				controller->m_virtualTouchpadYAxisIndex != -1 || 
-				controller->m_virtualTouchpadXAxisIndex != -1;
-			if (!bUsesVirtualTrackpad)
-			{
-				for (int buttonIndex = k_PSMButtonID_Virtual_0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-					if (controller->m_psButtonIDToEmulatedTouchpadAction[buttonIndex] != k_EmulatedTrackpadAction_None) {
-						bUsesVirtualTrackpad= true;
-						break;
-					}
-				}
-			}
-
-			if (bUsesVirtualTrackpad)
-			{
-				controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
-				controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
-				controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
-				controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_Y);
-			}
+			// Create components for emulated trackpad
+			controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadTouched);
+			controller->CreateButtonComponent(k_PSMButtonID_EmulatedTrackpadPressed);
+			controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_X);
+			controller->CreateAxisComponent(k_PSMAxisID_EmulatedTrackpad_Y);
 		}
 	}
 
@@ -328,7 +330,7 @@ namespace steamvrbridge {
 
 		const PSMVirtualController &clientView = m_PSMServiceController->ControllerState.VirtualController;
 
-		bool bStartRealignHMDTriggered = clientView.buttonStates[m_hmdAlignPSButtonID] == PSMButtonState_PRESSED;
+		bool bStartRealignHMDTriggered = clientView.buttonStates[m_hmdAlignButtonID] == PSMButtonState_PRESSED;
 
 		// If START was just pressed while and SELECT was held or vice versa,
 		// recenter the controller orientation pose and start the realignment of the controller to HMD tracking space.
@@ -359,6 +361,16 @@ namespace steamvrbridge {
 
 			m_bResetAlignRequestSent = true;
 		} else {
+			// Provide a system button update from one of the virtual buttons
+			if (m_systemButtonID >= k_PSMButtonID_Virtual_0 && m_systemButtonID <= k_PSMButtonID_Virtual_31)
+			{
+				int buttonIndex= m_systemButtonID - k_PSMButtonID_Virtual_0;
+				const PSMButtonState button_state= 
+					m_PSMServiceController->ControllerState.VirtualController.buttonStates[buttonIndex];
+
+				UpdateButton(k_PSMButtonID_System, button_state);
+			}
+
 			int buttonCount = m_PSMServiceController->ControllerState.VirtualController.numButtons;
 			for (int buttonIndex = 0; buttonIndex < buttonCount; ++buttonIndex)
 			{

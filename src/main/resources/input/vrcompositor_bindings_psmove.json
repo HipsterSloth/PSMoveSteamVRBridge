@@ -23,7 +23,7 @@
 						}
 					},
 					"mode": "trackpad",
-					"path": "/user/hand/left/input/emulated_trackpad"
+					"path": "/user/hand/left/input/trackpad"
 				},
 				{
 					"inputs": {
@@ -47,7 +47,7 @@
 						}
 					},
 					"mode": "trackpad",
-					"path": "/user/hand/right/input/emulated_trackpad"
+					"path": "/user/hand/right/input/trackpad"
 				},
 				{
 					"inputs": {
@@ -139,7 +139,7 @@
 						}
 					},
 					"mode": "trackpad",
-					"path": "/user/hand/left/input/emulated_trackpad"
+					"path": "/user/hand/left/input/trackpad"
 				}
 			],
 			"poses": [{
@@ -175,46 +175,75 @@
 				{
 					"inputs": {},
 					"mode": "none",
-					"path": "/user/hand/right/input/emulated_trackpad"
+					"path": "/user/hand/right/input/trackpad"
 				}
 			]
 		},
 		"/actions/system": {
 			"chords": [{
-				"inputs": [
-					["/user/hand/left/input/ps", "held"],
-					["/user/hand/left/input/trigger", "click"]
-				],
-				"output": "/actions/system/in/TakeScreenshot"
-			}],
+					"output": "/actions/system/in/TakeScreenshot",
+					"inputs": [
+						["/user/hand/left/input/ps", "held"],
+						["/user/hand/left/input/trigger", "click"]
+					]
+				},
+				{
+					"output": "/actions/system/in/TakeScreenshot",
+					"inputs": [
+						["/user/hand/right/input/ps", "held"],
+						["/user/hand/right/input/trigger", "click"]
+					]
+				}
+			],
 			"sources": [{
-					"inputs": {
-						"long": {
-							"output": "/actions/system/in/showpowermenu"
-						},
-						"single": {
-							"output": "/actions/system/in/toggledashboard"
-						}
-					},
-					"mode": "complex_button",
-					"path": "/user/hand/left/input/ps"
+					"path": "/user/hand/left/input/trigger",
+					"mode": "button"
 				},
 				{
-					"inputs": {},
-					"mode": "none",
-					"path": "/user/hand/right/input/ps"
+					"path": "/user/hand/right/input/trigger",
+					"mode": "button"
 				},
 				{
-					"inputs": {},
+					"path": "/user/hand/left/input/ps",
 					"mode": "button",
-					"path": "/user/hand/left/input/trigger"
+					"inputs": {
+						"held": {
+							"output": "/actions/system/in/SystemButtonChord"
+						},
+						"long": {
+							"long_press_delay": 1.5,
+							"output": "/actions/system/in/ShowPowerMenu"
+						},
+						"click": {
+							"output": "/actions/system/in/ToggleDashboard"
+						},
+						"double": {
+							"output": "/actions/system/in/ToggleRoomView"
+						}
+					}
+				},
+				{
+					"path": "/user/hand/right/input/ps",
+					"mode": "button",
+					"inputs": {
+						"held": {
+							"output": "/actions/system/in/SystemButtonChord"
+						},
+						"long": {
+							"long_press_delay": 1.5,
+							"output": "/actions/system/in/ShowPowerMenu"
+						},
+						"click": {
+							"output": "/actions/system/in/ToggleDashboard"
+						},
+						"double": {
+							"output": "/actions/system/in/ToggleRoomView"
+						}
+					}
 				}
 			]
 		}
 	},
-	"controller_type": "playstation_move",
-	"description": "",
-	"name": "Playstation Move system bindings",
 	"action_binds": [{
 			"action": "/actions/system/in/SystemButtonChord",
 			"source": "/filters/system_button/held"
@@ -278,19 +307,19 @@
 		},
 		{
 			"action": "/actions/lasermouse/in/TrackpadTouch",
-			"source": "/user/hand/left/input/emulated_trackpad/touch"
+			"source": "/user/hand/left/input/trackpad/touch"
 		},
 		{
 			"action": "/actions/lasermouse/in/TrackpadValue",
-			"source": ["/user/hand/left/input/emulated_trackpad/x", "/user/hand/left/input/emulated_trackpad/y"]
+			"source": ["/user/hand/left/input/trackpad/x", "/user/hand/left/input/trackpad/y"]
 		},
 		{
 			"action": "/actions/lasermouse/in/TrackpadTouch",
-			"source": "/user/hand/right/input/emulated_trackpad/touch"
+			"source": "/user/hand/right/input/trackpad/touch"
 		},
 		{
 			"action": "/actions/lasermouse/in/TrackpadValue",
-			"source": ["/user/hand/right/input/emulated_trackpad/x", "/user/hand/right/input/emulated_trackpad/y"]
+			"source": ["/user/hand/right/input/trackpad/x", "/user/hand/right/input/trackpad/y"]
 		},
 		{
 			"action": "/actions/lasermouse/in/TrackpadScroll",
@@ -310,27 +339,27 @@
 		},
 		{
 			"action": "/actions/dualanalog/in/LeftValue",
-			"source": ["/user/hand/left/input/emulated_trackpad/x", "/user/hand/left/input/emulated_trackpad/y"]
+			"source": ["/user/hand/left/input/trackpad/x", "/user/hand/left/input/trackpad/y"]
 		},
 		{
 			"action": "/actions/dualanalog/in/RightValue",
-			"source": ["/user/hand/right/input/emulated_trackpad/x", "/user/hand/right/input/emulated_trackpad/y"]
+			"source": ["/user/hand/right/input/trackpad/x", "/user/hand/right/input/trackpad/y"]
 		},
 		{
 			"action": "/actions/dualanalog/in/LeftTouch",
-			"source": "/user/hand/left/input/emulated_trackpad/touch"
+			"source": "/user/hand/left/input/trackpad/touch"
 		},
 		{
 			"action": "/actions/dualanalog/in/RightTouch",
-			"source": "/user/hand/right/input/emulated_trackpad/touch"
+			"source": "/user/hand/right/input/trackpad/touch"
 		},
 		{
 			"action": "/actions/dualanalog/in/LeftClick",
-			"source": "/user/hand/left/input/emulated_trackpad/click"
+			"source": "/user/hand/left/input/trackpad/click"
 		},
 		{
 			"action": "/actions/dualanalog/in/RightClick",
-			"source": "/user/hand/right/input/emulated_trackpad/click"
+			"source": "/user/hand/right/input/trackpad/click"
 		},
 		{
 			"action": "/actions/dualanalog/in/ModeSwitch1",
@@ -341,7 +370,6 @@
 			"source": "/user/hand/right/input/select/click"
 		}
 	],
-
 	"filters": [{
 			"name": "all_system_buttons",
 			"type": "boolean_or",
@@ -420,9 +448,9 @@
 			"name": "laser_scroll_l",
 			"type": "trackpad_scroll",
 			"input": {
-				"x": "/user/hand/left/input/emulated_trackpad/x",
-				"y": "/user/hand/left/input/emulated_trackpad/y",
-				"touch": "/user/hand/left/input/emulated_trackpad/touch"
+				"x": "/user/hand/left/input/trackpad/x",
+				"y": "/user/hand/left/input/trackpad/y",
+				"touch": "/user/hand/left/input/trackpad/touch"
 			},
 			"output": {
 				"x": "x",
@@ -434,9 +462,9 @@
 			"name": "laser_scroll_r",
 			"type": "trackpad_scroll",
 			"input": {
-				"x": "/user/hand/right/input/emulated_trackpad/x",
-				"y": "/user/hand/right/input/emulated_trackpad/y",
-				"touch": "/user/hand/right/input/emulated_trackpad/touch"
+				"x": "/user/hand/right/input/trackpad/x",
+				"y": "/user/hand/right/input/trackpad/y",
+				"touch": "/user/hand/right/input/trackpad/touch"
 			},
 			"output": {
 				"x": "x",
@@ -454,5 +482,8 @@
 			},
 			"output": "result"
 		}
-	]
+	],
+	"controller_type": "playstation_move",
+	"description": "",
+	"name": "Playstation Move system bindings"  
 }
