@@ -1,0 +1,3 @@
+[submodule "thirdparty/Configuru"]
+	path = thirdparty/Configuru
+	url = https://github.com/emilk/Configuru.git
