@@ -437,8 +437,8 @@ namespace steamvrbridge {
 		k_EmulatedTrackpadAction_Count
 	};
 
-	static const int k_max_vr_touchpad_directions = k_EmulatedTrackpadAction_Count;
-	static const char *k_VRTouchpadDirectionNames[k_max_vr_touchpad_directions] = {
+	static const int k_max_vr_touchpad_actions = k_EmulatedTrackpadAction_Count;
+	static const char *k_VRTouchpadActionNames[k_max_vr_touchpad_actions] = {
 		"none",
 		"touchpad_touch",
 		"touchpad_press",

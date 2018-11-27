@@ -7,6 +7,24 @@
 
 namespace steamvrbridge {
 
+	class PSNaviControllerConfig : public ControllerConfig
+	{
+	public:
+		static const int CONFIG_VERSION;
+
+		PSNaviControllerConfig(const std::string &fnamebase = "NaviControllerConfig")
+			: ControllerConfig(fnamebase)
+			, thumbstick_deadzone(k_defaultThumbstickDeadZoneRadius)
+		{
+		};
+
+		configuru::Config WriteToJSON() override;
+		bool ReadFromJSON(const configuru::Config &pt) override;
+
+		// The inner deadzone of the thumbsticks
+		float thumbstick_deadzone;
+	};
+
 	/* An un-tracked PSNavi controller.
 	   The controller class bridges the PSMoveService controller to OpenVR's tracked device.*/
 	class PSNaviController : public Controller {
@@ -25,7 +43,6 @@ namespace steamvrbridge {
 		void Deactivate() override;
 
 		// TrackableDevice interface implementation
-		void LoadSettings(vr::IVRSettings *pSettings) override;
 		vr::ETrackedDeviceClass GetTrackedDeviceClass() const override { return vr::TrackedDeviceClass_Controller; }
 		void Update() override;
 		void RefreshWorldFromDriverPose() override;
@@ -36,6 +53,13 @@ namespace steamvrbridge {
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }
 		PSMControllerType GetPSMControllerType() const override { return PSMController_Virtual; }
+
+	protected:
+		const PSNaviControllerConfig *getConfig() const { return static_cast<const PSNaviControllerConfig *>(m_config); }
+		ControllerConfig *AllocateControllerConfig() override { 
+			std::string fnamebase= std::string("psnavi_") + m_strPSMControllerSerialNo;
+			return new PSNaviControllerConfig(fnamebase); 
+		}
 
 	private:
 		void UpdateThumbstick();
@@ -68,12 +92,6 @@ namespace steamvrbridge {
 		// The last normalized thumbstick values (post dead zone application);
 		float m_lastSanitizedThumbstick_X;
 		float m_lastSanitizedThumbstick_Y;
-
-		// The size of the deadzone for the controller's thumbstick
-		float m_thumbstickDeadzone;
-
-		// Override model to use for the controller.
-		std::string m_overrideModel;
 
 		// Callbacks
 		static void start_controller_response_callback(const PSMResponseMessage *response, void *userdata);

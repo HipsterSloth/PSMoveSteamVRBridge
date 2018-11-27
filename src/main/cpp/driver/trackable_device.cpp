@@ -26,10 +26,6 @@ namespace steamvrbridge {
 	TrackableDevice::~TrackableDevice() {
 	}
 
-	void TrackableDevice::LoadSettings(vr::IVRSettings *pSettings) {
-
-	}
-
 	// Shared Implementation of vr::ITrackedDeviceServerDriver
 	vr::EVRInitError TrackableDevice::Activate(vr::TrackedDeviceIndex_t unObjectId) {
 		vr::CVRPropertyHelpers *properties = vr::VRProperties();

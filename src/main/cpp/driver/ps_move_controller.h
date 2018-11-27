@@ -8,6 +8,61 @@
 
 namespace steamvrbridge {
 
+	class PSMoveControllerConfig : public ControllerConfig
+	{
+	public:
+
+		PSMoveControllerConfig(const std::string &fnamebase = "PSMoveControllerConfig")
+			: ControllerConfig(fnamebase)
+			, rumble_suppressed(false)
+			, extend_Y_meters(0.f)
+			, extend_Z_meters(0.f)
+			, z_rotate_90_degrees(false)
+			, delay_after_touchpad_press(false)
+			, meters_per_touchpad_axis_units()
+			, calibration_offset_meters(0.f)
+			, disable_alignment_gesture(false)
+			, use_orientation_in_hmd_alignment(true)
+			, linear_velocity_multiplier(1.f)
+			, linear_velocity_exponent(0.f)
+		{
+		};
+
+		configuru::Config WriteToJSON() override;
+		bool ReadFromJSON(const configuru::Config &pt) override;
+
+		// Rumble state
+		bool rumble_suppressed;
+
+		// Virtual extend controller in meters.
+		float extend_Y_meters;
+		float extend_Z_meters;
+
+		// Rotate controllers orientation 90 degrees about the z-axis (for gun style games).
+		bool z_rotate_90_degrees;
+
+		// Delay in resetting touchpad position after touchpad press.
+		bool delay_after_touchpad_press;
+
+		// Settings values. Used to determine whether we'll map controller movement after touchpad
+		// presses to touchpad axis values.
+		float meters_per_touchpad_axis_units;
+
+		// Settings value: used to determine how many meters in front of the HMD the controller
+		// is held when it's being calibrated.
+		float calibration_offset_meters;
+
+		// Flag used to completely disable the alignment gesture.
+		bool disable_alignment_gesture;
+
+		// Flag to tell if we should use the controller orientation as part of the controller alignment.
+		bool use_orientation_in_hmd_alignment;
+
+		// Settings values. Used to adjust throwing power using linear velocity and acceleration.
+		float linear_velocity_multiplier;
+		float linear_velocity_exponent;
+	};
+
 	/* A trackable PS Move controller. The controller class bridges the PSMoveService controller to
 	OpenVR's tracked device.*/
 	class PSMoveController : public Controller {
@@ -23,7 +78,6 @@ namespace steamvrbridge {
 		void Deactivate() override;
 
 		// TrackableDevice interface implementation
-		void LoadSettings(vr::IVRSettings *pSettings) override;
 		vr::ETrackedDeviceClass GetTrackedDeviceClass() const override { return vr::TrackedDeviceClass_Controller; }
 		void Update() override;
 		void RefreshWorldFromDriverPose() override;
@@ -34,6 +88,13 @@ namespace steamvrbridge {
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
 		std::string GetPSMControllerSerialNo() const override { return m_strPSMControllerSerialNo; }
 		PSMControllerType GetPSMControllerType() const override { return PSMController_Move; }
+
+	protected:
+		const PSMoveControllerConfig *getConfig() const { return static_cast<const PSMoveControllerConfig *>(m_config); }
+		ControllerConfig *AllocateControllerConfig() override { 
+			std::string fnamebase= std::string("psmove_") + m_strPSMControllerSerialNo;
+			return new PSMoveControllerConfig(fnamebase); 
+		}
 
 	private:
 		void UpdateEmulatedTrackpad();
@@ -57,19 +118,6 @@ namespace steamvrbridge {
 		bool m_bIsBatteryCharging;
 		float m_fBatteryChargeFraction;
 
-		// Rumble state
-		bool m_bRumbleSuppressed;
-
-		// Virtual extend controller in meters.
-		float m_fVirtuallExtendControllersYMeters;
-		float m_fVirtuallExtendControllersZMeters;
-
-		// Rotate controllers orientation 90 degrees about the z-axis (for gun style games).
-		bool m_fZRotate90Degrees;
-
-		// Delay in resetting touchpad position after touchpad press.
-		bool m_bDelayAfterTouchpadPress;
-
 		// True while the touchpad is considered active (touched or pressed) 
 		// after the initial touchpad delay, if any.
 		bool m_bTouchpadWasActive;
@@ -81,14 +129,6 @@ namespace steamvrbridge {
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_resetAlignButtonPressTime;
 		bool m_bResetAlignRequestSent;
 
-		// Settings values. Used to determine whether we'll map controller movement after touchpad
-		// presses to touchpad axis values.
-		float m_fMetersPerTouchpadAxisUnits;
-
-		// Settings value: used to determine how many meters in front of the HMD the controller
-		// is held when it's being calibrated.
-		float m_fControllerMetersInFrontOfHmdAtCalibration;
-
 		// The position of the controller in meters in driver space relative to its own rotation
 		// at the time when the touchpad was most recently pressed (after being up).
 		PSMVector3f m_posMetersAtTouchpadPressTime;
@@ -96,22 +136,6 @@ namespace steamvrbridge {
 		// The orientation of the controller in driver space at the time when
 		// the touchpad was most recently pressed (after being up).
 		PSMQuatf m_driverSpaceRotationAtTouchpadPressTime;
-
-		// Flag used to completely disable the alignment gesture.
-		bool m_bDisableHMDAlignmentGesture;
-
-		// Flag to tell if we should use the controller orientation as part of the controller alignment.
-		bool m_bUseControllerOrientationInHMDAlignment;
-
-		// The axis to use for trigger input
-		int m_steamVRTriggerAxisIndex;
-
-		// Settings values. Used to adjust throwing power using linear velocity and acceleration.
-		float m_fLinearVelocityMultiplier;
-		float m_fLinearVelocityExponent;
-
-		// Override model to use for the controller.
-		std::string m_overrideModel;
 
 		// Callbacks
 		static void start_controller_response_callback(const PSMResponseMessage *response, void *userdata);

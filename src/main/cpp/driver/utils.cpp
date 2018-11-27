@@ -5,9 +5,11 @@
 #include "constants.h"
 #include "logger.h"
 #include <openvr_driver.h>
+#include <assert.h>
 #include <math.h>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 namespace steamvrbridge {
 
@@ -86,6 +88,61 @@ namespace steamvrbridge {
 		#endif
 
 	}
+
+    std::string Utils::Path_GetHomeDirectory()
+    {
+        std::string home_dir;
+
+#if defined WIN32 || defined _WIN32 || defined WINCE
+        size_t homedir_buffer_req_size;
+        char homedir_buffer[512];
+        getenv_s(&homedir_buffer_req_size, homedir_buffer, "APPDATA");
+        assert(homedir_buffer_req_size <= sizeof(homedir_buffer));
+        home_dir= homedir_buffer;
+#else    
+        // if run as root, use system-wide data directory
+        if (geteuid() == 0)
+        {
+            home_dir = "/etc/";
+        }
+        else
+        {
+            homedir = getenv("HOME");
+        }
+#endif
+        return home_dir;
+    }
+
+    bool Utils::Path_CreateDirectory(const std::string &path)
+    {
+        bool bSuccess= false;
+
+#if defined WIN32 || defined _WIN32 || defined WINCE
+        if (_mkdir(path.c_str()) == 0)
+        {
+            bSuccess= true;
+        }
+#else 
+        mode_t nMode = 0733; // UNIX style permissions
+        if (mkdir(path.c_str(), nMode) == 0)
+        {
+            bSuccess= true;
+        }
+#endif
+        else if (errno == EEXIST)
+        {
+            bSuccess= true;
+        }
+
+        return bSuccess;
+    }
+
+    bool Utils::Path_FileExists(const std::string& filename) 
+    {
+        std::ifstream file(filename.c_str());
+
+        return (bool)file;
+    }
 
 	//==================================================================================================
 	// HMD Helpers

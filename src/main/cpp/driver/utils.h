@@ -25,6 +25,9 @@ namespace steamvrbridge {
 		static int find_index_of_string_in_table(const char **string_table, const int string_table_count, const char *string);
 		static std::string Path_StripFilename(const std::string & sPath, char slash);
 		static std::string Path_GetThisModulePath();
+		static std::string Path_GetHomeDirectory();
+		static bool Path_CreateDirectory(const std::string &path);
+		static bool Path_FileExists(const std::string& filename);
 		static bool GetHMDDeviceIndex(vr::TrackedDeviceIndex_t *out_hmd_device_index);
 		static bool GetTrackedDevicePose(const vr::TrackedDeviceIndex_t device_index, PSMPosef *out_device_pose);
 		static PSMQuatf ExtractHMDYawQuaternion(const PSMQuatf & q);

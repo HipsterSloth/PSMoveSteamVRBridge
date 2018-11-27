@@ -375,6 +375,7 @@ namespace steamvrbridge {
 			PSMControllerType psmControllerType = controller_list->controller_type[list_index];
 			PSMControllerHand psmControllerHand = controller_list->controller_hand[list_index];
 			std::string psmControllerSerial(controller_list->controller_serial[list_index]);
+			std::replace(psmControllerSerial.begin(), psmControllerSerial.end(), ':', '_');
 
 			switch (psmControllerType) {
 				case PSMControllerType::PSMController_Move:
@@ -480,7 +481,6 @@ namespace steamvrbridge {
 				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
 				PSMoveController *TrackedDevice =
 					new PSMoveController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
-				TrackedDevice->LoadSettings(vr::VRSettings());
 
 				m_vecTrackedDevices.push_back(TrackedDevice);
 
@@ -507,7 +507,6 @@ namespace steamvrbridge {
 				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
 				VirtualController *TrackedDevice =
 					new VirtualController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
-				TrackedDevice->LoadSettings(vr::VRSettings());
 
 				m_vecTrackedDevices.push_back(TrackedDevice);
 
@@ -534,7 +533,6 @@ namespace steamvrbridge {
 				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
 				PSDualshock4Controller *TrackedDevice =
 					new PSDualshock4Controller(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
-				TrackedDevice->LoadSettings(vr::VRSettings());
 
 				m_vecTrackedDevices.push_back(TrackedDevice);
 
@@ -596,7 +594,6 @@ namespace steamvrbridge {
 				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
 				PSNaviController *naviController =
 					new PSNaviController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
-				naviController->LoadSettings(vr::VRSettings());
 
 				m_vecTrackedDevices.push_back(naviController);
 
@@ -627,7 +624,6 @@ namespace steamvrbridge {
 		if (!FindTrackedDeviceDriver(svrIdentifier)) {
 			Logger::Info("added new tracker device %s\n", svrIdentifier);
 			PSMServiceTracker *TrackerDevice = new PSMServiceTracker(trackerInfo);
-			TrackerDevice->LoadSettings(vr::VRSettings());
 
 			m_vecTrackedDevices.push_back(TrackerDevice);
 

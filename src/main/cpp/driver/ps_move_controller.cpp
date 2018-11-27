@@ -18,6 +18,76 @@
 
 namespace steamvrbridge {
 
+	// -- PSMoveControllerConfig -----
+	configuru::Config PSMoveControllerConfig::WriteToJSON() {
+		configuru::Config &pt= ControllerConfig::WriteToJSON();
+
+		// Touch pad settings
+		pt["delay_after_touchpad_press"] = delay_after_touchpad_press;
+		pt["cm_per_touchpad_units"] = meters_per_touchpad_axis_units * 100.f;
+
+		// Throwing power settings
+		pt["linear_velocity_multiplier"] = linear_velocity_multiplier;
+		pt["linear_velocity_exponent"] = linear_velocity_exponent;
+
+		// General Settings
+		pt["rumble_suppressed"] = rumble_suppressed;
+		pt["extend_y_cm"] = extend_Y_meters * 100.f;
+		pt["extend_x_cm"] = extend_Z_meters * 100.f;
+		pt["rotate_z_90"] = z_rotate_90_degrees;
+		pt["calibration_offset_cm"] = calibration_offset_meters * 100.f;
+		pt["disable_alignment_gesture"] = disable_alignment_gesture;
+		pt["use_orientation_in_hmd_alignment"] = use_orientation_in_hmd_alignment;
+
+		//PSMove controller button -> fake touchpad mappings
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_PS);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Move);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Triangle);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Square);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Circle);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Cross);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Select);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Start);
+
+		return pt;
+	}
+
+	bool PSMoveControllerConfig::ReadFromJSON(const configuru::Config &pt) {
+
+		if (!ControllerConfig::ReadFromJSON(pt))
+			return false;
+
+		// Touch pad settings
+		delay_after_touchpad_press = pt.get_or<bool>("delay_after_touchpad_press", delay_after_touchpad_press);
+		meters_per_touchpad_axis_units = pt.get_or<float>("cm_per_touchpad_units", 7.5f) / 100.f;
+
+		// Throwing power settings
+		linear_velocity_multiplier = pt.get_or<float>("linear_velocity_multiplier",  linear_velocity_multiplier);
+		linear_velocity_exponent = pt.get_or<float>("linear_velocity_exponent",  linear_velocity_exponent);
+
+		// General Settings
+		rumble_suppressed = pt.get_or<bool>("rumble_suppressed", rumble_suppressed);
+		extend_Y_meters = pt.get_or<float>("extend_y_cm",  0.f) / 100.f;
+		extend_Z_meters = pt.get_or<float>("extend_x_cm",  0.f) / 100.f;
+		z_rotate_90_degrees = pt.get_or<bool>("rotate_z_90", z_rotate_90_degrees);
+		calibration_offset_meters = pt.get_or<float>("calibration_offset_cm",  6.f) / 100.f;
+		disable_alignment_gesture = pt.get_or<bool>("disable_alignment_gesture", disable_alignment_gesture);
+		use_orientation_in_hmd_alignment = pt.get_or<bool>("use_orientation_in_hmd_alignment", use_orientation_in_hmd_alignment);
+
+		//PSMove controller button -> fake touchpad mappings
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_PS);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Move);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Triangle);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Square);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Circle);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Cross);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Select);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Start);
+
+		return true;
+	}
+
+	// -- PSMoveController -----
 	PSMoveController::PSMoveController(
 		PSMControllerID psmControllerId,
 		vr::ETrackedControllerRole trackedControllerRole,
@@ -28,25 +98,13 @@ namespace steamvrbridge {
 		, m_nPoseSequenceNumber(0)
 		, m_bIsBatteryCharging(false)
 		, m_fBatteryChargeFraction(0.f)
-		, m_bRumbleSuppressed(false)
 		, m_resetPoseButtonPressTime()
 		, m_bResetPoseRequestSent(false)
 		, m_resetAlignButtonPressTime()
 		, m_bResetAlignRequestSent(false)
-		, m_fVirtuallExtendControllersZMeters(0.0f)
-		, m_fVirtuallExtendControllersYMeters(0.0f)
-		, m_fZRotate90Degrees(false)
-		, m_bDelayAfterTouchpadPress(false)
 		, m_bTouchpadWasActive(false)
-		, m_fControllerMetersInFrontOfHmdAtCalibration(0.f)
 		, m_posMetersAtTouchpadPressTime(*k_psm_float_vector3_zero)
-		, m_driverSpaceRotationAtTouchpadPressTime(*k_psm_quaternion_identity)
-		, m_bDisableHMDAlignmentGesture(false)
-		, m_bUseControllerOrientationInHMDAlignment(false)
-		, m_steamVRTriggerAxisIndex(1)
-		, m_fLinearVelocityMultiplier(1.f)
-		, m_fLinearVelocityExponent(0.f)
-		, m_overrideModel("") {
+		, m_driverSpaceRotationAtTouchpadPressTime(*k_psm_quaternion_identity) {
 		char svrIdentifier[256];
 		Utils::GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerId);
 		m_strSteamVRSerialNo = svrIdentifier;
@@ -63,61 +121,12 @@ namespace steamvrbridge {
 
 		m_TrackedControllerRole = trackedControllerRole;
 
-		// Map every button to not be associated with any touchpad direction, initially
-		memset(m_psButtonIDToEmulatedTouchpadAction, k_EmulatedTrackpadAction_None, k_PSMButtonID_Count * sizeof(vr::EVRButtonId));
-
-		m_trackingStatus = m_bDisableHMDAlignmentGesture ? vr::TrackingResult_Running_OK : vr::TrackingResult_Uninitialized;
+		m_trackingStatus = vr::TrackingResult_Uninitialized;
 	}
 
 	PSMoveController::~PSMoveController() {
 		PSM_FreeControllerListener(m_PSMServiceController->ControllerID);
 		m_PSMServiceController = nullptr;
-	}
-
-	void PSMoveController::LoadSettings(vr::IVRSettings *pSettings) {
-		Controller::LoadSettings(pSettings);
-
-		const char * szModelName= GetControllerSettingsPrefix();
-
-		//PSMove controller button -> fake touchpad mappings
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_PS, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Move, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Triangle, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Square, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Circle, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Cross, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Select, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Start, m_nPSMControllerId);
-
-		// Touch pad settings
-		m_bDelayAfterTouchpadPress =
-			SettingsUtil::LoadBool(pSettings, szModelName, "delay_after_touchpad_press", m_bDelayAfterTouchpadPress);
-		m_fMetersPerTouchpadAxisUnits =
-			SettingsUtil::LoadFloat(pSettings, szModelName, "cm_per_touchpad_units", 7.5f) / 100.f;
-
-		// Throwing power settings
-		m_fLinearVelocityMultiplier =
-			SettingsUtil::LoadFloat(pSettings, szModelName, "linear_velocity_multiplier", 1.f);
-		m_fLinearVelocityExponent =
-			SettingsUtil::LoadFloat(pSettings, szModelName, "linear_velocity_exponent", 0.f);
-
-		// General Settings
-		m_bRumbleSuppressed = 
-			SettingsUtil::LoadBool(pSettings, szModelName, "rumble_suppressed", m_bRumbleSuppressed);
-		m_fVirtuallExtendControllersYMeters =
-			SettingsUtil::LoadFloat(pSettings, szModelName, "extend_y", 0.0f);
-		m_fVirtuallExtendControllersZMeters = 
-			SettingsUtil::LoadFloat(pSettings, szModelName, "extend_z", 0.0f);
-		m_fZRotate90Degrees = 
-			SettingsUtil::LoadBool(pSettings, szModelName, "rotate_z_90", false);
-		m_fControllerMetersInFrontOfHmdAtCalibration =
-			SettingsUtil::LoadFloat(pSettings, szModelName, "calibration_cm_offset", 6.f) / 100.f;
-		m_bDisableHMDAlignmentGesture = 
-			SettingsUtil::LoadBool(pSettings, szModelName, "disable_alignment_gesture", false);
-		m_bUseControllerOrientationInHMDAlignment = 
-			SettingsUtil::LoadBool(pSettings, szModelName, "use_orientation_in_alignment", true);
-
-		Logger::Logger::Info("m_fControllerMetersInFrontOfHmdAtCalibration(psmove): %f\n", m_fControllerMetersInFrontOfHmdAtCalibration);
 	}
 
 	vr::EVRInitError PSMoveController::Activate(vr::TrackedDeviceIndex_t unObjectId) {
@@ -126,6 +135,12 @@ namespace steamvrbridge {
 		if (result == vr::VRInitError_None) {
 			Logger::Info("CPSMoveControllerLatest::Activate - Controller %d Activated\n", unObjectId);
 
+			// If we aren't doing the alignment gesture then just pretend we have tracking
+			// This will suppress the alignment gesture dialog in the monitor
+			if (getConfig()->disable_alignment_gesture) { 
+				m_trackingStatus = vr::TrackingResult_Running_OK;
+			}
+			
 			CServerDriver_PSMoveService::getInstance()->LaunchPSMoveMonitor();
 
 			PSMRequestID requestId;
@@ -158,12 +173,9 @@ namespace steamvrbridge {
 				// The {psmove} syntax lets us refer to rendermodels that are installed
 				// in the driver's own resources/rendermodels directory.  The driver can
 				// still refer to SteamVR models like "generic_hmd".
-				if (m_overrideModel.length() > 0)
-				{
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, m_overrideModel.c_str());
-				}
-				else
-				{
+				if (getConfig()->override_model.length() > 0) {
+					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, getConfig()->override_model.c_str());
+				} else {
 					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
 				}
 
@@ -279,7 +291,7 @@ namespace steamvrbridge {
 
 		// If START was just pressed while and SELECT was held or vice versa,
 		// recenter the controller orientation pose and start the realignment of the controller to HMD tracking space.
-		if (bStartRealignHMDTriggered && !m_bDisableHMDAlignmentGesture) {
+		if (bStartRealignHMDTriggered && !getConfig()->disable_alignment_gesture) {
 			PSMVector3f controllerBallPointedUpEuler = { (float)M_PI_2, 0.0f, 0.0f };
 			PSMQuatf controllerBallPointedUpQuat = PSM_QuatfCreateFromAngles(&controllerBallPointedUpEuler);
 
@@ -297,7 +309,7 @@ namespace steamvrbridge {
 			// Translation) The controller's position is a few inches ahead of the HMD's on the HMD's local -Z axis. 
 			PSMVector3f eulerPitch = { (float)M_PI_2, 0.0f, 0.0f };
 			controllerOrientationInHmdSpaceQuat = PSM_QuatfCreateFromAngles(&eulerPitch);
-			controllerLocalOffsetFromHmdPosition = { 0.0f, 0.0f, -1.0f * m_fControllerMetersInFrontOfHmdAtCalibration };
+			controllerLocalOffsetFromHmdPosition = { 0.0f, 0.0f, -1.0f * getConfig()->calibration_offset_meters };
 
 			try {
 				PSMPosef hmdPose = Utils::GetHMDPoseInMeters();
@@ -305,7 +317,7 @@ namespace steamvrbridge {
 																		controllerLocalOffsetFromHmdPosition,
 																		m_PSMServiceController->ControllerID,
 																		hmdPose,
-																		m_bUseControllerOrientationInHMDAlignment);
+																		getConfig()->use_orientation_in_hmd_alignment);
 				CServerDriver_PSMoveService::getInstance()->SetHMDTrackingSpace(realignedPose);
 			} catch (std::exception & e) {
 				// Log an error message and safely carry on
@@ -393,7 +405,7 @@ namespace steamvrbridge {
 		// Find the highest priority emulated touch pad action (if any)
 		eEmulatedTrackpadAction highestPriorityAction= k_EmulatedTrackpadAction_None;
 		for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-			eEmulatedTrackpadAction action= m_psButtonIDToEmulatedTouchpadAction[buttonIndex];
+			eEmulatedTrackpadAction action= getConfig()->ps_button_id_to_emulated_touchpad_action[buttonIndex];
 			if (action != k_EmulatedTrackpadAction_None) {
 				PSMButtonState button_state= PSMButtonState_UP;
 				if (Controller::GetButtonState((ePSMButtonID)buttonIndex, button_state))
@@ -476,7 +488,7 @@ namespace steamvrbridge {
 
 			bool bIsNewTouchpadLocation = true;
 
-			if (m_bDelayAfterTouchpadPress) {
+			if (getConfig()->delay_after_touchpad_press) {
 				std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 
 				if (!m_bTouchpadWasActive) {
@@ -514,8 +526,8 @@ namespace steamvrbridge {
 									offsetMeters.x, offsetMeters.y, offsetMeters.z);
 					#endif
 
-					touchpad_x = fminf(fmaxf(offsetMeters.x / m_fMetersPerTouchpadAxisUnits, -1.0f), 1.0f);
-					touchpad_y = fminf(fmaxf(-offsetMeters.z / m_fMetersPerTouchpadAxisUnits, -1.0f), 1.0f);
+					touchpad_x = fminf(fmaxf(offsetMeters.x / getConfig()->meters_per_touchpad_axis_units, -1.0f), 1.0f);
+					touchpad_y = fminf(fmaxf(-offsetMeters.z / getConfig()->meters_per_touchpad_axis_units, -1.0f), 1.0f);
 
 					#if LOG_TOUCHPAD_EMULATION != 0
 					Logger::Info("Touchpad axis at (%f, %f) \n", touchpad_x, touchpad_x);
@@ -571,25 +583,25 @@ namespace steamvrbridge {
 		}
 
 		// virtual extend controllers
-		if (m_fVirtuallExtendControllersYMeters != 0.0f || m_fVirtuallExtendControllersZMeters != 0.0f) {
+		if (getConfig()->extend_Y_meters != 0.0f || getConfig()->extend_Z_meters != 0.0f) {
 			const PSMQuatf &orientation = view.Pose.Orientation;
 
 			PSMVector3f shift = { (float)m_Pose.vecPosition[0], (float)m_Pose.vecPosition[1], (float)m_Pose.vecPosition[2] };
 
-			if (m_fVirtuallExtendControllersZMeters != 0.0f) {
+			if (getConfig()->extend_Z_meters != 0.0f) {
 
 				PSMVector3f local_forward = { 0, 0, -1 };
 				PSMVector3f global_forward = PSM_QuatfRotateVector(&orientation, &local_forward);
 
-				shift = PSM_Vector3fScaleAndAdd(&global_forward, m_fVirtuallExtendControllersZMeters, &shift);
+				shift = PSM_Vector3fScaleAndAdd(&global_forward, getConfig()->extend_Z_meters, &shift);
 			}
 
-			if (m_fVirtuallExtendControllersYMeters != 0.0f) {
+			if (getConfig()->extend_Y_meters != 0.0f) {
 
 				PSMVector3f local_forward = { 0, -1, 0 };
 				PSMVector3f global_forward = PSM_QuatfRotateVector(&orientation, &local_forward);
 
-				shift = PSM_Vector3fScaleAndAdd(&global_forward, m_fVirtuallExtendControllersYMeters, &shift);
+				shift = PSM_Vector3fScaleAndAdd(&global_forward, getConfig()->extend_Y_meters, &shift);
 			}
 
 			m_Pose.vecPosition[0] = shift.x;
@@ -601,10 +613,10 @@ namespace steamvrbridge {
 		{
 			const PSMQuatf &orientation = view.Pose.Orientation;
 
-			m_Pose.qRotation.w = m_fZRotate90Degrees ? -orientation.w : orientation.w;
+			m_Pose.qRotation.w = getConfig()->z_rotate_90_degrees ? -orientation.w : orientation.w;
 			m_Pose.qRotation.x = orientation.x;
 			m_Pose.qRotation.y = orientation.y;
-			m_Pose.qRotation.z = m_fZRotate90Degrees ? -orientation.z : orientation.z;
+			m_Pose.qRotation.z = getConfig()->z_rotate_90_degrees ? -orientation.z : orientation.z;
 		}
 
 		// Set the physics state of the controller
@@ -649,7 +661,7 @@ namespace steamvrbridge {
 		if (haptic_state == nullptr)
 			return;
 
-		if (!m_bRumbleSuppressed) {
+		if (!getConfig()->rumble_suppressed) {
 			// pulse duration - the length of each pulse
 			// amplitude - strength of vibration
 			// frequency - speed of each pulse

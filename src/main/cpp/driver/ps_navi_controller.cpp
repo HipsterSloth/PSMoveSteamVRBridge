@@ -18,6 +18,50 @@
 
 namespace steamvrbridge {
 
+	// -- PSNaviControllerConfig -----
+	configuru::Config PSNaviControllerConfig::WriteToJSON() {
+		configuru::Config &pt= ControllerConfig::WriteToJSON();
+
+		// General Settings
+		pt["thumbstick_deadzone"] = thumbstick_deadzone;
+
+		//PSMove controller button -> fake touchpad mappings
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_PS);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Left);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Up);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Right);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Down);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Circle);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Cross);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Joystick);
+		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Shoulder);
+
+		return pt;
+	}
+
+	bool PSNaviControllerConfig::ReadFromJSON(const configuru::Config &pt) {
+
+		if (!ControllerConfig::ReadFromJSON(pt))
+			return false;
+
+		// General Settings
+		thumbstick_deadzone = pt.get_or<float>("thumbstick_deadzone", thumbstick_deadzone);
+
+		// DS4 controller button -> fake touchpad mappings
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_PS);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Left);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Up);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Right);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Down);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Circle);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Cross);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Joystick);
+		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_Shoulder);
+
+		return true;
+	}
+
+	// -- PSNaviController -----
 	PSNaviController::PSNaviController(
 		PSMControllerID psmControllerId,
 		vr::ETrackedControllerRole trackedControllerRole,
@@ -33,9 +77,7 @@ namespace steamvrbridge {
 		, m_bResetAlignRequestSent(false)
 		, m_touchpadDirectionsUsed(false)
 		, m_lastSanitizedThumbstick_X(0.f)
-		, m_lastSanitizedThumbstick_Y(0.f)
-		, m_thumbstickDeadzone(k_defaultThumbstickDeadZoneRadius)
-		, m_overrideModel("") {
+		, m_lastSanitizedThumbstick_Y(0.f) {
 		char svrIdentifier[256];
 		Utils::GenerateControllerSteamVRIdentifier(svrIdentifier, sizeof(svrIdentifier), psmControllerId);
 		m_strSteamVRSerialNo = svrIdentifier;
@@ -83,27 +125,6 @@ namespace steamvrbridge {
 		}
 	}
 
-	void PSNaviController::LoadSettings(vr::IVRSettings *pSettings) {
-		Controller::LoadSettings(pSettings);
-
-		const char * szModelName= GetControllerSettingsPrefix();
-
-		// PSNavi controller button -> fake touchpad mappings
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_PS, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Left, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Up, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Right, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_DPad_Down, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Circle, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Cross, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Joystick, m_nPSMControllerId);
-		LoadEmulatedTouchpadActions(pSettings, k_PSMButtonID_Shoulder, m_nPSMControllerId);
-
-		// General Settings
-		m_thumbstickDeadzone =
-			fminf(fmaxf(SettingsUtil::LoadFloat(pSettings, szModelName, "thumbstick_deadzone_radius", k_defaultThumbstickDeadZoneRadius), 0.f), 0.99f);
-	}
-
 	vr::EVRInitError PSNaviController::Activate(vr::TrackedDeviceIndex_t unObjectId) {
 		vr::EVRInitError result = Controller::Activate(unObjectId);
 
@@ -148,9 +169,9 @@ namespace steamvrbridge {
 				// The {psmove} syntax lets us refer to rendermodels that are installed
 				// in the driver's own resources/rendermodels directory.  The driver can
 				// still refer to SteamVR models like "generic_hmd".
-				if (m_overrideModel.length() > 0)
+				if (getConfig()->override_model.length() > 0)
 				{
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, m_overrideModel.c_str());
+					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, getConfig()->override_model.c_str());
 				}
 				else
 				{
@@ -254,10 +275,10 @@ namespace steamvrbridge {
 		const float thumb_stick_radius = sqrtf(thumb_stick_x*thumb_stick_x + thumb_stick_y * thumb_stick_y);
 
 		// Moving a thumb-stick outside of the deadzone is consider a touchpad touch
-		if (thumb_stick_radius >= m_thumbstickDeadzone)
+		if (thumb_stick_radius >= getConfig()->thumbstick_deadzone)
 		{
 			// Rescale the thumb-stick position to hide the dead zone
-			const float rescaledRadius = (thumb_stick_radius - m_thumbstickDeadzone) / (1.f - m_thumbstickDeadzone);
+			const float rescaledRadius = (thumb_stick_radius - getConfig()->thumbstick_deadzone) / (1.f - getConfig()->thumbstick_deadzone);
 
 			// Set the thumb-stick axis
 			m_lastSanitizedThumbstick_X = (rescaledRadius / thumb_stick_radius) * thumb_stick_x;
@@ -282,7 +303,7 @@ namespace steamvrbridge {
 		// Find the highest priority emulated touch pad action (if any)
 		eEmulatedTrackpadAction highestPriorityAction= k_EmulatedTrackpadAction_None;
 		for (int buttonIndex = 0; buttonIndex < static_cast<int>(k_PSMButtonID_Count); ++buttonIndex) {
-			eEmulatedTrackpadAction action= m_psButtonIDToEmulatedTouchpadAction[buttonIndex];
+			eEmulatedTrackpadAction action= getConfig()->ps_button_id_to_emulated_touchpad_action[buttonIndex];
 			if (action != k_EmulatedTrackpadAction_None) {
 				PSMButtonState button_state= PSMButtonState_UP;
 				if (Controller::GetButtonState((ePSMButtonID)buttonIndex, button_state))

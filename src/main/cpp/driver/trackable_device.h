@@ -1,6 +1,7 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
+#include <configuru.hpp>
 
 namespace steamvrbridge {
 
@@ -22,7 +23,6 @@ namespace steamvrbridge {
 		virtual vr::DriverPose_t GetPose() override;
 
 		// TrackedDevice Interface
-		virtual void LoadSettings(vr::IVRSettings *pSettings);
 		virtual vr::ETrackedDeviceClass GetTrackedDeviceClass() const;
 		virtual vr::ETrackedControllerRole GetTrackedDeviceRole() const;
 		virtual bool IsActivated() const;

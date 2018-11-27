@@ -1,6 +1,7 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
 #include "constants.h"
+#include "config.h"
 #include "trackable_device.h"
 
 #include <map>
@@ -8,7 +9,32 @@
 namespace steamvrbridge {
 
 	/*
-		Interface that defines what a controller is and can do in the context of this driver. (Self-contained header)
+		Base class for the controller configuration
+	*/
+	class ControllerConfig : public Config
+	{
+	public:
+		static const int CONFIG_VERSION;
+
+		ControllerConfig(const std::string &fnamebase = "ControllerConfig");
+
+		virtual configuru::Config WriteToJSON();
+		virtual bool ReadFromJSON(const configuru::Config &pt);
+
+		void ReadEmulatedTouchpadAction(const configuru::Config &pt, const ePSMButtonID psButtonID);
+		void WriteEmulatedTouchpadAction(configuru::Config &pt, const ePSMButtonID psButtonID);
+
+	    bool is_valid;
+	    long version;
+
+		std::string override_model;
+
+		// Used to map buttons to the emulated touchpad
+		eEmulatedTrackpadAction ps_button_id_to_emulated_touchpad_action[k_PSMButtonID_Count];
+	};
+
+	/*
+		Interface that defines what a controller is and can do in the context of this driver. 
 	*/
 	class Controller : public TrackableDevice {
 
@@ -70,9 +96,12 @@ namespace steamvrbridge {
 		virtual PSMControllerType GetPSMControllerType() const = 0;
 
 		/** TrackableDevice Interface */
-		void LoadSettings(vr::IVRSettings *pSettings) override;
 		void LoadEmulatedTouchpadActions(vr::IVRSettings *pSettings, const ePSMButtonID psButtonID, int controllerId=-1);
 		vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
+		void Deactivate() override;
+
+	protected:
+		virtual ControllerConfig *AllocateControllerConfig() { return new ControllerConfig(); }
 
 	private:
 		struct ButtonState
@@ -93,10 +122,6 @@ namespace steamvrbridge {
 		std::map<ePSMHapicID, HapticState> m_hapticStates;
 
 	protected:
-		// Used to map buttons to the emulated touchpad
-		eEmulatedTrackpadAction m_psButtonIDToEmulatedTouchpadAction[k_PSMButtonID_Count];
-
-		// Override model to use for the controller.
-		std::string m_overrideModel;
+		ControllerConfig *m_config;
 	};
 }

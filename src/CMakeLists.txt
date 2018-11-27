@@ -51,6 +51,9 @@ list(APPEND PSM_PLUGIN_REQ_LIBS ${PSM_LIBRARIES})
 list(APPEND PSM_MONITOR_INCL_DIRS ${PSM_INCLUDE_DIR})
 list(APPEND PSM_MONITOR_REQ_LIBS ${PSM_LIBRARIES})
 
+# Configuru
+list(APPEND PSM_PLUGIN_INCL_DIRS ${ROOT_DIR}/thirdparty/Configuru)
+
 ##############################################################################################
 # This driver makes two build artifacts, the monitor app binary and the psmove driver library#
 ##############################################################################################
@@ -58,6 +61,8 @@ list(APPEND PSM_MONITOR_REQ_LIBS ${PSM_LIBRARIES})
 # Shared library: defines what is compiled, what output type it is and what libs/includes it needs
 add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver.cpp 
 								 ${PROJECT_SRC_DIR}/constants.h
+                 ${PROJECT_SRC_DIR}/config.h
+                 ${PROJECT_SRC_DIR}/config.cpp
 								 ${PROJECT_SRC_DIR}/controller.h
 								 ${PROJECT_SRC_DIR}/controller.cpp
 								 ${PROJECT_SRC_DIR}/driver.h
