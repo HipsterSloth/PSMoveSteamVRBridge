@@ -13,8 +13,6 @@ namespace steamvrbridge {
 		, m_bExitSignaled({ false })
 		, m_pWatchdogThread(nullptr)
 	{
-		m_strPSMoveServiceAddress = PSMOVESERVICE_DEFAULT_ADDRESS;
-		m_strServerPort = PSMOVESERVICE_DEFAULT_PORT;
 	}
 
 	CWatchdogDriver_PSMoveService::~CWatchdogDriver_PSMoveService() {
@@ -30,38 +28,11 @@ namespace steamvrbridge {
 
 		WatchdogLog("CWatchdogDriver_PSMoveService::Init - Called");
 
-		vr::IVRSettings *pSettings = vr::VRSettings();
-		if (pSettings != nullptr)
-		{
-			char buf[256];
-			vr::EVRSettingsError fetchError;
+		// Load the config file, if it exists
+		m_config.load();
 
-			pSettings->GetString("psmoveservice", "server_address", buf, sizeof(buf), &fetchError);
-			if (fetchError == vr::VRSettingsError_None)
-			{
-				m_strPSMoveServiceAddress = buf;
-				WatchdogLog("CWatchdogDriver_PSMoveService::Init - Overridden Server Address: %s.\n", m_strPSMoveServiceAddress.c_str());
-			}
-			else
-			{
-				WatchdogLog("CWatchdogDriver_PSMoveService::Init - Using Default Server Address: %s.\n", m_strPSMoveServiceAddress.c_str());
-			}
-
-			pSettings->GetString("psmoveservice", "server_port", buf, sizeof(buf), &fetchError);
-			if (fetchError == vr::VRSettingsError_None)
-			{
-				m_strServerPort = buf;
-				WatchdogLog("CWatchdogDriver_PSMoveService::Init - Overridden Server Port: %s.\n", m_strServerPort.c_str());
-			}
-			else
-			{
-				WatchdogLog("CWatchdogDriver_PSMoveService::Init - Using Default Server Port: %s.\n", m_strServerPort.c_str());
-			}
-		}
-		else
-		{
-			WatchdogLog("CWatchdogDriver_PSMoveService::Init - Settings missing!");
-		}
+		WatchdogLog("CWatchdogDriver_PSMoveService::Init - Using Default Server Address: %s.\n", m_config.server_address.c_str());
+		WatchdogLog("CWatchdogDriver_PSMoveService::Init - Using Default Server Port: %s.\n", m_config.server_port.c_str());
 
 		// Watchdog mode on Windows starts a thread that listens for the 'Y' key on the keyboard to 
 		// be pressed. A real driver should wait for a system button event or something else from the 
@@ -109,7 +80,7 @@ namespace steamvrbridge {
 		{
 			if (!PSM_GetIsInitialized())
 			{
-				if (PSM_Initialize(m_strPSMoveServiceAddress.c_str(), m_strServerPort.c_str(), PSM_DEFAULT_TIMEOUT) != PSMResult_Success)
+				if (PSM_Initialize(m_config.server_address.c_str(), m_config.server_port.c_str(), PSM_DEFAULT_TIMEOUT) != PSMResult_Success)
 				{
 					// Try re-connecting in 1 second
 					std::this_thread::sleep_for(std::chrono::seconds(1));

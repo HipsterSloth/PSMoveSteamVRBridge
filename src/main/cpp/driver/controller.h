@@ -96,7 +96,6 @@ namespace steamvrbridge {
 		virtual PSMControllerType GetPSMControllerType() const = 0;
 
 		/** TrackableDevice Interface */
-		void LoadEmulatedTouchpadActions(vr::IVRSettings *pSettings, const ePSMButtonID psButtonID, int controllerId=-1);
 		vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
 		void Deactivate() override;
 

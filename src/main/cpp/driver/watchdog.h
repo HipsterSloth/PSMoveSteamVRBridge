@@ -5,6 +5,7 @@
 #include <mutex>
 
 #include <openvr_driver.h>
+#include "settings_util.h"
 #include "PSMoveClient_CAPI.h"
 
 namespace steamvrbridge {
@@ -43,8 +44,7 @@ namespace steamvrbridge {
 		std::atomic_bool m_bExitSignaled;
 		std::thread *m_pWatchdogThread;
 
-		std::string m_strPSMoveServiceAddress;
-		std::string m_strServerPort;
+		ServerDriverConfig m_config;
 
 		PSMControllerList controllerList;
 

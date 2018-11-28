@@ -1,9 +1,11 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
+#include "config.h"
 #include "trackable_device.h"
 #include "tracker.h"
 #include "logger.h"
+#include "settings_util.h"
 
 // Platform specific includes
 #if defined( _WIN32 )
@@ -74,9 +76,7 @@ namespace steamvrbridge {
 
 		void LaunchPSMoveMonitor_Internal(const char * pchDriverInstallDir);
 
-		std::string m_strVirtualHMDSerialNo;
-		std::string m_strPSMoveServiceAddress;
-		std::string m_strServerPort;
+		ServerDriverConfig m_config;
 
 		bool m_bLaunchedPSMoveMonitor;
 		bool m_bInitialized;

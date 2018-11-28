@@ -1,43 +1,40 @@
 #include "settings_util.h"
+#include "SharedConstants.h"
 
 namespace steamvrbridge {
 
-	bool SettingsUtil::LoadBool(vr::IVRSettings *pSettings, const char *pchSection, const char *pchSettingsKey, const bool bDefaultValue)
-	{
-		vr::EVRSettingsError eError;
-		bool bResult = pSettings->GetBool(pchSection, pchSettingsKey, &eError);
+	const int ServerDriverConfig::CONFIG_VERSION = 1;
 
-		if (eError != vr::VRSettingsError_None)
-		{
-			bResult = bDefaultValue;
-		}
+	ServerDriverConfig::ServerDriverConfig(const std::string &fnamebase)
+		: Config(fnamebase)
+		, is_valid(true)
+		, version(CONFIG_VERSION)
+		, filter_virtual_hmd_serial("") 
+		, server_address(PSMOVESERVICE_DEFAULT_ADDRESS)
+		, server_port(PSMOVESERVICE_DEFAULT_PORT) {
+	};
 
-		return bResult;
+	configuru::Config ServerDriverConfig::WriteToJSON() {
+		configuru::Config pt{
+			{"is_valid", is_valid},
+			{"version", version},
+			{"filter_virtual_hmd_serial", filter_virtual_hmd_serial},
+			{"server_address", server_address},
+			{"server_port", server_port},
+		};
+
+		return pt;
 	}
 
-	int SettingsUtil::LoadInt(vr::IVRSettings *pSettings, const char *pchSection, const char *pchSettingsKey, const int iDefaultValue)
-	{
-		vr::EVRSettingsError eError;
-		int iResult = pSettings->GetInt32(pchSection, pchSettingsKey, &eError);
-
-		if (eError != vr::VRSettingsError_None)
-		{
-			iResult = iDefaultValue;
+	bool ServerDriverConfig::ReadFromJSON(const configuru::Config &pt) {
+		if (pt.get_or<bool>("is_valid", false) == true &&
+			pt.get_or<int>("version", -1) == CONFIG_VERSION) {
+			filter_virtual_hmd_serial= pt.get_or<std::string>("filter_virtual_hmd_serial", "");
+			server_address= pt.get_or<std::string>("server_address", server_address);
+			server_port= pt.get_or<std::string>("server_port", server_port);
+			return true;
 		}
 
-		return iResult;
-	}
-
-	float SettingsUtil::LoadFloat(vr::IVRSettings *pSettings, const char *pchSection, const char *pchSettingsKey, const float fDefaultValue)
-	{
-		vr::EVRSettingsError eError;
-		float fResult = pSettings->GetFloat(pchSection, pchSettingsKey, &eError);
-
-		if (eError != vr::VRSettingsError_None)
-		{
-			fResult = fDefaultValue;
-		}
-
-		return fResult;
+		return false;
 	}
 }
