@@ -10,267 +10,267 @@
 	"input_source": {
 		"/input/system": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_0": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_1": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_2": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_3": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_4": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_5": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_6": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_7": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_8": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_9": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_10": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_11": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_12": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_13": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_14": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_15": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_16": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_17": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_18": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_19": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_20": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_21": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_22": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_23": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_24": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_25": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_26": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_27": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_28": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_29": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_30": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_button_31": {
 			"type": "button",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_0": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_1": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_2": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_3": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_4": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_5": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_6": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_7": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_8": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_9": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_10": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_11": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_12": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_13": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_14": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_15": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_16": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_17": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_18": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237
 		},
 		"/input/virtual_axis_19": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_20": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_21": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_22": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_23": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_24": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_25": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_26": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_27": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_28": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_29": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_30": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_31": {
 			"type": "trigger",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		},
 		"/input/trackpad": {
 			"type": "trackpad",
-			"binding_image_point": [0, 0]
+			"binding_image_point": [378, 237]
 		}
 	}
 }
