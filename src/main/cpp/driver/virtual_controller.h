@@ -28,7 +28,7 @@ namespace steamvrbridge {
 			, thumbstick_touch_as_press(true)
 			, linear_velocity_multiplier(1.f)
 			, linear_velocity_exponent(0.f)
-			, system_button_id(k_PSMButtonID_Virtual_14) // "Jewel" button on a xbox 360 controller
+			, system_button_id(k_PSMButtonID_Virtual_4) // "Start" button on a xbox 360 controller
 			, hmd_align_button_id(k_PSMButtonID_Virtual_5) // "Back" button on a xbox 360 controller
 		{
 		};

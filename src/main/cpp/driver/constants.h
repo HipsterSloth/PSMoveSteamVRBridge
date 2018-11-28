@@ -123,6 +123,10 @@ namespace steamvrbridge {
 		"shoulder_left",
 		"shoulder_right",
 
+		/* Emulated Trackpad Buttons */
+		"emulated_trackpad_touched",
+		"emulated_trackpad_pressed",
+
 		/* Virtual Controller Specific Buttons */
 		"virtual_button_0",
 		"virtual_button_1",

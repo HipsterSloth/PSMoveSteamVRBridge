@@ -5,7 +5,7 @@
 	"controller_type": "virtual_controller",
 	"input_bindingui_mode": "single_device",
 	"input_bindingui_right": {
-		"image": "{gamepad}/icons/virtual_controller.svg"
+		"image": "{psmove}/icons/virtual_controller.svg"
 	},
 	"input_source": {
 		"/input/system": {
