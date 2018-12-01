@@ -13,7 +13,7 @@
 	},  
 	"input_source": {
 		"/input/trackpad": {
-			"binding_image_point": [130, 465],
+			"binding_image_point": [129, 314],
 			"type": "trackpad",
 			"order": 2
 		},
