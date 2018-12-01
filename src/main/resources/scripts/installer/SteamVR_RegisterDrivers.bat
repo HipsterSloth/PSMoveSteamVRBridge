@@ -1,10 +1,10 @@
-@echo off
-call SteamVR_SetDriverVars.bat
+@ECHO off
+CALL SteamVR_SetDriverVars.bat
 
-echo "Registering PSMove SteamVR driver..."
+ECHO "Registering PSMove SteamVR driver..."
 "%STEAMVR_RUNTIME_DIR%\bin\win64\vrpathreg" adddriver "%INSTALL_DIR%"
 
-if not defined suppressPause (
-  echo "Done"
-  pause
+IF NOT DEFINED suppressPause (
+  ECHO "Done"
+  PAUSE
 )

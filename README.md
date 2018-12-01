@@ -13,6 +13,12 @@ If you want to make modifications to the service or want to debug it, you can bu
 * General setup guides, troubleshooting and design docs can be found on the [wiki](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki)
 * Documentation for the code is hosted on [codedocs](https://codedocs.xyz/HipsterSloth/PSMoveSteamVRBridge/) (In Progress)
 
+### Installing the Driver in SteamVR
+#### Automated Installer
+In the installer folder of this project is an XML definition file for the BitRock installer project. This is a cross-platform installer that offer free licenses for opensource projects. This project's installer is built using that.
+
+[![alt text][bitrock-logo]][bitrock-url]
+
 # Getting Help
 Please start with the wiki. If you can't find help with your problem then please search through the issues (especially the closed ones) to see if your problem has been addressed already. If you still find no previous mention of your problem then you have one of two options:
 
@@ -37,3 +43,7 @@ Special thanks to the following people who helped make this project possible:
 * YossiMH - Improvements to touch pad mappings and help with the HMD/Controller alignment tool
 * William (zelmon64) - Many improvements to config tool UX, beta testing, and troubleshooting hero
 * Antonio Jose Ramos Marquez - Work on PS4EyeDriver and PSX hardware reverse engineering
+* Stephen O'Hair -  Huge refactor of the SteamVR plugin to help get it working with the new SteamVR input system
+
+[bitrock-logo]:https://github.com/alatnet/OpenPSVR/blob/master/installer/installer-logo.png "BitRock Installer"
+[bitrock-url]:http://bitrock.com

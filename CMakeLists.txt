@@ -26,7 +26,7 @@ ENDIF()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Set project info
-set(PSM_DRIVER_PROJECT_NAME "PSMoveSteamVRBridge_${DRIVER_VERSION}")
+set(PSM_DRIVER_PROJECT_NAME "PSMoveSteamVRBridge")
 set(TARGET_BUILD_DIR "build")
 message(STATUS "Project driver version: ${DRIVER_VERSION}")
 message(STATUS "Project name: ${PSM_DRIVER_PROJECT_NAME}")
