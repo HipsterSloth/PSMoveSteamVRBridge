@@ -4,6 +4,7 @@
 #include "PSMoveClient_CAPI.h"
 #include "constants.h"
 #include "logger.h"
+#include "settings_util.h"
 #include <openvr_driver.h>
 #include <assert.h>
 #include <math.h>
@@ -11,7 +12,39 @@
 #include <sstream>
 #include <fstream>
 
+#ifdef WIN32
+#include <windows.h>
+#include <tlhelp32.h>
+#include <tchar.h>
+
+#define PSM_STEAMVR_BRIDGE_REGISTRY_PATH _T("SOFTWARE\\WOW6432Node\\PSMoveSteamVRBridge\\PSMoveSteamVRBridge")
+#endif // WIN32
+
 namespace steamvrbridge {
+
+	//==================================================================================================
+	// Win32 Helpers
+	//==================================================================================================
+	#ifdef WIN32
+	std::string GetLastErrorAsString()
+	{
+		//Get the error message, if any.
+		DWORD errorMessageID = ::GetLastError();
+		if(errorMessageID == 0)
+			return std::string(); //No error message has been recorded
+
+		LPSTR messageBuffer = nullptr;
+		size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+									 NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+		std::string message(messageBuffer, size);
+
+		//Free the buffer.
+		LocalFree(messageBuffer);
+
+		return message;
+	}
+	#endif // WIN32
 
 	//==================================================================================================
 	// String Helpers
@@ -113,6 +146,109 @@ namespace steamvrbridge {
         return home_dir;
     }
 
+	std::string Utils::Path_GetPSMoveSteamVRBridgeInstallPath(const ServerDriverConfig *config)
+	{
+		std::string install_path;
+
+		#if defined WIN32 || defined _WIN32 || defined WINCE
+		if (config->use_installation_path) {
+			HKEY hKey;
+
+			if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
+				PSM_STEAMVR_BRIDGE_REGISTRY_PATH, 
+				0, 
+				KEY_READ | KEY_QUERY_VALUE | KEY_WOW64_64KEY, 
+				&hKey) == ERROR_SUCCESS) {
+
+				DWORD dwType = REG_SZ;
+				char value[1024];
+				DWORD value_length = 1024;
+				if (RegQueryValueEx(
+					hKey,
+					"Location",
+					NULL,
+					&dwType,
+					(LPBYTE)&value,
+					&value_length) == ERROR_SUCCESS) {
+					install_path= value;
+				}
+
+				RegCloseKey(hKey);
+			}
+		} 
+		#endif
+
+		if (install_path.length() == 0)
+		{
+			std::string driver_dll_path = Utils::Path_StripFilename(Utils::Path_GetThisModulePath(), 0);
+
+			if (driver_dll_path.length() > 0) {
+				std::ostringstream driverInstallDirBuilder;
+				driverInstallDirBuilder << driver_dll_path;
+				#if defined( _WIN64 ) || defined( _WIN32 )
+				driverInstallDirBuilder << "\\..\\..\\..\\..";
+				#else
+				driverInstallDirBuilder << "/../../../..";
+				#endif
+
+				install_path = driverInstallDirBuilder.str();
+			}
+		}
+
+		return install_path;
+	}
+
+	std::string Utils::Path_GetPSMoveSteamVRBridgeDriverRootPath(const class ServerDriverConfig *config)
+	{
+		std::string driver_root_path= Utils::Path_GetPSMoveSteamVRBridgeInstallPath(config);
+
+		if (driver_root_path.length() > 0) {
+			#if defined( _WIN64 ) || defined( _WIN32 )
+			driver_root_path+= "\\drivers\\psmove";
+			#else
+			driver_root_path+= "/drivers/psmove";
+			#endif
+		}
+
+		return driver_root_path;
+	}
+
+	std::string Utils::Path_GetPSMoveSteamVRBridgeDriverBinPath(const class ServerDriverConfig *config)
+	{
+		std::string driver_bin_path= Utils::Path_GetPSMoveSteamVRBridgeInstallPath(config);
+
+		if (driver_bin_path.length() > 0) {
+			#if defined( _WIN64 ) || defined( _WIN32 )
+			driver_bin_path+= "\\drivers\\psmove\\bin\\win64";
+			#else
+			driver_bin_path+= "/drivers/psmove//bin/win64";
+			#endif
+		}
+
+		return driver_bin_path;
+	}
+
+	std::string Utils::Path_GetPSMoveSteamVRBridgeDriverResourcesPath(const class ServerDriverConfig *config)
+	{
+		std::string driver_resources_path= Utils::Path_GetPSMoveSteamVRBridgeInstallPath(config);
+
+		if (driver_resources_path.length() > 0) {
+			#if defined( _WIN64 ) || defined( _WIN32 )
+			driver_resources_path+= "\\drivers\\psmove\\resources";
+			#else
+			driver_resources_path+= "/drivers/psmove/resources";
+			#endif
+		}
+
+		return driver_resources_path;
+	}
+
+	std::string Utils::Path_GetPSMoveServiceInstallPath(const ServerDriverConfig *config)
+	{
+		//###HipsterSloth $TODO For the moment we use the copy of PSMoveService.exe that is installed with PSMoveSteamVRBridge
+		return Path_GetPSMoveSteamVRBridgeInstallPath(config);
+	}
+
     bool Utils::Path_CreateDirectory(const std::string &path)
     {
         bool bSuccess= false;
@@ -143,6 +279,107 @@ namespace steamvrbridge {
 
         return (bool)file;
     }
+
+	//==================================================================================================
+	// Process Helpers
+	//==================================================================================================
+
+	bool Utils::IsProcessRunning(const std::string &processName) {
+		bool exists = false;
+		PROCESSENTRY32 entry;
+		entry.dwSize = sizeof(PROCESSENTRY32);
+
+		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
+		if (Process32First(snapshot, &entry)) {
+			while (Process32Next(snapshot, &entry)) {
+				if (!stricmp(entry.szExeFile, processName.c_str())) {
+					exists = true;
+					break;
+				}
+			}
+		}
+
+		CloseHandle(snapshot);
+		return exists;
+	}
+
+	bool Utils::LaunchProcess(
+		const std::string &processPath, 
+		const std::string &processName, 
+		const std::vector<std::string> &args) {
+		bool bLaunchedProcess= false;
+
+		#if defined( _WIN32 ) || defined( _WIN64 )
+		{
+			std::string path_and_executable= processPath;
+			path_and_executable+= "\\";
+			path_and_executable+= processName;
+
+			char sz_executable_and_args[1024];
+			memset(sz_executable_and_args, 0, sizeof(sz_executable_and_args));
+			strncpy_s(sz_executable_and_args, processName.c_str(), processName.length());
+			for (const std::string &arg : args) {
+				strncat_s(sz_executable_and_args, " ", 1);
+				strncat_s(sz_executable_and_args, arg.c_str(), arg.length());
+			}
+
+			Logger::Info("Utils::LaunchProcess() process path: %s\n", path_and_executable.c_str());
+			Logger::Info("Utils::LaunchProcess() process args: %s\n", sz_executable_and_args);
+
+			STARTUPINFOA sInfoProcess = { 0 };
+			sInfoProcess.cb = sizeof(STARTUPINFOW);
+			PROCESS_INFORMATION pInfoStartedProcess;
+
+			if (CreateProcessA(
+				path_and_executable.c_str(), 
+				sz_executable_and_args, 
+				NULL, NULL, FALSE, 0, NULL, NULL, 
+				&sInfoProcess, &pInfoStartedProcess) == TRUE) {
+				bLaunchedProcess= true;
+				Logger::Info("Utils::LaunchProcess() - CreateProcessA() succeeded.\n");
+			} else {
+				std::string LastErrorString= GetLastErrorAsString();
+				Logger::Error("Utils::LaunchProcess() - CreateProcessA() failed: %s.\n", LastErrorString);
+			}
+		}
+		#elif defined(__APPLE__) 
+		{
+			pid_t processId;
+
+			if ((processId = fork()) == 0) {
+				std::string path_and_executable= processPath;
+				path_and_executable+= "/";
+				path_and_executable+= processName;
+
+				Logger::Info("Utils::LaunchProcess() process path: %s\n", path_and_executable.c_str());
+
+				const char * argv[] = new char *[args.size() + 2];			
+				argv[0]= processName.c_str();
+				for (size_t arg_index= 0; arg_index < args.size(); ++arg_index) {
+					Logger::Info("Utils::LaunchProcess() process args[%d]: %s\n", arg_index, args[arg_index].c_str());
+					argv[arg_index+1]= args[arg_index].c_str();
+				}
+				argv[args.size()+1]= NULL;
+
+				if (execv(path_and_executable.c_str(), argv) == 0) {
+					bLaunchedProcess= true;
+					Logger::Info("Utils::LaunchProcess() - execv() succeeded.\n");
+				} else {
+					Logger::Error("Utils::LaunchProcess() - Failed to exec child process!\n");
+				}
+
+				delete[] argv;
+			} else if (processId < 0) {
+				Logger::Error("Utils::LaunchProcess() - Failed to fork child process!\n");
+			}
+		}
+		#else 
+		#error Do not know how to launch process
+		#endif
+
+		return bLaunchedProcess;
+	}
 
 	//==================================================================================================
 	// HMD Helpers

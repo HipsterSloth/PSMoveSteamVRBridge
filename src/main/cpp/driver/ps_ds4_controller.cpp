@@ -127,7 +127,7 @@ namespace steamvrbridge {
 
 		m_TrackedControllerRole = trackedControllerRole;
 
-		m_trackingStatus = vr::TrackingResult_Running_OK;
+		m_trackingStatus = vr::TrackingResult_Uninitialized;
 	}
 
 	PSDualshock4Controller::~PSDualshock4Controller() {
@@ -141,7 +141,14 @@ namespace steamvrbridge {
 		if (result == vr::VRInitError_None) {
 			Logger::Info("PSDualshock4Controller::Activate - Controller %d Activated\n", unObjectId);
 
-			CServerDriver_PSMoveService::getInstance()->LaunchPSMoveMonitor();
+			// If we aren't doing the alignment gesture then just pretend we have tracking
+			// This will suppress the alignment gesture dialog in the monitor
+			if (getConfig()->disable_alignment_gesture || 
+				CServerDriver_PSMoveService::getInstance()->IsHMDTrackingSpaceCalibrated()) { 
+				m_trackingStatus = vr::TrackingResult_Running_OK;
+			} else {
+				CServerDriver_PSMoveService::getInstance()->LaunchPSMoveMonitor();
+			}
 
 			PSMRequestID requestId;
 			if (PSM_StartControllerDataStreamAsync(

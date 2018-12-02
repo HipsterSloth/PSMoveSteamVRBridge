@@ -17,6 +17,7 @@ namespace steamvrbridge {
 
 	CServerDriver_PSMoveService::CServerDriver_PSMoveService()
 		: m_bLaunchedPSMoveMonitor(false)
+		, m_bLaunchedPSMoveService(false)
 		, m_bInitialized(false) {
 	}
 
@@ -46,15 +47,14 @@ namespace steamvrbridge {
 			// Save the config back out in case the config didn't exist or was upgraded
 			m_config.save();
 
-			Logger::Info("CServerDriver_PSMoveService::Init - Using Default Server Address: %s.\n", m_config.server_address.c_str());
-			Logger::Info("CServerDriver_PSMoveService::Init - Using Default Server Port: %s.\n", m_config.server_port.c_str());
-
-			// By default, assume the psmove and openvr tracking spaces are the same
-			m_worldFromDriverPose = *k_psm_pose_identity;
+			// Launch PSMoveService automatically if it's not already running
+			LaunchPSMoveService();
 
 			// Note that reconnection is a non-blocking async request.
 			// Returning true means we we're able to start trying to connect,
 			// not that we are successfully connected yet.
+			Logger::Info("CServerDriver_PSMoveService::Init - Using Default Server Address: %s.\n", m_config.server_address.c_str());
+			Logger::Info("CServerDriver_PSMoveService::Init - Using Default Server Port: %s.\n", m_config.server_port.c_str());
 			if (!ReconnectToPSMoveService()) {
 				initError = vr::VRInitError_Driver_Failed;
 			}
@@ -408,7 +408,9 @@ namespace steamvrbridge {
 		const PSMPosef &origin_pose) {
 		Logger::Info("Begin CServerDriver_PSMoveService::SetHMDTrackingSpace()\n");
 
-		m_worldFromDriverPose = origin_pose;
+		m_config.has_calibrated_world_from_driver_pose= true;
+		m_config.world_from_driver_pose = origin_pose;
+		m_config.save();
 
 		// Tell all the devices that the relationship between the psmove and the OpenVR
 		// tracking spaces changed
@@ -610,68 +612,38 @@ namespace steamvrbridge {
 		}
 	}
 
-	// The monitor_psmove is a companion program which can display overlay prompts for us
-	// and tell us the pose of the HMD at the moment we want to calibrate.
-	void CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal(const char * pchDriverInstallDir) {
-		Logger::Info("Entered CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal(%s)\n", pchDriverInstallDir);
-
-		m_bLaunchedPSMoveMonitor = true;
-
-		std::ostringstream path_and_executable_string_builder;
-
-		path_and_executable_string_builder << pchDriverInstallDir;
-		#if defined( _WIN64 )
-		path_and_executable_string_builder << "\\bin\\win64";
-		#elif defined( _WIN32 )
-		path_and_executable_string_builder << "\\bin\\win32";
-		#elif defined(__APPLE__) 
-		path_and_executable_string_builder << "/bin/osx";
-		#else 
-		#error Do not know how to launch psmove_monitor
-		#endif
-
-
-		#if defined( _WIN32 ) || defined( _WIN64 )
-		path_and_executable_string_builder << "\\monitor_psmove.exe";
-		const std::string monitor_path_and_exe = path_and_executable_string_builder.str();
-
-		std::ostringstream args_string_builder;
-		args_string_builder << "monitor_psmove.exe \"" << pchDriverInstallDir << "\\resources\"";
-		const std::string monitor_args = args_string_builder.str();
-
-		char monitor_args_cstr[1024];
-		strncpy_s(monitor_args_cstr, monitor_args.c_str(), sizeof(monitor_args_cstr) - 1);
-		monitor_args_cstr[sizeof(monitor_args_cstr) - 1] = '\0';
-
-		Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal() monitor_psmove windows full path: %s\n", monitor_path_and_exe.c_str());
-		Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal() monitor_psmove windows args: %s\n", monitor_args_cstr);
-
-		STARTUPINFOA sInfoProcess = { 0 };
-		sInfoProcess.cb = sizeof(STARTUPINFOW);
-		PROCESS_INFORMATION pInfoStartedProcess;
-		BOOL bSuccess = CreateProcessA(monitor_path_and_exe.c_str(), monitor_args_cstr, NULL, NULL, FALSE, 0, NULL, NULL, &sInfoProcess, &pInfoStartedProcess);
-		DWORD ErrorCode = (bSuccess == TRUE) ? 0 : GetLastError();
-
-		Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor_Internal() Start monitor_psmove CreateProcessA() result: %d.\n", ErrorCode);
-
-		#elif defined(__APPLE__) 
-		pid_t processId;
-		if ((processId = fork()) == 0) {
-			path_and_executable_string_builder << "\\monitor_psmove";
-
-			const std::string monitor_exe_path = path_and_executable_string_builder.str();
-			const char * argv[] = { monitor_exe_path.c_str(), pchDriverInstallDir, NULL };
-
-			if (execv(app, argv) < 0) {
-				Logger::DriverLog("Failed to exec child process\n");
-			}
-		} else if (processId < 0) {
-			Logger::DriverLog("Failed to fork child process\n");
-			perror("fork error");
+	void CServerDriver_PSMoveService::LaunchPSMoveService() {
+		if (m_bLaunchedPSMoveService) {
+			return;
 		}
-		#else 
-		#error Do not know how to launch psmove config tool
-		#endif
+
+		// Only attempt an auto-launch once
+		m_bLaunchedPSMoveService = true;
+
+		if (m_config.auto_launch_psmove_service) {
+			#if defined( _WIN32 ) || defined( _WIN64 )
+			std::string psmServiceProcessName("PSMoveService.exe");
+			#else 
+			std::string psmServiceProcessName("PSMoveService");
+			#endif
+
+			if (!Utils::IsProcessRunning(psmServiceProcessName)) {
+				std::string psmInstallDir = Utils::Path_GetPSMoveServiceInstallPath(&m_config);
+
+				if (psmInstallDir.length() > 0) {
+					// We'll spin on connection attempts independent of PSMoveService start-up state
+					std::vector<std::string> args;
+					Utils::LaunchProcess(psmInstallDir, psmServiceProcessName, args);
+				} else {
+					Logger::Error("CServerDriver_PSMoveService::LaunchPSMoveService() - Failed to fetch PSMoveServices paths\n");
+				}
+			}
+			else {
+				Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveService() - Skipping auto-launch of PSMoveService: Alread running.\n");
+			}
+		} else {
+			Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveService() - Skipping auto-launch of PSMoveService: auto_launch_psmove_service set to 'false'.\n");
+		}
 	}
 
 	/** Launch monitor_psmove if needed (requested by devices as they activate) */
@@ -680,29 +652,30 @@ namespace steamvrbridge {
 			return;
 		}
 
-		Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - Called\n");
+		Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - Attempting to launch monitor_psmove\n");
+		m_bLaunchedPSMoveMonitor = true;
 
-		//###HipsterSloth $TODO - Ideally we would get the install path as a property, but this property fetch doesn't seem to work...
-		//vr::ETrackedPropertyError errorCode;
-		//std::string driverInstallDir= vr::VRProperties()->GetStringProperty(requestingDevicePropertyHandle, vr::Prop_InstallPath_String, &errorCode);
+		std::string driverBinDir = Utils::Path_GetPSMoveSteamVRBridgeDriverBinPath(&m_config);
+		std::string driverResourcesDir = Utils::Path_GetPSMoveSteamVRBridgeDriverResourcesPath(&m_config);
+		if (driverBinDir.length() > 0 && driverResourcesDir.length() > 0) {
+			Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - driver bin directory: %s\n", driverBinDir.c_str());
+			Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - driver resources directory: %s\n", driverResourcesDir.c_str());
 
-		//...so for now, just assume that we're running out of the steamvr folder
-		std::string driver_dll_path = Utils::Path_StripFilename(Utils::Path_GetThisModulePath(), 0);
-		if (driver_dll_path.length() > 0) {
-			Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - driver dll directory: %s\n", driver_dll_path);
-
-			std::ostringstream driverInstallDirBuilder;
-			driverInstallDirBuilder << driver_dll_path;
-			#if defined( _WIN64 ) || defined( _WIN32 )
-			driverInstallDirBuilder << "\\..\\..";
-			#else
-			driverInstallDirBuilder << "/../..";
+			#if defined( _WIN32 ) || defined( _WIN64 )
+			std::string process_name("monitor_psmove.exe");
+			#else 
+			std::string process_name("monitor_psmove");
 			#endif
-			const std::string driverInstallDir = driverInstallDirBuilder.str();
 
-			LaunchPSMoveMonitor_Internal(driverInstallDir.c_str());
+			std::vector<std::string> args;
+			args.push_back(driverResourcesDir);
+
+			// The monitor_psmove is a companion program which can display overlay prompts for us
+			// and tell us the pose of the HMD at the moment we want to calibrate.
+			Utils::LaunchProcess(driverBinDir, process_name, args);
+
 		} else {
-			Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - Failed to fetch current directory\n");
+			Logger::Error("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - Failed to fetch PSMoveSteamVRBridge paths\n");
 		}
 	}
 }

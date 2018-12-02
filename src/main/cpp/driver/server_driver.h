@@ -45,10 +45,12 @@ namespace steamvrbridge {
 		virtual void EnterStandby() override;
 		virtual void LeaveStandby() override;
 
+		void LaunchPSMoveService();
 		void LaunchPSMoveMonitor();
 
+		bool IsHMDTrackingSpaceCalibrated() const { return m_config.has_calibrated_world_from_driver_pose; }
 		void SetHMDTrackingSpace(const PSMPosef &origin_pose);
-		inline PSMPosef GetWorldFromDriverPose() const { return m_worldFromDriverPose; }
+		inline PSMPosef GetWorldFromDriverPose() const { return m_config.world_from_driver_pose; }
 
 	private:
 		vr::ITrackedDeviceServerDriver * FindTrackedDeviceDriver(const char * pchId);
@@ -74,17 +76,13 @@ namespace steamvrbridge {
 		void HandleControllerListReponse(const PSMControllerList *controller_list, const PSMResponseHandle response_handle);
 		void HandleTrackerListReponse(const PSMTrackerList *tracker_list);
 
-		void LaunchPSMoveMonitor_Internal(const char * pchDriverInstallDir);
-
 		ServerDriverConfig m_config;
 
 		bool m_bLaunchedPSMoveMonitor;
+		bool m_bLaunchedPSMoveService;
 		bool m_bInitialized;
 
 		std::vector< TrackableDevice * > m_vecTrackedDevices;
-
-		// HMD Tracking Space
-		PSMPosef m_worldFromDriverPose;
 
 		// Singleton instance of CServerDriver_PSMoveService
 		static CServerDriver_PSMoveService *m_instance;

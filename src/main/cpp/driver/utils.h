@@ -2,6 +2,7 @@
 #include "openvr_driver.h"
 #include "PSMoveClient_CAPI.h"
 #include <string>
+#include <vector>
 
 // Platform specific includes
 #if defined( _WIN32 )
@@ -26,8 +27,15 @@ namespace steamvrbridge {
 		static std::string Path_StripFilename(const std::string & sPath, char slash);
 		static std::string Path_GetThisModulePath();
 		static std::string Path_GetHomeDirectory();
+		static std::string Path_GetPSMoveSteamVRBridgeInstallPath(const class ServerDriverConfig *config);
+		static std::string Path_GetPSMoveSteamVRBridgeDriverRootPath(const class ServerDriverConfig *config);
+		static std::string Path_GetPSMoveSteamVRBridgeDriverBinPath(const class ServerDriverConfig *config);
+		static std::string Path_GetPSMoveSteamVRBridgeDriverResourcesPath(const class ServerDriverConfig *config);
+		static std::string Path_GetPSMoveServiceInstallPath(const class ServerDriverConfig *config);
 		static bool Path_CreateDirectory(const std::string &path);
 		static bool Path_FileExists(const std::string& filename);
+		static bool IsProcessRunning(const std::string &processName);
+		static bool LaunchProcess(const std::string &processPath, const std::string &processName, const std::vector<std::string> &args);
 		static bool GetHMDDeviceIndex(vr::TrackedDeviceIndex_t *out_hmd_device_index);
 		static bool GetTrackedDevicePose(const vr::TrackedDeviceIndex_t device_index, PSMPosef *out_device_pose);
 		static PSMQuatf ExtractHMDYawQuaternion(const PSMQuatf & q);
