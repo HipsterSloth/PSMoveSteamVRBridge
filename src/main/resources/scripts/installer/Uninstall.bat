@@ -10,9 +10,17 @@ IF "%1"=="-nopause" (
 :: Suppress pause for child scripts
 SET /A suppressPause=suppressPause+1
 
-:: Reregister any existing psmove drivers
+:: Unregister any existing psmove drivers
 CALL SteamVR_UnregisterDrivers.bat
 IF %ERRORLEVEL% NEQ 0 (goto failure)
+
+:: Clear out the installation paths script
+DEL SteamVR_SetDriverVars.bat 2>NUL
+
+:: Clear out PSMoveService generated files
+DEL ..\PSMoveService.log 2>NUL
+DEL ..\imgui.ini 2>NUL
+RMDIR /S /Q ..\shared_mem 2>NUL
 
 :: Un-Suppress pause for child scripts
 SET /A suppressPause=suppressPause-1

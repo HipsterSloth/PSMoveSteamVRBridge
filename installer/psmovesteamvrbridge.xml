@@ -12,6 +12,36 @@
             <canBeEdited>1</canBeEdited>
             <selected>1</selected>
             <show>1</show>
+            <desktopShortcutList>
+                <shortcut>
+                    <comment>Launces PSM Device Management Server</comment>
+                    <exec></exec>
+                    <icon></icon>
+                    <name>PSMoveService</name>
+                    <path></path>
+                    <platforms>all</platforms>
+                    <runAsAdmin>0</runAsAdmin>
+                    <runInTerminal>0</runInTerminal>
+                    <windowsExec>${installdir}/PSMoveService.exe</windowsExec>
+                    <windowsExecArgs></windowsExecArgs>
+                    <windowsIcon></windowsIcon>
+                    <windowsPath>${installdir}</windowsPath>
+                </shortcut>
+                <shortcut>
+                    <comment>Launched PSM Device Configuration Tool</comment>
+                    <exec></exec>
+                    <icon></icon>
+                    <name>PSMoveConfigTool</name>
+                    <path></path>
+                    <platforms>all</platforms>
+                    <runAsAdmin>0</runAsAdmin>
+                    <runInTerminal>0</runInTerminal>
+                    <windowsExec>${installdir}/PSMoveConfigTool.exe</windowsExec>
+                    <windowsExecArgs></windowsExecArgs>
+                    <windowsIcon></windowsIcon>
+                    <windowsPath>${installdir}</windowsPath>
+                </shortcut>
+            </desktopShortcutList>
             <folderList>
                 <folder>
                     <description>Program Files</description>
@@ -25,6 +55,42 @@
                         <distributionDirectory>
                             <origin>../build/PSMoveSteamVRBridge/installer</origin>
                         </distributionDirectory>
+                        <distributionDirectory>
+                            <origin>../build/PSMoveSteamVRBridge/assets</origin>
+                        </distributionDirectory>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/test_psmove_controller.exe</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/PSMoveClient_CAPI.dll</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/PSMoveConfigTool.exe</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/PSMoveService.exe</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/PSMoveServiceAdmin.exe</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/test_camera.exe</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/test_camera_parallel.exe</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/test_console_CAPI.exe</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/test_ds4_controller.exe</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/test_kalman_filter.exe</origin>
+                        </distributionFile>
+                        <distributionFile>
+                            <origin>../build/PSMoveSteamVRBridge/test_navi_controller.exe</origin>
+                        </distributionFile>
                     </distributionFileList>
                     <shortcutList>
                         <shortcut>
@@ -62,6 +128,12 @@
                     <platforms>osx</platforms>
                 </folder>
             </folderList>
+            <postInstallationActionList>
+                <setWindowsACL>
+                    <action>allow</action>
+                    <files>${installdir}</files>
+                </setWindowsACL>
+            </postInstallationActionList>
             <startMenuShortcutList>
                 <startMenuShortcut>
                     <comment>Uninstall ${product_fullname}</comment>

@@ -1,4 +1,4 @@
-@ECHO on
+@ECHO off
 SETLOCAL
 SET HOME=%~dp0
 
