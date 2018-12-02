@@ -153,7 +153,14 @@ IF(${WIN32})
 		DESTINATION ${STEAMVR_DRIVER_BIN_DIR}
 		FILES_MATCHING PATTERN "*.dll" PATTERN "*.pdb"
 	)
- 		
+
+	# Copy PSMoveService binaries and assets
+	install(
+		DIRECTORY ${PSM_BINARIES_DIR}/
+	  DESTINATION ${PROJECT_INSTALL_DIR}
+    FILES_MATCHING PATTERN "*.exe" PATTERN "*.dll" PATTERN "*.ttf" PATTERN "*.jpg"
+	)
+  
 	# Copy the post-installation scripts the user will use to install the driver on their PC
 	install(
 		DIRECTORY ${ROOT_DIR}/src/main/resources/scripts/installer
