@@ -214,7 +214,7 @@
 		},
 		"/input/virtual_axis_18": {
 			"type": "trigger",
-			"binding_image_point": [378, 237
+			"binding_image_point": [378, 237]
 		},
 		"/input/virtual_axis_19": {
 			"type": "trigger",
