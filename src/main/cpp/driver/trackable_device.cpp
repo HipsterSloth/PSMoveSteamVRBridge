@@ -43,6 +43,11 @@ namespace steamvrbridge {
 		//properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, m_hardware_revision);
 		//properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, m_firmware_revision);
 
+		if (CServerDriver_PSMoveService::getInstance()->IsHMDTrackingSpaceCalibrated())
+		{
+			RefreshWorldFromDriverPose();
+		}
+
 		return vr::VRInitError_None;
 	}
 
@@ -91,11 +96,11 @@ namespace steamvrbridge {
 	}
 
 	void TrackableDevice::RefreshWorldFromDriverPose() {
-		steamvrbridge::Logger::Info("Begin CServerDriver_PSMoveService::RefreshWorldFromDriverPose() for device %s\n", GetSteamVRIdentifier());
 
 		const PSMPosef worldFromDriverPose = CServerDriver_PSMoveService::getInstance()->GetWorldFromDriverPose();
 
-		steamvrbridge::Logger::Info("worldFromDriverPose: %s \n", steamvrbridge::Utils::PSMPosefToString(worldFromDriverPose).c_str());
+		steamvrbridge::Logger::Info("CServerDriver_PSMoveService::RefreshWorldFromDriverPose() for device %s\n", GetSteamVRIdentifier());
+		steamvrbridge::Logger::Info("  worldFromDriverPose: %s \n", steamvrbridge::Utils::PSMPosefToString(worldFromDriverPose).c_str());
 
 		// Transform used to convert from PSMove Tracking space to OpenVR Tracking Space
 		m_Pose.qWorldFromDriverRotation.w = worldFromDriverPose.Orientation.w;
