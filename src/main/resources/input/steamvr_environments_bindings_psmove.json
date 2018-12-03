@@ -27,7 +27,7 @@
                   }
                },
                "mode" : "button",
-               "path" : "/user/hand/right/input/select"
+               "path" : "/user/hand/right/input/square"
             },
             {
                "inputs" : {
@@ -120,7 +120,7 @@
                   }
                },
                "mode" : "button",
-               "path" : "/user/hand/left/input/select"
+               "path" : "/user/hand/left/input/square"
             },
             {
                "inputs" : {
@@ -235,7 +235,7 @@
                   }
                },
                "mode" : "button",
-               "path" : "/user/hand/right/input/select"
+               "path" : "/user/hand/right/input/square"
             },
             {
                "inputs" : {
@@ -370,7 +370,7 @@
                   }
                },
                "mode" : "button",
-               "path" : "/user/hand/left/input/select"
+               "path" : "/user/hand/left/input/square"
             }
          ]
       }
