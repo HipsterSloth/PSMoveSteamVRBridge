@@ -3,8 +3,11 @@ branches:
   only:
   - master
 clone_folder: c:\projects\PSMoveSteamVR
+clone_script:
+- ps: git clone -q $("--branch=" + $env:APPVEYOR_REPO_BRANCH) $("https://github.com/" + $env:APPVEYOR_REPO_NAME + ".git") $env:APPVEYOR_BUILD_FOLDER
+- ps: git submodule update -q --init --recursive
 image:
-- Visual Studio 2017
+- Visual Studio 2015
 configuration:
 - Release
 - Debug
