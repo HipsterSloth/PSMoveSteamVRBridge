@@ -2,7 +2,6 @@
 *.slo
 *.lo
 *.o
-*.obj
 
 # Precompiled Headers
 *.gch
@@ -28,8 +27,11 @@
 *.app
 
 # Build directories
-build*
+build
 bin*
+
+# Project IDE dirs
+generated*
 
 # Auto-downloaded Dependencies
 deps

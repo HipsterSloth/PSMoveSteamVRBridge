@@ -1,0 +1,88 @@
+{
+	"jsonid": "input_profile",
+	"controller_type": "playstation_move",
+	"legacy_profile": "playstation_move",
+	"legacy_binding": "{psmove}/input/legacy_bindings_psmove.json",
+	"input_bindingui_mode": "controller_handed",
+	"input_bindingui_left": {
+		"transform": "scale(-1,1)",
+		"image": "{psmove}/icons/psmove.svg"
+	},
+	"input_bindingui_right": {
+		"image": "{psmove}/icons/psmove.svg"
+	},  
+	"input_source": {
+		"/input/trackpad": {
+			"binding_image_point": [129, 314],
+			"type": "trackpad",
+			"order": 2
+		},
+		"/input/trigger": {
+			"binding_image_point": [380, 308],
+			"type": "trigger",
+			"order": 1
+		},
+		"/input/select": {
+			"binding_image_point": [874, 296],
+			"type": "button",
+			"order": 3
+		},
+		"/input/start": {
+			"binding_image_point": [624, 296],
+			"type": "button",
+			"order": 4
+		},
+		"/input/triangle": {
+			"binding_image_point": [180, 285],
+			"type": "button",
+			"order": 5
+		},
+		"/input/circle": {
+			"binding_image_point": [180, 336],
+			"type": "button",
+			"order": 6
+		},
+		"/input/cross": {
+			"binding_image_point": [82, 336],
+			"type": "button",
+			"order": 7
+		},
+		"/input/square": {
+			"binding_image_point": [82, 285],
+			"type": "button",
+			"order": 8
+		},
+		"/input/move": {
+			"binding_image_point": [129, 314],
+			"type": "button",
+			"order": 9
+		},
+		"/input/system": {
+			"binding_image_point": [131, 437],
+			"type": "button",
+			"order": 10
+		},
+		"/input/ps": {
+			"binding_image_point": [131, 437],
+			"type": "button",
+			"order": 11
+		},
+		"/pose/raw": {
+			"type": "pose",
+			"binding_image_point": [124, 96]
+		},
+		"/output/haptic": {
+			"type": "vibration",
+			"binding_image_point": [376, 410]
+		}
+	},
+	"default_bindings": [{
+			"app_key": "openvr.component.vrcompositor",
+			"binding_url": "vrcompositor_bindings_psmove.json"
+		},
+		{
+			"app_key": "openvr.tool.steamvr_environments",
+			"binding_url": "steamvr_environments_bindings_psmove.json"
+		}
+	]
+}

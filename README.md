@@ -1,6 +1,4 @@
-[![Documentation](https://codedocs.xyz/HipsterSloth/PSMoveSteamVRBridge.svg)](https://codedocs.xyz/HipsterSloth/PSMoveSteamVRBridge/)
-
-# PSMoveSteamVRBridge
+# PSMoveSteamVRBridge [![Build status](https://ci.appveyor.com/api/projects/status/epo1qleh474o539v?svg=true)](https://ci.appveyor.com/project/HipsterSloth/psmovesteamvrbridge)  [![Documentation](https://img.shields.io/badge/code-documented-brightgreen.svg)](https://superevensteven.github.io/PSMoveSteamVRBridge/annotated.html)
 PSMoveSteamVRBridge is a client for [PSMoveService](https://github.com/cboulay/PSMoveService) that takes the pose and button data of PSMove/DualShock4/PSNavi controller and forwards it into SteamVR. The [FAQ](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki/Frequently-Asked-Questions) is a good starting point for any specific questions you may have about the project. 
 
 **NOTE** This is alpha software still heavily in development. If you are downloading this project to play games on SteamVR please be aware that this tool may not work for the game you want to play so buyer beware. That said, if you are feeling brave and want to test this we appreciate the feedback about what works and what doesn't.
@@ -14,6 +12,12 @@ If you want to make modifications to the service or want to debug it, you can bu
 # Documentation
 * General setup guides, troubleshooting and design docs can be found on the [wiki](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki)
 * Documentation for the code is hosted on [codedocs](https://codedocs.xyz/HipsterSloth/PSMoveSteamVRBridge/) (In Progress)
+
+### Installing the Driver in SteamVR
+#### Automated Installer
+In the installer folder of this project is an XML definition file for the BitRock installer project. This is a cross-platform installer that offer free licenses for opensource projects. This project's installer is built using that.
+
+[![alt text][bitrock-logo]][bitrock-url]
 
 # Getting Help
 Please start with the wiki. If you can't find help with your problem then please search through the issues (especially the closed ones) to see if your problem has been addressed already. If you still find no previous mention of your problem then you have one of two options:
@@ -39,3 +43,7 @@ Special thanks to the following people who helped make this project possible:
 * YossiMH - Improvements to touch pad mappings and help with the HMD/Controller alignment tool
 * William (zelmon64) - Many improvements to config tool UX, beta testing, and troubleshooting hero
 * Antonio Jose Ramos Marquez - Work on PS4EyeDriver and PSX hardware reverse engineering
+* Stephen O'Hair -  Huge refactor of the SteamVR plugin to help get it working with the new SteamVR input system
+
+[bitrock-logo]:https://github.com/alatnet/OpenPSVR/blob/master/installer/installer-logo.png "BitRock Installer"
+[bitrock-url]:http://bitrock.com

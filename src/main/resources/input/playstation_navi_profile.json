@@ -1,0 +1,70 @@
+{
+   "jsonid" : "input_profile",
+   "legacy_binding" : "none",
+   "legacy_profile" : "none",
+   "controller_type" : "playstation_navi",
+   "input_bindingui_mode" : "controller_handed",
+   "input_bindingui_right" : {
+      "image" : "{gamepad}/icons/psnavi.svg"
+   },
+   "input_bindingui_left" : {
+      "image" : "{gamepad}/icons/psnavi.svg"
+   },   
+   "input_source" : {
+      "/input/system" : {
+         "binding_image_point" : [ 26,56 ],
+         "type" : "button",
+        "order" : 1
+      },
+      "/input/ps" : {
+         "binding_image_point" : [ 26,56 ],
+         "type" : "button",
+        "order" : 1
+      },      
+      "/input/circle" : {
+         "binding_image_point" : [ 36,84 ],
+         "type" : "button",
+        "order" : 2
+      },
+      "/input/cross" : {
+         "binding_image_point" : [ 16,84 ],
+         "type" : "button",
+        "order" : 3
+      },
+      "/input/dpad_up" : {
+         "binding_image_point" : [ 26,80 ],
+         "type" : "button",
+         "order" : 4
+      },
+      "/input/dpad_down" : {
+         "binding_image_point" : [ 26,67 ],
+         "type" : "button",
+         "order" : 5
+      },
+      "/input/dpad_right" : {
+         "binding_image_point" : [ 32,74 ],
+         "type" : "button",
+         "order" : 6
+      },
+      "/input/dpad_left" : {
+         "binding_image_point" : [ 19,74 ],
+         "type" : "button",
+         "order" : 7
+      },
+      "/input/shoulder" : {
+         "binding_image_point" : [ 88,113 ],
+         "type" : "button",
+         "order" : 8
+      },
+      "/input/trigger" : {
+         "binding_image_point" : [ 88,101 ],
+         "type" : "trigger",
+         "order" : 9
+      },
+      "/input/trackpad" : {
+         "binding_image_point" : [ 26,56 ],
+         "type" : "trackpad",
+         "order" : 10
+      }
+   }
+}
