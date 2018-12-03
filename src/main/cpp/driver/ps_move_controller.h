@@ -19,13 +19,14 @@ namespace steamvrbridge {
 			, extend_Z_meters(0.f)
 			, z_rotate_90_degrees(false)
 			, delay_after_touchpad_press(false)
-			, meters_per_touchpad_axis_units()
+			, meters_per_touchpad_axis_units(7.5f/100.f)
 			, calibration_offset_meters(0.f)
 			, disable_alignment_gesture(false)
 			, use_orientation_in_hmd_alignment(true)
 			, linear_velocity_multiplier(1.f)
 			, linear_velocity_exponent(0.f)
 		{
+			ps_button_id_to_emulated_touchpad_action[k_PSMButtonID_Move]= eEmulatedTrackpadAction::k_EmulatedTrackpadAction_Press;
 		};
 
 		configuru::Config WriteToJSON() override;

@@ -33,7 +33,7 @@ namespace steamvrbridge {
 		// General Settings
 		pt["rumble_suppressed"] = rumble_suppressed;
 		pt["extend_y_cm"] = extend_Y_meters * 100.f;
-		pt["extend_x_cm"] = extend_Z_meters * 100.f;
+		pt["extend_z_cm"] = extend_Z_meters * 100.f;
 		pt["rotate_z_90"] = z_rotate_90_degrees;
 		pt["calibration_offset_cm"] = calibration_offset_meters * 100.f;
 		pt["disable_alignment_gesture"] = disable_alignment_gesture;
@@ -68,7 +68,7 @@ namespace steamvrbridge {
 		// General Settings
 		rumble_suppressed = pt.get_or<bool>("rumble_suppressed", rumble_suppressed);
 		extend_Y_meters = pt.get_or<float>("extend_y_cm",  0.f) / 100.f;
-		extend_Z_meters = pt.get_or<float>("extend_x_cm",  0.f) / 100.f;
+		extend_Z_meters = pt.get_or<float>("extend_z_cm",  -7.5f) / 100.f;
 		z_rotate_90_degrees = pt.get_or<bool>("rotate_z_90", z_rotate_90_degrees);
 		calibration_offset_meters = pt.get_or<float>("calibration_offset_cm",  6.f) / 100.f;
 		disable_alignment_gesture = pt.get_or<bool>("disable_alignment_gesture", disable_alignment_gesture);
@@ -409,16 +409,15 @@ namespace steamvrbridge {
 			eEmulatedTrackpadAction action= getConfig()->ps_button_id_to_emulated_touchpad_action[buttonIndex];
 			if (action != k_EmulatedTrackpadAction_None) {
 				PSMButtonState button_state= PSMButtonState_UP;
-				if (Controller::GetButtonState((ePSMButtonID)buttonIndex, button_state))
-				{
-					if (action >= highestPriorityAction)
-					{
-						highestPriorityAction= action;
-					}
+				if (Controller::GetButtonState((ePSMButtonID)buttonIndex, button_state)) {
+					if (button_state == PSMButtonState_DOWN || button_state == PSMButtonState_PRESSED) {
+						if (action >= highestPriorityAction) {
+							highestPriorityAction= action;
+						}
 
-					if (action >= k_EmulatedTrackpadAction_Press)
-					{
-						break;
+						if (action >= k_EmulatedTrackpadAction_Press) {
+							break;
+						}
 					}
 				}
 			}
@@ -429,20 +428,16 @@ namespace steamvrbridge {
 		PSMButtonState emulatedTouchPadTouchedState= PSMButtonState_UP;
 		PSMButtonState emulatedTouchPadPressedState= PSMButtonState_UP;
 
-		if (highestPriorityAction == k_EmulatedTrackpadAction_Touch)
-		{
+		if (highestPriorityAction == k_EmulatedTrackpadAction_Touch) {
 			emulatedTouchPadTouchedState= PSMButtonState_DOWN;
-		}
-		else if (highestPriorityAction == k_EmulatedTrackpadAction_Press)
-		{
+		} else if (highestPriorityAction == k_EmulatedTrackpadAction_Press) {
 			emulatedTouchPadTouchedState= PSMButtonState_DOWN;
 			emulatedTouchPadPressedState= PSMButtonState_DOWN;
 		}
 
 		// If the action specifies a specific trackpad direction,
 		// then use the given trackpad axis
-		if (highestPriorityAction > k_EmulatedTrackpadAction_Press)
-		{
+		if (highestPriorityAction > k_EmulatedTrackpadAction_Press) {
 			emulatedTouchPadTouchedState= PSMButtonState_DOWN;
 			emulatedTouchPadPressedState= PSMButtonState_DOWN;
 

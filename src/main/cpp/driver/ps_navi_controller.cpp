@@ -304,16 +304,15 @@ namespace steamvrbridge {
 			eEmulatedTrackpadAction action= getConfig()->ps_button_id_to_emulated_touchpad_action[buttonIndex];
 			if (action != k_EmulatedTrackpadAction_None) {
 				PSMButtonState button_state= PSMButtonState_UP;
-				if (Controller::GetButtonState((ePSMButtonID)buttonIndex, button_state))
-				{
-					if (action >= highestPriorityAction)
-					{
-						highestPriorityAction= action;
-					}
+				if (Controller::GetButtonState((ePSMButtonID)buttonIndex, button_state)) {
+					if (button_state == PSMButtonState_DOWN || button_state == PSMButtonState_PRESSED) {
+						if (action >= highestPriorityAction) {
+							highestPriorityAction= action;
+						}
 
-					if (action >= k_EmulatedTrackpadAction_Press)
-					{
-						break;
+						if (action >= k_EmulatedTrackpadAction_Press) {
+							break;
+						}
 					}
 				}
 			}
