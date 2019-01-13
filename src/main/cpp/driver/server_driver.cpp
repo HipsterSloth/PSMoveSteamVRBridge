@@ -124,10 +124,10 @@ namespace steamvrbridge {
 		PSMMessage mesg;
 		while (PSM_PollNextMessage(&mesg, sizeof(PSMMessage)) == PSMResult_Success) {
 			switch (mesg.payload_type) {
-				case PSMMessage::_messagePayloadType_Response:
+				case PSMMessageType::_messagePayloadType_Response:
 					HandleClientPSMoveResponse(&mesg);
 					break;
-				case PSMMessage::_messagePayloadType_Event:
+				case PSMMessageType::_messagePayloadType_Event:
 					HandleClientPSMoveEvent(&mesg);
 					break;
 			}
@@ -205,30 +205,30 @@ namespace steamvrbridge {
 		const PSMMessage *message) {
 		switch (message->event_data.event_type) {
 			// Client Events
-			case PSMEventMessage::PSMEvent_connectedToService:
+			case PSMEventMessageType::PSMEvent_connectedToService:
 				HandleConnectedToPSMoveService();
 				break;
-			case PSMEventMessage::PSMEvent_failedToConnectToService:
+			case PSMEventMessageType::PSMEvent_failedToConnectToService:
 				HandleFailedToConnectToPSMoveService();
 				break;
-			case PSMEventMessage::PSMEvent_disconnectedFromService:
+			case PSMEventMessageType::PSMEvent_disconnectedFromService:
 				HandleDisconnectedFromPSMoveService();
 				break;
 
 				// Service Events
-			case PSMEventMessage::PSMEvent_opaqueServiceEvent:
+			case PSMEventMessageType::PSMEvent_opaqueServiceEvent:
 				// We don't care about any opaque service events
 				break;
-			case PSMEventMessage::PSMEvent_controllerListUpdated:
+			case PSMEventMessageType::PSMEvent_controllerListUpdated:
 				HandleControllerListChanged();
 				break;
-			case PSMEventMessage::PSMEvent_trackerListUpdated:
+			case PSMEventMessageType::PSMEvent_trackerListUpdated:
 				HandleTrackerListChanged();
 				break;
-			case PSMEventMessage::PSMEvent_hmdListUpdated:
+			case PSMEventMessageType::PSMEvent_hmdListUpdated:
 				// don't care
 				break;
-			case PSMEventMessage::PSMEvent_systemButtonPressed:
+			case PSMEventMessageType::PSMEvent_systemButtonPressed:
 				// don't care
 				break;
 				//###HipsterSloth $TODO - Need a notification for when a tracker pose changes
@@ -321,17 +321,17 @@ namespace steamvrbridge {
 	void CServerDriver_PSMoveService::HandleClientPSMoveResponse(
 		const PSMMessage *message) {
 		switch (message->response_data.payload_type) {
-			case PSMResponseMessage::_responsePayloadType_Empty:
+			case PSMResponsePayloadType::_responsePayloadType_Empty:
 				Logger::Info("NotifyClientPSMoveResponse - request id %d returned result %s.\n",
 							 message->response_data.request_id,
 							 (message->response_data.result_code == PSMResult::PSMResult_Success) ? "ok" : "error");
 				break;
-			case PSMResponseMessage::_responsePayloadType_ControllerList:
+			case PSMResponsePayloadType::_responsePayloadType_ControllerList:
 				Logger::Info("NotifyClientPSMoveResponse - Controller Count = %d (request id %d).\n",
 							 message->response_data.payload.controller_list.count, message->response_data.request_id);
 				HandleControllerListReponse(&message->response_data.payload.controller_list, message->response_data.opaque_request_handle);
 				break;
-			case PSMResponseMessage::_responsePayloadType_TrackerList:
+			case PSMResponsePayloadType::_responsePayloadType_TrackerList:
 				Logger::Info("NotifyClientPSMoveResponse - Tracker Count = %d (request id %d).\n",
 							 message->response_data.payload.tracker_list.count, message->response_data.request_id);
 				HandleTrackerListReponse(&message->response_data.payload.tracker_list);
@@ -348,10 +348,11 @@ namespace steamvrbridge {
 
 		bool bAnyNaviControllers = false;
 		for (int list_index = 0; list_index < controller_list->count; ++list_index) {
-			PSMControllerID psmControllerId = controller_list->controller_id[list_index];
-			PSMControllerType psmControllerType = controller_list->controller_type[list_index];
-			PSMControllerHand psmControllerHand = controller_list->controller_hand[list_index];
-			std::string psmControllerSerial(controller_list->controller_serial[list_index]);
+			const PSMClientControllerInfo &controller_info= controller_list->controllers[list_index];
+			PSMControllerID psmControllerId = controller_info.controller_id;
+			PSMControllerType psmControllerType = controller_info.controller_type;
+			PSMControllerHand psmControllerHand = controller_info.controller_hand;
+			std::string psmControllerSerial(controller_info.controller_serial);
 			std::replace(psmControllerSerial.begin(), psmControllerSerial.end(), ':', '_');
 
 			switch (psmControllerType) {
@@ -378,13 +379,14 @@ namespace steamvrbridge {
 
 		if (bAnyNaviControllers) {
 			for (int list_index = 0; list_index < controller_list->count; ++list_index) {
-				PSMControllerType controller_type = controller_list->controller_type[list_index];
+				const PSMClientControllerInfo &controller_info= controller_list->controllers[list_index];
+				PSMControllerType controller_type = controller_info.controller_type;
 
 				if (controller_type == PSMControllerType::PSMController_Navi) {
-					int psmControllerId = controller_list->controller_id[list_index];
-					PSMControllerHand psmControllerHand = controller_list->controller_hand[list_index];
-					std::string psmControllerSerial(controller_list->controller_serial[list_index]);
-					std::string psmParentControllerSerial(controller_list->parent_controller_serial[list_index]);
+					int psmControllerId = controller_info.controller_id;
+					PSMControllerHand psmControllerHand = controller_info.controller_hand;
+					std::string psmControllerSerial(controller_info.controller_serial);
+					std::string psmParentControllerSerial(controller_info.parent_controller_serial);
 
 					Logger::Info("CServerDriver_PSMoveService::HandleControllerListReponse - Allocate PSNavi(%d)\n", psmControllerId);
 					AllocateUniquePSNaviController(psmControllerId, psmControllerHand, psmControllerSerial, psmParentControllerSerial);

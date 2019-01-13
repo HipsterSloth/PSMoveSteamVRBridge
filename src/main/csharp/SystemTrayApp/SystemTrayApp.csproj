@@ -1,0 +1,272 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{98A88D85-0F78-39D2-9186-E258D4BE7944}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>SystemTrayApp</ProjectName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFrameworkProfile />
+    <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <OutputPath>..\..\..\..\build\PSMoveSteamVRBridge\</OutputPath>
+    <PlatformTarget>x64</PlatformTarget>
+    <PlatformToolset>v140</PlatformToolset>
+    <AssemblyName>SystemTrayApp</AssemblyName>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(OutputPath)SystemTrayApp.exe</StartProgram>
+    <DebugType>full</DebugType>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <LangVersion>4</LangVersion>
+    <Optimize>false</Optimize>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <OutputPath>..\..\..\..\build\PSMoveSteamVRBridge\</OutputPath>
+    <PlatformTarget>x64</PlatformTarget>
+    <PlatformToolset>v140</PlatformToolset>
+    <AssemblyName>SystemTrayApp</AssemblyName>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(OutputPath)\SystemTrayApp.exe</StartProgram>
+    <DebugType>none</DebugType>
+    <ErrorReport>queue</ErrorReport>
+    <LangVersion>4</LangVersion>
+    <Optimize>true</Optimize>
+    <WarningLevel>1</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <OutputPath>..\..\..\..\build\PSMoveSteamVRBridge\</OutputPath>
+    <PlatformTarget>x64</PlatformTarget>
+    <PlatformToolset>v140</PlatformToolset>
+    <AssemblyName>SystemTrayApp</AssemblyName>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(OutputPath)SystemTrayApp.exe</StartProgram>
+    <DebugType>none</DebugType>
+    <LangVersion>4</LangVersion>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <OutputPath>..\..\..\..\build\PSMoveSteamVRBridge\</OutputPath>
+    <PlatformTarget>x64</PlatformTarget>
+    <PlatformToolset>v140</PlatformToolset>
+    <AssemblyName>SystemTrayApp</AssemblyName>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(OutputPath)SystemTrayApp.exe</StartProgram>
+    <DebugType>full</DebugType>
+    <LangVersion>4</LangVersion>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.CSharp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.CSharp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemGroup>
+    <Compile Include="Config\ConfigBase.cs" />
+    <Compile Include="Config\DS4ControllerConfig.cs" />
+    <Compile Include="Config\VirtualControllerConfig.cs" />
+    <Compile Include="Config\PSNaviControllerConfig.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="Config\ControllerConfig.cs" />
+    <Compile Include="UI\ButtonMapping.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\ButtonMapping.Designer.cs">
+      <DependentUpon>ButtonMapping.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\ControllerPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\ControllerPanel.Designer.cs">
+      <DependentUpon>ControllerPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dualshock4ControllerPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\Dualshock4ControllerPanel.Designer.cs">
+      <DependentUpon>Dualshock4ControllerPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\HMDPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\HMDPanel.Designer.cs">
+      <DependentUpon>HMDPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="UI\AppWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\AppWindow.Designer.cs">
+      <DependentUpon>AppWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Config\PSMoveControllerConfig.cs" />
+    <Compile Include="UI\IControllerPanel.cs" />
+    <Compile Include="UI\PSMoveControllerPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\PSMoveControllerPanel.Designer.cs">
+      <DependentUpon>PSMoveControllerPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\PSMoveServicePanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\PSMoveServicePanel.Designer.cs">
+      <DependentUpon>PSMoveServicePanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Config\PSMoveSteamVRBridgeConfig.cs" />
+    <Compile Include="UI\PSNaviControllerPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\PSNaviControllerPanel.Designer.cs">
+      <DependentUpon>PSNaviControllerPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SteamVRWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\SteamVRWindow.Designer.cs">
+      <DependentUpon>SteamVRWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Config\ConfigManager.cs" />
+    <Compile Include="PSMoveServiceContext.cs" />
+    <Compile Include="SteamVRContext.cs" />
+    <Compile Include="..\..\..\..\deps\OpenVR\src\OpenVR\headers\openvr_api.cs" />
+    <Compile Include="UI\VirtualControllerPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\VirtualControllerPanel.Designer.cs">
+      <DependentUpon>VirtualControllerPanel.cs</DependentUpon>
+    </Compile>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+    <None Include="Resources\Default.ico" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="OpenGL.Net">
+      <HintPath>..\packages\OpenGL.Net.0.7.1\lib\net461\OpenGL.Net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.3.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Windows.Forms">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="MaterialSkin, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MaterialSkin.Updated.0.2.2\lib\MaterialSkin.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="OpenGL.Net-CoreProfile">
+      <HintPath>..\packages\OpenGL.Net.CoreProfile.0.7.1\lib\net461\OpenGL.Net-CoreProfile.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenGL.Net.Math">
+      <HintPath>..\packages\OpenGL.Net.Math.0.7.1\lib\net461\OpenGL.Net.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenGL.Net.WinForms">
+      <HintPath>..\packages\OpenGL.Net.WinForms.0.7.1\lib\net461\OpenGL.Net.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="PSMoveClient_csharp">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <Private>True</Private>
+      <HintPath>..\..\..\..\deps\PSMoveService\src\PSMoveService\bin\PSMoveClient_csharp.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.3.0\lib\netstandard1.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Json">
+      <HintPath>..\packages\System.Json.4.5.0\lib\netstandard2.0\System.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="UI\AppWindow.resx">
+      <DependentUpon>AppWindow.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\ButtonMapping.resx">
+      <DependentUpon>ButtonMapping.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\ControllerPanel.resx">
+      <DependentUpon>ControllerPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\Dualshock4ControllerPanel.resx">
+      <DependentUpon>Dualshock4ControllerPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\HMDPanel.resx">
+      <DependentUpon>HMDPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\PSMoveControllerPanel.resx">
+      <DependentUpon>PSMoveControllerPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\PSMoveServicePanel.resx">
+      <DependentUpon>PSMoveServicePanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\PSNaviControllerPanel.resx">
+      <DependentUpon>PSNaviControllerPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SteamVRWindow.resx">
+      <DependentUpon>SteamVRWindow.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\VirtualControllerPanel.resx">
+      <DependentUpon>VirtualControllerPanel.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'MinSizeRel'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'RelWithDebInfo'">
+  </PropertyGroup>
+</Project>

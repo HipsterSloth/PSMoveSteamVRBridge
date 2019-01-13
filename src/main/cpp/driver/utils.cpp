@@ -631,40 +631,39 @@ namespace steamvrbridge {
 		return q;
 	}
 
-	PSMQuatf Utils::psmMatrix3fToPSMQuatf(const PSMMatrix3f &psmMat) {
+	PSMQuatf Utils::psmMatrix3fToPSMQuatf(const PSMMatrix3f &a) {
 		PSMQuatf q;
 
-		const float(&a)[3][3] = psmMat.m;
-		const float trace = a[0][0] + a[1][1] + a[2][2];
+		const float trace = a.m00 + a.m11 + a.m22;
 
 		if (trace > 0) {
 			const float s = 0.5f / sqrtf(trace + 1.0f);
 
 			q.w = 0.25f / s;
-			q.x = (a[2][1] - a[1][2]) * s;
-			q.y = (a[0][2] - a[2][0]) * s;
-			q.z = (a[1][0] - a[0][1]) * s;
+			q.x = (a.m21 - a.m12) * s;
+			q.y = (a.m02 - a.m20) * s;
+			q.z = (a.m10 - a.m01) * s;
 		} else {
-			if (a[0][0] > a[1][1] && a[0][0] > a[2][2]) {
-				const float s = 2.0f * sqrtf(1.0f + a[0][0] - a[1][1] - a[2][2]);
+			if (a.m00 > a.m11 && a.m00 > a.m22) {
+				const float s = 2.0f * sqrtf(1.0f + a.m00 - a.m11 - a.m22);
 
-				q.w = (a[2][1] - a[1][2]) / s;
+				q.w = (a.m21 - a.m12) / s;
 				q.x = 0.25f * s;
-				q.y = (a[0][1] + a[1][0]) / s;
-				q.z = (a[0][2] + a[2][0]) / s;
-			} else if (a[1][1] > a[2][2]) {
-				const float s = 2.0f * sqrtf(1.0f + a[1][1] - a[0][0] - a[2][2]);
+				q.y = (a.m01 + a.m10) / s;
+				q.z = (a.m02 + a.m20) / s;
+			} else if (a.m11 > a.m22) {
+				const float s = 2.0f * sqrtf(1.0f + a.m11 - a.m00 - a.m22);
 
-				q.w = (a[0][2] - a[2][0]) / s;
-				q.x = (a[0][1] + a[1][0]) / s;
+				q.w = (a.m02 - a.m20) / s;
+				q.x = (a.m01 + a.m10) / s;
 				q.y = 0.25f * s;
-				q.z = (a[1][2] + a[2][1]) / s;
+				q.z = (a.m12 + a.m21) / s;
 			} else {
-				const float s = 2.0f * sqrtf(1.0f + a[2][2] - a[0][0] - a[1][1]);
+				const float s = 2.0f * sqrtf(1.0f + a.m22 - a.m00 - a.m11);
 
-				q.w = (a[1][0] - a[0][1]) / s;
-				q.x = (a[0][2] + a[2][0]) / s;
-				q.y = (a[1][2] + a[2][1]) / s;
+				q.w = (a.m10 - a.m01) / s;
+				q.x = (a.m02 + a.m20) / s;
+				q.y = (a.m12 + a.m21) / s;
 				q.z = 0.25f * s;
 			}
 		}

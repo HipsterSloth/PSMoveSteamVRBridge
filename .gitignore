@@ -44,3 +44,12 @@ SetBuildVars.bat
 
 # Allow source model files
 !src/openvr_plugin/resources/*.obj
+
+# CSharp project exclusions
+src/main/csharp/.vs
+src/main/csharp/*.suo
+src/main/csharp/*.opendb
+src/main/csharp/*.db
+src/main/csharp/*.user
+src/main/csharp/SystemTrayApp/obj
+src/main/csharp/packages

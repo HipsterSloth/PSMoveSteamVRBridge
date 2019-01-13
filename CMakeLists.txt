@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.8)
+
 project(PSMoveSteamVRBridge VERSION 0.1.0)
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cmake/CMakeUtils.txt)
 include(ExternalProject)
 
@@ -33,8 +35,8 @@ message(STATUS "Project name: ${PSM_DRIVER_PROJECT_NAME}")
 message(STATUS "Target build directory: ${TARGET_BUILD_DIR}")
 
 # Configure and build external projects
-build_external_project(PSMoveService ${ROOT_DIR}/deps ${PSM_PACKAGE_URL})
-build_external_project(OpenVR ${ROOT_DIR}/deps ${OPENVR_PACKAGE_URL})
+build_external_project(PSMoveService ${ROOT_DIR}/deps ${PSM_PACKAGE_URL} "")
+build_external_project(OpenVR ${ROOT_DIR}/deps ${OPENVR_PACKAGE_URL} "")
   
 # Configure the cmake for the driver
 add_subdirectory(src)

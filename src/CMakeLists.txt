@@ -1,11 +1,13 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.8)
+enable_language(CSharp)
 
 # initialise variables
 set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
-set(PROJECT_SRC_DIR ${ROOT_DIR}/src/main/cpp/driver)
+set(PROJECT_DRIVER_SRC_DIR ${ROOT_DIR}/src/main/cpp/driver)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/main/cmake)
 message(STATUS "CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}")
 message(STATUS "Running cmake in ${CMAKE_CURRENT_LIST_DIR}")
+
 # Shared architecture label used for install folder locations
 if (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -59,44 +61,44 @@ list(APPEND PSM_PLUGIN_INCL_DIRS ${ROOT_DIR}/thirdparty/Configuru)
 ##############################################################################################
 
 # Shared library: defines what is compiled, what output type it is and what libs/includes it needs
-add_library(driver_psmove SHARED ${PROJECT_SRC_DIR}/driver.cpp 
-								 ${PROJECT_SRC_DIR}/constants.h
-                 ${PROJECT_SRC_DIR}/config.h
-                 ${PROJECT_SRC_DIR}/config.cpp
-								 ${PROJECT_SRC_DIR}/controller.h
-								 ${PROJECT_SRC_DIR}/controller.cpp
-								 ${PROJECT_SRC_DIR}/driver.h
-								 ${PROJECT_SRC_DIR}/driver.cpp
-								 ${PROJECT_SRC_DIR}/facing_handsolver.h
-								 ${PROJECT_SRC_DIR}/facing_handsolver.cpp
-								 ${PROJECT_SRC_DIR}/logger.h
-								 ${PROJECT_SRC_DIR}/logger.cpp
-								 ${PROJECT_SRC_DIR}/ps_ds4_controller.h
-								 ${PROJECT_SRC_DIR}/ps_ds4_controller.cpp
-								 ${PROJECT_SRC_DIR}/ps_move_controller.h
-								 ${PROJECT_SRC_DIR}/ps_move_controller.cpp
-								 ${PROJECT_SRC_DIR}/ps_navi_controller.h
-								 ${PROJECT_SRC_DIR}/ps_navi_controller.cpp
-								 ${PROJECT_SRC_DIR}/server_driver.h
-								 ${PROJECT_SRC_DIR}/server_driver.cpp
-								 ${PROJECT_SRC_DIR}/settings_util.h
-								 ${PROJECT_SRC_DIR}/settings_util.cpp
-								 ${PROJECT_SRC_DIR}/trackable_device.h
-								 ${PROJECT_SRC_DIR}/trackable_device.cpp
-								 ${PROJECT_SRC_DIR}/tracker.h
-								 ${PROJECT_SRC_DIR}/tracker.cpp
-								 ${PROJECT_SRC_DIR}/utils.h
-								 ${PROJECT_SRC_DIR}/utils.cpp
-								 ${PROJECT_SRC_DIR}/virtual_controller.h
-								 ${PROJECT_SRC_DIR}/virtual_controller.cpp
-								 ${PROJECT_SRC_DIR}/watchdog.h
-								 ${PROJECT_SRC_DIR}/watchdog.cpp
+add_library(driver_psmove SHARED ${PROJECT_DRIVER_SRC_DIR}/driver.cpp 
+								 ${PROJECT_DRIVER_SRC_DIR}/constants.h
+                 ${PROJECT_DRIVER_SRC_DIR}/config.h
+                 ${PROJECT_DRIVER_SRC_DIR}/config.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/controller.h
+								 ${PROJECT_DRIVER_SRC_DIR}/controller.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/driver.h
+								 ${PROJECT_DRIVER_SRC_DIR}/driver.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/facing_handsolver.h
+								 ${PROJECT_DRIVER_SRC_DIR}/facing_handsolver.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/logger.h
+								 ${PROJECT_DRIVER_SRC_DIR}/logger.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/ps_ds4_controller.h
+								 ${PROJECT_DRIVER_SRC_DIR}/ps_ds4_controller.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/ps_move_controller.h
+								 ${PROJECT_DRIVER_SRC_DIR}/ps_move_controller.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/ps_navi_controller.h
+								 ${PROJECT_DRIVER_SRC_DIR}/ps_navi_controller.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/server_driver.h
+								 ${PROJECT_DRIVER_SRC_DIR}/server_driver.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/settings_util.h
+								 ${PROJECT_DRIVER_SRC_DIR}/settings_util.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/trackable_device.h
+								 ${PROJECT_DRIVER_SRC_DIR}/trackable_device.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/tracker.h
+								 ${PROJECT_DRIVER_SRC_DIR}/tracker.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/utils.h
+								 ${PROJECT_DRIVER_SRC_DIR}/utils.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/virtual_controller.h
+								 ${PROJECT_DRIVER_SRC_DIR}/virtual_controller.cpp
+								 ${PROJECT_DRIVER_SRC_DIR}/watchdog.h
+								 ${PROJECT_DRIVER_SRC_DIR}/watchdog.cpp
 								 )
 target_include_directories(driver_psmove PUBLIC ${OPENVR_PLUGIN_INCL_DIRS} ${PSM_PLUGIN_INCL_DIRS} )
 target_link_libraries(driver_psmove ${OPENVR_PLUGIN_REQ_LIBS} ${PSM_PLUGIN_REQ_LIBS})
 
 # Monitor app: defines what is compiled, what output type it is and what libs/includes it needs
-add_executable(monitor_psmove ${PROJECT_SRC_DIR}/monitor.cpp)
+add_executable(monitor_psmove ${PROJECT_DRIVER_SRC_DIR}/monitor.cpp)
 target_include_directories(monitor_psmove PUBLIC ${OPENVR_MONITOR_INCL_DIRS} ${PSM_PLUGIN_INCL_DIRS})
 target_link_libraries(monitor_psmove ${OPENVR_MONITOR_REQ_LIBS} ${PSM_PLUGIN_REQ_LIBS})
 
@@ -132,7 +134,13 @@ IF(${WIN32})
 	install(
 		TARGETS monitor_psmove
 		RUNTIME DESTINATION ${STEAMVR_DRIVER_BIN_DIR}
-	)    
+	)
+    
+  # Copy OpenVR dll (SystemAppTray dependency) into the main install folder
+  install(
+		FILES ${OPENVR_BINARIES_DIR}/openvr_api.dll
+		DESTINATION ${PROJECT_INSTALL_DIR}
+	)  
 	
 	# Copy Program DataBase(*.pdb) file for the driver's monitor binary (only required for debugging)
 	install(
