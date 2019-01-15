@@ -77,9 +77,10 @@ namespace SystemTrayApp
 
         public void SaveAllPanels()
         {
-            // Save all UI state back into the controller configs
-            foreach (IControllerPanel controllerPanel in ControllerPanels) {
-                controllerPanel.Save();
+            // Save all panels back to their respective config
+            foreach (IControllerPanel panel in ControllerPanels)
+            {
+                panel.SaveToConfig();
             }
 
             // Save all controller configs back to disk
@@ -96,6 +97,7 @@ namespace SystemTrayApp
 
             DetachAllPanels();
 
+            ControllerPanels.Clear();
             for (int ControllerIndex = 0; ControllerIndex < ControllerConfig.GetControllerCount(); ++ControllerIndex) {
                 ControllerConfig Config = ControllerConfig.GetControllerConfigByIndex(ControllerIndex);
 
@@ -133,6 +135,10 @@ namespace SystemTrayApp
 
                 ControllerLabel.Text = Config.ControllerName;
                 ContentPanel.Controls.Add((UserControl)ControllerPanels[ControllerIndex]);
+            }
+            else
+            {
+                ControllerLabel.Text = "";
             }
 
             if (ControllerIndex > 0)
@@ -186,18 +192,24 @@ namespace SystemTrayApp
 
         private void ReloadControllerSettingsButton_Click(object sender, EventArgs e)
         {
+            // Load all controller config back from disk
+            ConfigManager.Instance.LoadAllControllerConfigs();
+
             if (SelectedControllerIndex >= 0 && SelectedControllerIndex < ControllerPanels.Count)
             {
-                ControllerPanels[SelectedControllerIndex].Reload();
+                ControllerPanels[SelectedControllerIndex].ReloadFromConfig();
             }
         }
 
         private void SaveControllerSettingsButton_Click(object sender, EventArgs e)
         {
-            if (SelectedControllerIndex >= 0 && SelectedControllerIndex < ControllerPanels.Count)
+            if (SelectedControllerIndex >= 0 && SelectedControllerIndex < ControllerPanels.Count) 
             {
-                ControllerPanels[SelectedControllerIndex].Save();
+                ControllerPanels[SelectedControllerIndex].SaveToConfig();
             }
+
+            // Save all dirty controller configs to disk
+            ConfigManager.Instance.SaveAllControllerConfigs();
         }
     }
 }

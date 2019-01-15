@@ -51,12 +51,12 @@
             // 
             this.TouchpadMappingLabel.AutoSize = true;
             this.TouchpadMappingLabel.Depth = 0;
-            this.TouchpadMappingLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold);
+            this.TouchpadMappingLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.TouchpadMappingLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.TouchpadMappingLabel.Location = new System.Drawing.Point(429, 43);
             this.TouchpadMappingLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.TouchpadMappingLabel.Name = "TouchpadMappingLabel";
-            this.TouchpadMappingLabel.Size = new System.Drawing.Size(285, 18);
+            this.TouchpadMappingLabel.Size = new System.Drawing.Size(258, 19);
             this.TouchpadMappingLabel.TabIndex = 65;
             this.TouchpadMappingLabel.Text = "Button to Virtual Touchpad Mappings";
             // 
@@ -77,6 +77,7 @@
             this.VelocityExponentTextField.TabStop = false;
             this.VelocityExponentTextField.Text = "0";
             this.VelocityExponentTextField.UseSystemPasswordChar = false;
+            this.VelocityExponentTextField.Validated += VelocityExponentTextField_Validated;
             // 
             // VelocityExponentLabel
             // 
@@ -108,6 +109,7 @@
             this.VelocityMultiplierTextField.TabStop = false;
             this.VelocityMultiplierTextField.Text = "1";
             this.VelocityMultiplierTextField.UseSystemPasswordChar = false;
+            this.VelocityMultiplierTextField.Validated += VelocityMultiplierTextField_Validated;
             // 
             // VelocityMultiplierLabel
             // 
@@ -139,6 +141,7 @@
             this.ThumbstickDeadzoneTextField.TabStop = false;
             this.ThumbstickDeadzoneTextField.Text = "0";
             this.ThumbstickDeadzoneTextField.UseSystemPasswordChar = false;
+            this.ThumbstickDeadzoneTextField.Validated += ThumbstickDeadzoneTextField_Validated;
             // 
             // ThumbsticklDeadzoneLabel
             // 
@@ -168,6 +171,7 @@
             this.UseOrientationInHMDAlignmentCheckBox.TabIndex = 42;
             this.UseOrientationInHMDAlignmentCheckBox.Text = "Use Orientation in HMD Alignment";
             this.UseOrientationInHMDAlignmentCheckBox.UseVisualStyleBackColor = true;
+            this.UseOrientationInHMDAlignmentCheckBox.CheckedChanged += new System.EventHandler(this.UseOrientationInHMDAlignmentCheckBox_CheckedChanged);
             // 
             // DisableAlignmentGestureCheckBox
             // 
@@ -184,6 +188,7 @@
             this.DisableAlignmentGestureCheckBox.TabIndex = 41;
             this.DisableAlignmentGestureCheckBox.Text = "Disable Alignment Gesture";
             this.DisableAlignmentGestureCheckBox.UseVisualStyleBackColor = true;
+            this.DisableAlignmentGestureCheckBox.CheckedChanged += new System.EventHandler(this.DisableAlignmentGestureCheckBox_CheckedChanged);
             // 
             // ZRotate90CheckBox
             // 
@@ -200,6 +205,7 @@
             this.ZRotate90CheckBox.TabIndex = 39;
             this.ZRotate90CheckBox.Text = "Rotate Z by 90°";
             this.ZRotate90CheckBox.UseVisualStyleBackColor = true;
+            this.ZRotate90CheckBox.CheckedChanged += new System.EventHandler(this.ZRotate90CheckBox_CheckedChanged);
             // 
             // ExtendZTextField
             // 
@@ -218,6 +224,7 @@
             this.ExtendZTextField.TabStop = false;
             this.ExtendZTextField.Text = "0";
             this.ExtendZTextField.UseSystemPasswordChar = false;
+            this.ExtendZTextField.Validated += ExtendZTextField_Validated;
             // 
             // ExtendZLabel
             // 
@@ -249,6 +256,7 @@
             this.ExtendYTextField.TabStop = false;
             this.ExtendYTextField.Text = "0";
             this.ExtendYTextField.UseSystemPasswordChar = false;
+            this.ExtendYTextField.Validated += ExtendYTextField_Validated;
             // 
             // ExtendYLabel
             // 
@@ -267,12 +275,12 @@
             // 
             this.DS4ControllerLabel.AutoSize = true;
             this.DS4ControllerLabel.Depth = 0;
-            this.DS4ControllerLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold);
+            this.DS4ControllerLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.DS4ControllerLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.DS4ControllerLabel.Location = new System.Drawing.Point(48, 19);
             this.DS4ControllerLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.DS4ControllerLabel.Name = "DS4ControllerLabel";
-            this.DS4ControllerLabel.Size = new System.Drawing.Size(248, 18);
+            this.DS4ControllerLabel.Size = new System.Drawing.Size(222, 19);
             this.DS4ControllerLabel.TabIndex = 34;
             this.DS4ControllerLabel.Text = "Dualshock 4 Controller Settings";
             // 
@@ -291,6 +299,7 @@
             this.RumbleSuppressedCheckBox.TabIndex = 33;
             this.RumbleSuppressedCheckBox.Text = "Rumble Supressed";
             this.RumbleSuppressedCheckBox.UseVisualStyleBackColor = true;
+            this.RumbleSuppressedCheckBox.CheckedChanged += new System.EventHandler(this.RumbleSuppressedCheckBox_CheckedChanged);
             // 
             // TouchpadMappingsLayoutPanel
             // 

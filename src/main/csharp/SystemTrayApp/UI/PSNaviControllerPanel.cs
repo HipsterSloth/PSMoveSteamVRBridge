@@ -32,17 +32,7 @@ namespace SystemTrayApp
 
             controllerConfig = config;
 
-            ThumbstickDeadzoneTextField.Text = controllerConfig.ThumbstickDeadzone.ToString();
-
-            SetTouchpadComboBoxValue(PSButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.PS));
-            SetTouchpadComboBoxValue(DPadDownButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.DPad_Down));
-            SetTouchpadComboBoxValue(DPadUpButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.DPad_Up));
-            SetTouchpadComboBoxValue(DPadLeftButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.DPad_Left));
-            SetTouchpadComboBoxValue(DPadRightButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.DPad_Right));
-            SetTouchpadComboBoxValue(CircleButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Circle));
-            SetTouchpadComboBoxValue(CrossButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Cross));
-            SetTouchpadComboBoxValue(JoystickButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Joystick));
-            SetTouchpadComboBoxValue(ShoulderButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Shoulder));
+            ReloadFromConfig();
         }
 
         private void InitTouchpadComboBox(ComboBox combo_box)
@@ -128,14 +118,23 @@ namespace SystemTrayApp
             controllerConfig.setTrackpadActionForButton(ePSMButtonID.PS, GetTouchpadComboBoxValue(PSButtonComboBox));
         }
 
-        public void Reload()
+        public void ReloadFromConfig()
         {
-            throw new NotImplementedException();
+            ThumbstickDeadzoneTextField.Text = controllerConfig.ThumbstickDeadzone.ToString();
+
+            SetTouchpadComboBoxValue(PSButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.PS));
+            SetTouchpadComboBoxValue(DPadDownButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.DPad_Down));
+            SetTouchpadComboBoxValue(DPadUpButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.DPad_Up));
+            SetTouchpadComboBoxValue(DPadLeftButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.DPad_Left));
+            SetTouchpadComboBoxValue(DPadRightButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.DPad_Right));
+            SetTouchpadComboBoxValue(CircleButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Circle));
+            SetTouchpadComboBoxValue(CrossButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Cross));
+            SetTouchpadComboBoxValue(JoystickButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Joystick));
+            SetTouchpadComboBoxValue(ShoulderButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Shoulder));
         }
 
-        public void Save()
+        public void SaveToConfig()
         {
-            throw new NotImplementedException();
         }
     }
 }

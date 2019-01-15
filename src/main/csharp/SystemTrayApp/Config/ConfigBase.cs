@@ -25,6 +25,18 @@ namespace SystemTrayApp
             set { bIsDirty = value; }
         }
 
+        public static float ParseFloat(string float_string, float scale, float default_value)
+        {
+            float float_value;
+
+            if (!float.TryParse(float_string, out float_value))
+            {
+                float_value = default_value;
+            }
+
+            return float_value;
+        }
+
         public void Save()
         {
             Save(FetchOrCreateConfigPath());

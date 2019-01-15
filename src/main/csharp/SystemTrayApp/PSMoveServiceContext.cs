@@ -13,7 +13,8 @@ namespace SystemTrayApp
     {
         private static string PSMOVESTEAMVRBRIDE_REGKEY_PATH = @"SOFTWARE\WOW6432Node\PSMoveSteamVRBridge\PSMoveSteamVRBridge";
         private static string PSMOVESERVICE_PROCESS_NAME = "PSMoveService";
-        private static int POLL_INTERVAL = 100; // ms
+        private static double POLL_INTERVAL_5FPS = 1.0 / 5.0; // ms
+        private static double POLL_INTERVAL_60FPS = 1.0 / 60.0; // ms
 
         private static readonly Lazy<PSMoveServiceContext> lazy = 
             new Lazy<PSMoveServiceContext>(() => new PSMoveServiceContext());
@@ -22,28 +23,43 @@ namespace SystemTrayApp
         private bool bInitialized;
         private Timer PollTimer;
 
+        public enum PSMConnectionState
+        {
+            disconnected,
+            waitingForConnectionResponse,
+            connected
+        }
+
+        private PSMConnectionState connection_state;
+        public PSMConnectionState ConnectionState
+        {
+            get { return connection_state; }
+            set { connection_state = value; }
+        }
+
+        public delegate void ConnectedToPSMService();
+        public event ConnectedToPSMService ConnectedToPSMServiceEvent;
+
+        public delegate void DisconnectedFromPSMService();
+        public event DisconnectedFromPSMService DisconnectedFromPSMServiceEvent;
+
         private PSMoveServiceContext()
         {
-            PollTimer = new System.Timers.Timer(POLL_INTERVAL);
+            PollTimer = new System.Timers.Timer();
             bInitialized = false;
+            ConnectionState = PSMConnectionState.disconnected;
         }
 
         public bool Init()
         {
             if (!bInitialized)
             {
-                // Note that reconnection is a non-blocking async request.
-                // Returning true means we we're able to start trying to connect,
-                // not that we are successfully connected yet.
-                if (!ReconnectToPSMoveService())
-                {
-                    return false;
-                }
-
                 // Create a timer to poll PSMoveService state with
                 PollTimer.Elapsed += RunFrame;
                 PollTimer.AutoReset = false; // NO AUTO RESET! Restart in RunFrame().
                 PollTimer.Enabled = true;
+                PollTimer.Interval = POLL_INTERVAL_5FPS;
+                PollTimer.Start();
 
                 bInitialized = true;
             }
@@ -60,32 +76,39 @@ namespace SystemTrayApp
 
                 // Shutdown PSMove Client API
                 PSMoveClient.PSM_Shutdown();
+                ConnectionState = PSMConnectionState.disconnected;
                 bInitialized = false;
             }
         }
 
         private void RunFrame(object sender, ElapsedEventArgs e)
         {
-            // Update any controllers that are currently listening
-            PSMoveClient.PSM_UpdateNoPollMessages();
-
-            // Poll events queued up by the call to PSM_UpdateNoPollMessages()
-            PSMMessage mesg = new PSMMessage();
-            while (PSMoveClient.PSM_PollNextMessage(mesg) == PSMResult.PSMResult_Success) 
+            if (ConnectionState == PSMConnectionState.connected ||
+                ConnectionState == PSMConnectionState.waitingForConnectionResponse)
             {
-                switch (mesg.payload_type) 
-                {
-                    case PSMMessageType._messagePayloadType_Response:
-                        HandleClientPSMoveResponse(mesg);
-                        break;
-                    case PSMMessageType._messagePayloadType_Event:
-                        HandleClientPSMoveEvent(mesg);
-                        break;
+                // Update any controllers that are currently listening
+                PSMoveClient.PSM_UpdateNoPollMessages();
+
+                // Poll events queued up by the call to PSM_UpdateNoPollMessages()
+                PSMMessage mesg = new PSMMessage();
+                while (PSMoveClient.PSM_PollNextMessage(mesg) == PSMResult.PSMResult_Success) {
+                    switch (mesg.payload_type) {
+                        case PSMMessageType._messagePayloadType_Response:
+                            HandleClientPSMoveResponse(mesg);
+                            break;
+                        case PSMMessageType._messagePayloadType_Event:
+                            HandleClientPSMoveEvent(mesg);
+                            break;
+                    }
                 }
+            }
+            else
+            {
+                TryConnectToPSMoveService();
             }
 
             // Restart the timer once event handling is complete.
-            // This prevents overlaping callings to RunFrame.
+            // This prevents overlapping callings to RunFrame.
             // In practice this is only an issue when debugging.
             PollTimer.Start();
         }
@@ -162,15 +185,9 @@ namespace SystemTrayApp
             }
         }
 
-        public delegate void ConnectedToPSMService();
-        public event ConnectedToPSMService ConnectedToPSMServiceEvent;
-
-        public delegate void DisconnectedFromPSMService();
-        public event DisconnectedFromPSMService DisconnectedFromPSMServiceEvent;
-
         void HandleConnectedToPSMoveService()
         {
-            Trace.TraceInformation("CServerDriver_PSMoveService::HandleConnectedToPSMoveService - Request controller and tracker lists");
+            Trace.TraceInformation("HandleConnectedToPSMoveService - Request service version");
 
             int request_id;
             PSMoveClient.PSM_GetServiceVersionStringAsync(out request_id);
@@ -192,14 +209,14 @@ namespace SystemTrayApp
                     {
                         Trace.TraceInformation(
                             string.Format(
-                            "CServerDriver_PSMoveService::HandleServiceVersionResponse - Received expected protocol version {0}",
+                            "HandleServiceVersionResponse - Received expected protocol version {0}",
                             service_version));
 
+                        // Connection is now ready
+                        ConnectionState = PSMConnectionState.connected;
+
                         // Fire off connection delegate
-                        if (ConnectedToPSMServiceEvent != null)
-                        {
-                            ConnectedToPSMServiceEvent();
-                        }
+                        ConnectedToPSMServiceEvent();
 
                         // Ask the service for a list of connected controllers
                         // Response handled in HandleControllerListReponse()
@@ -210,7 +227,7 @@ namespace SystemTrayApp
                     {
                         Trace.TraceInformation(
                             string.Format(
-                                "CServerDriver_PSMoveService::HandleServiceVersionResponse - Protocol mismatch! Expected {0}, got {1}. Please reinstall the PSMove Driver!",
+                                "HandleServiceVersionResponse - Protocol mismatch! Expected {0}, got {1}. Please reinstall the PSMove Driver!",
                                 local_version, service_version));
                         Cleanup();
                     }
@@ -219,7 +236,7 @@ namespace SystemTrayApp
                 case PSMResult.PSMResult_Error:
                 case PSMResult.PSMResult_Canceled:
                 {
-                    Trace.TraceInformation("CServerDriver_PSMoveService::HandleServiceVersionResponse - Failed to get protocol version\n");
+                    Trace.TraceInformation("HandleServiceVersionResponse - Failed to get protocol version\n");
                 }
                 break;
             }
@@ -227,24 +244,18 @@ namespace SystemTrayApp
 
         void HandleFailedToConnectToPSMoveService()
         {
-            Trace.TraceInformation("CServerDriver_PSMoveService::HandleFailedToConnectToPSMoveService - Called");
-
-            // Immediately attempt to reconnect to the service
-            //ReconnectToPSMoveService();
+            Trace.TraceInformation("HandleFailedToConnectToPSMoveService - Called");
+            ConnectionState = PSMConnectionState.disconnected;
         }
 
         void HandleDisconnectedFromPSMoveService()
         {
-            Trace.TraceInformation("CServerDriver_PSMoveService::HandleDisconnectedFromPSMoveService - Called");
+            Trace.TraceInformation("HandleDisconnectedFromPSMoveService - Called");
 
             // Fire off disconnection delegate
-            if (DisconnectedFromPSMServiceEvent != null)
-            {
-                DisconnectedFromPSMServiceEvent();
-            }
+            DisconnectedFromPSMServiceEvent();
 
-            // Immediately attempt to reconnect to the service
-            //ReconnectToPSMoveService();
+            ConnectionState = PSMConnectionState.disconnected;
         }
 
         public delegate void ControllerListPreUpdate();
@@ -337,25 +348,39 @@ namespace SystemTrayApp
             get { return PSMoveClient.PSM_GetIsConnected(); }
         }
 
-        public bool ReconnectToPSMoveService()
+        public bool TryConnectToPSMoveService()
         {
-            PSMoveSteamVRBridgeConfig config = PSMoveSteamVRBridgeConfig.Instance;
-
-            if (PSMoveClient.PSM_GetIsConnected())
+            // Only attempt connection once this is a window listening for a connection
+            if (ConnectedToPSMServiceEvent != null && DisconnectedFromPSMServiceEvent != null)
             {
-                PSMoveClient.PSM_Shutdown();
+                if (GetIsPSMoveServiceRunning()) {
+                    PSMoveSteamVRBridgeConfig config = PSMoveSteamVRBridgeConfig.Instance;
+
+                    if (PSMoveClient.PSM_InitializeAsync(config.ServerAddress, config.ServerPort) != PSMResult.PSMResult_Error) {
+                        ConnectionState = PSMConnectionState.waitingForConnectionResponse;
+                        return true;
+                    }
+                    else {
+                        Trace.TraceInformation("TryConnectToPSMoveService - Error initializing PSMoveService connection");
+                    }
+                }
             }
 
-            bool bSuccess= PSMoveClient.PSM_InitializeAsync(config.ServerAddress, config.ServerPort) != PSMResult.PSMResult_Error;
-
-            return bSuccess;
+            return false;
         }
 
         public void DisconnectFromPSMoveService()
         {
-            if (PSMoveClient.PSM_GetIsConnected())
+            if (ConnectionState != PSMConnectionState.connected ||
+                ConnectionState != PSMConnectionState.waitingForConnectionResponse)
             {
+                if (ConnectionState == PSMConnectionState.connected) 
+                {
+                    HandleDisconnectedFromPSMoveService();
+                }
+
                 PSMoveClient.PSM_Shutdown();
+                ConnectionState = PSMConnectionState.disconnected;
             }
         }
 
@@ -364,16 +389,27 @@ namespace SystemTrayApp
             if (!GetIsPSMoveServiceRunning())
             {
                 string psm_path = GetPSMoveServicePath();
-
                 if (psm_path.Length > 0)
                 {
-                    Process process = Process.Start(psm_path);
+                    bool bSuccess = false;
 
-                    if (process != null) 
+                    try
                     {
-                        ReconnectToPSMoveService();
-                        return true;
+                        Process process = new Process();
+                        process.StartInfo.FileName = psm_path;
+                        process.StartInfo.CreateNoWindow = false;
+                        process.StartInfo.UseShellExecute = true;
+                        bSuccess = process.Start();
                     }
+                    catch (Exception e)
+                    {
+                        Trace.TraceInformation(
+                            string.Format(
+                                "LaunchPSMoveServiceProcess - Error launching PSMoveService: {0}",
+                                e.Message));
+                    }
+
+                    return bSuccess;
                 }
             }
             else
@@ -386,6 +422,8 @@ namespace SystemTrayApp
 
         public void TerminatePSMoveServiceProcess()
         {
+            DisconnectFromPSMoveService();
+
             foreach (Process process in Process.GetProcessesByName(PSMOVESERVICE_PROCESS_NAME))
             {
                 if (!process.HasExited)

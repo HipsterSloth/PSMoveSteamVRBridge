@@ -8,7 +8,7 @@ namespace SystemTrayApp
 {
     interface IControllerPanel
     {
-        void Reload();
-        void Save();
+        void ReloadFromConfig();
+        void SaveToConfig();
     }
 }

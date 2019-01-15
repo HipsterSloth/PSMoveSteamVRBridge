@@ -31,26 +31,7 @@ namespace SystemTrayApp
 
             controllerConfig = config;
 
-            RumbleSuppressedCheckBox.Checked = controllerConfig.RumbleSuppressed;
-            ZRotate90CheckBox.Checked = controllerConfig.ZRotate90Degrees;
-            TouchpadPressDelayCheckBox.Checked = controllerConfig.DelayAfterTouchpadPress;
-            DisableAlignmentGestureCheckBox.Checked = controllerConfig.DisableAlignmentGesture;
-            UseOrientationInHMDAlignmentCheckBox.Checked = controllerConfig.UseOrientationInHmdAlignment;
-
-            VelocityExponentTextField.Text = controllerConfig.LinearVelocityExponent.ToString();
-            VelocityMultiplierTextField.Text = controllerConfig.LinearVelocityMultiplier.ToString();
-            VirtualTumbstickScaleTextField.Text = string.Format("{0}", controllerConfig.MetersPerTouchpadAxisUnits * 100.0f);
-            ExtendYTextField.Text = string.Format("{0}", controllerConfig.ExtendYMeters * 100.0f);
-            ExtendZTextField.Text = string.Format("{0}", controllerConfig.ExtendZMeters * 100.0f);
-
-            SetTouchpadComboBoxValue(PSButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.PS));
-            SetTouchpadComboBoxValue(MoveButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Move));
-            SetTouchpadComboBoxValue(TriangleButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Triangle));
-            SetTouchpadComboBoxValue(SquareButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Square));
-            SetTouchpadComboBoxValue(CircleButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Circle));
-            SetTouchpadComboBoxValue(CrossButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Cross));
-            SetTouchpadComboBoxValue(SelectButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Select));
-            SetTouchpadComboBoxValue(StartButtonComboBox, config.getTrackpadActionForButton(ePSMButtonID.Start));
+            ReloadFromConfig();
         }
 
         private void InitTouchpadComboBox(ComboBox combo_box)
@@ -110,42 +91,32 @@ namespace SystemTrayApp
 
         private void VelocityExponentTextField_Validated(object sender, System.EventArgs e)
         {
-            float VelocityExponent = 0.0f;
-            if (float.TryParse(VelocityExponentTextField.Text, out VelocityExponent)) {
-                controllerConfig.LinearVelocityExponent = VelocityExponent;
-            }
+            controllerConfig.LinearVelocityExponent=
+                ConfigBase.ParseFloat(VelocityExponentTextField.Text, 1.0f, controllerConfig.LinearVelocityExponent);
         }
 
         private void VelocityMultiplierTextField_Validated(object sender, System.EventArgs e)
         {
-            float VelocityMultiplier = 1.0f;
-            if (float.TryParse(VelocityMultiplierTextField.Text, out VelocityMultiplier)) {
-                controllerConfig.LinearVelocityMultiplier = VelocityMultiplier;
-            }
+            controllerConfig.LinearVelocityMultiplier =
+                ConfigBase.ParseFloat(VelocityMultiplierTextField.Text, 1.0f, controllerConfig.LinearVelocityMultiplier);
         }
 
         private void VirtualTumbstickScaleTextField_Validated(object sender, System.EventArgs e)
         {
-            float ThumbstickScaleCM = 0.0f;
-            if (float.TryParse(VirtualTumbstickScaleTextField.Text, out ThumbstickScaleCM)) {
-                controllerConfig.MetersPerTouchpadAxisUnits = ThumbstickScaleCM / 100.0f;
-            }
+            controllerConfig.MetersPerTouchpadAxisUnits =
+                ConfigBase.ParseFloat(VirtualTumbstickScaleTextField.Text, 0.01f, controllerConfig.MetersPerTouchpadAxisUnits);
         }
 
         private void ExtendZTextField_Validated(object sender, System.EventArgs e)
         {
-            float ExtendZ_CM = 0.0f;
-            if (float.TryParse(ExtendZTextField.Text, out ExtendZ_CM)) {
-                controllerConfig.ExtendZMeters = ExtendZ_CM / 100.0f;
-            }
+            controllerConfig.ExtendZMeters =
+                ConfigBase.ParseFloat(ExtendZTextField.Text, 0.01f, controllerConfig.ExtendZMeters);
         }
 
         private void ExtendYTextField_Validated(object sender, System.EventArgs e)
         {
-            float ExtendY_CM = 0.0f;
-            if (float.TryParse(ExtendYTextField.Text, out ExtendY_CM)) {
-                controllerConfig.ExtendYMeters = ExtendY_CM / 100.0f;
-            }
+            controllerConfig.ExtendYMeters =
+                ConfigBase.ParseFloat(ExtendYTextField.Text, 0.01f, controllerConfig.ExtendYMeters);
         }
 
         private void StartButtonComboBox_SelectedValueChanged(object sender, System.EventArgs e)
@@ -188,14 +159,35 @@ namespace SystemTrayApp
             controllerConfig.setTrackpadActionForButton(ePSMButtonID.PS, GetTouchpadComboBoxValue(PSButtonComboBox));
         }
 
-        public void Reload()
+        public void ReloadFromConfig()
         {
-            throw new NotImplementedException();
+            if (controllerConfig == null)
+                return;
+
+            RumbleSuppressedCheckBox.Checked = controllerConfig.RumbleSuppressed;
+            ZRotate90CheckBox.Checked = controllerConfig.ZRotate90Degrees;
+            TouchpadPressDelayCheckBox.Checked = controllerConfig.DelayAfterTouchpadPress;
+            DisableAlignmentGestureCheckBox.Checked = controllerConfig.DisableAlignmentGesture;
+            UseOrientationInHMDAlignmentCheckBox.Checked = controllerConfig.UseOrientationInHmdAlignment;
+
+            VelocityExponentTextField.Text = controllerConfig.LinearVelocityExponent.ToString();
+            VelocityMultiplierTextField.Text = controllerConfig.LinearVelocityMultiplier.ToString();
+            VirtualTumbstickScaleTextField.Text = string.Format("{0}", controllerConfig.MetersPerTouchpadAxisUnits * 100.0f);
+            ExtendYTextField.Text = string.Format("{0}", controllerConfig.ExtendYMeters * 100.0f);
+            ExtendZTextField.Text = string.Format("{0}", controllerConfig.ExtendZMeters * 100.0f);
+
+            SetTouchpadComboBoxValue(PSButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.PS));
+            SetTouchpadComboBoxValue(MoveButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Move));
+            SetTouchpadComboBoxValue(TriangleButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Triangle));
+            SetTouchpadComboBoxValue(SquareButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Square));
+            SetTouchpadComboBoxValue(CircleButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Circle));
+            SetTouchpadComboBoxValue(CrossButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Cross));
+            SetTouchpadComboBoxValue(SelectButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Select));
+            SetTouchpadComboBoxValue(StartButtonComboBox, controllerConfig.getTrackpadActionForButton(ePSMButtonID.Start));
         }
 
-        public void Save()
+        public void SaveToConfig()
         {
-            throw new NotImplementedException();
         }
     }
 }

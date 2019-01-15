@@ -48,7 +48,7 @@ namespace SystemTrayApp
         };
         private Dictionary<string, ePSMButtonID> ButtonTable = new Dictionary<string, ePSMButtonID>();
 
-        private VirtualControllerConfig AssignedConfig;
+        private VirtualControllerConfig controllerConfig;
 
         public VirtualControllerPanel(ControllerConfig config)
         {
@@ -61,21 +61,9 @@ namespace SystemTrayApp
             InitVirtualButtonComboBox(SystemButtonComboBox);
             InitVirtualButtonComboBox(HMDAlignButtonComboBox);
 
-            AssignedConfig = (VirtualControllerConfig)config;
+            controllerConfig = (VirtualControllerConfig)config;
 
-            VelocityExponentTextField.Text = AssignedConfig.LinearVelocityExponent.ToString();
-            VelocityMultiplierTextField.Text = AssignedConfig.LinearVelocityMultiplier.ToString();
-            VirtualTumbstickScaleTextField.Text = string.Format("{0}", AssignedConfig.MetersPerTouchpadAxisUnits * 100.0f);
-            ThumbstickDeadzoneTextField.Text = AssignedConfig.ThumbstickDeadzone.ToString();
-            ExtendYTextField.Text = string.Format("{0}", AssignedConfig.ExtendYMeters * 100.0f);
-            ExtendZTextField.Text = string.Format("{0}", AssignedConfig.ExtendZMeters * 100.0f);
-
-            SetVirtualButtonComboBoxValue(SystemButtonComboBox, AssignedConfig.SystemButtonID);
-            SetVirtualButtonComboBoxValue(HMDAlignButtonComboBox, AssignedConfig.HMDAlignButtonID);
-
-            SetVirtualAxisComboBoxValue(TouchpadXAxisIndexComboBox, AssignedConfig.VirtualTouchpadXAxisIndex);
-            SetVirtualAxisComboBoxValue(TouchpadYAxisIndexComboBox, AssignedConfig.VirtualTouchpadYAxisIndex);
-            SetVirtualAxisComboBoxValue(TriggerAxisIndexComboBox, AssignedConfig.SteamVRTriggerAxisIndex);
+            ReloadFromConfig();
         }
 
         private void InitVirtualButtonComboBox(ComboBox combo_box)
@@ -107,17 +95,17 @@ namespace SystemTrayApp
 
         private void DisableAlignmentGestureCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            AssignedConfig.DisableAlignmentGesture = DisableAlignmentGestureCheckBox.Checked;
+            controllerConfig.DisableAlignmentGesture = DisableAlignmentGestureCheckBox.Checked;
         }
 
         private void TouchpadPressDelayCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            AssignedConfig.DelayAfterTouchpadPress = TouchpadPressDelayCheckBox.Checked;
+            controllerConfig.DelayAfterTouchpadPress = TouchpadPressDelayCheckBox.Checked;
         }
 
         private void ZRotate90CheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            AssignedConfig.ZRotate90Degrees = ZRotate90CheckBox.Checked;
+            controllerConfig.ZRotate90Degrees = ZRotate90CheckBox.Checked;
         }
 
         private void AddNewMappingButton_Click(object sender, EventArgs e)
@@ -127,37 +115,64 @@ namespace SystemTrayApp
 
         private void TouchpadXAxisIndexComboBox_SelectedIndexChanged(object sender, System.EventArgs e)
         {
-            AssignedConfig.VirtualTouchpadXAxisIndex = GetVirtualAxisComboBoxValue(TouchpadXAxisIndexComboBox);
+            controllerConfig.VirtualTouchpadXAxisIndex = GetVirtualAxisComboBoxValue(TouchpadXAxisIndexComboBox);
         }
 
         private void TouchpadYAxisIndexComboBox_SelectedIndexChanged(object sender, System.EventArgs e)
         {
-            AssignedConfig.VirtualTouchpadYAxisIndex = GetVirtualAxisComboBoxValue(TouchpadYAxisIndexComboBox);
+            controllerConfig.VirtualTouchpadYAxisIndex = GetVirtualAxisComboBoxValue(TouchpadYAxisIndexComboBox);
         }
 
         private void TriggerAxisIndexComboBox_SelectedIndexChanged(object sender, System.EventArgs e)
         {
-            AssignedConfig.SteamVRTriggerAxisIndex = GetVirtualAxisComboBoxValue(TriggerAxisIndexComboBox);
+            controllerConfig.SteamVRTriggerAxisIndex = GetVirtualAxisComboBoxValue(TriggerAxisIndexComboBox);
         }
 
         private void HMDAlignButtonComboBox_SelectedIndexChanged(object sender, System.EventArgs e)
         {
-            AssignedConfig.HMDAlignButtonID = GetVirtualButtonComboBoxValue(HMDAlignButtonComboBox);
+            controllerConfig.HMDAlignButtonID = GetVirtualButtonComboBoxValue(HMDAlignButtonComboBox);
         }
 
         private void SystemButtonComboBox_SelectedIndexChanged(object sender, System.EventArgs e)
         {
-            AssignedConfig.SystemButtonID = GetVirtualButtonComboBoxValue(SystemButtonComboBox);
+            controllerConfig.SystemButtonID = GetVirtualButtonComboBoxValue(SystemButtonComboBox);
         }
 
-        public void Reload()
+        public void ReloadFromConfig()
         {
-            throw new NotImplementedException();
+            VelocityExponentTextField.Text = controllerConfig.LinearVelocityExponent.ToString();
+            VelocityMultiplierTextField.Text = controllerConfig.LinearVelocityMultiplier.ToString();
+            VirtualTumbstickScaleTextField.Text = string.Format("{0}", controllerConfig.MetersPerTouchpadAxisUnits * 100.0f);
+            ThumbstickDeadzoneTextField.Text = controllerConfig.ThumbstickDeadzone.ToString();
+            ExtendYTextField.Text = string.Format("{0}", controllerConfig.ExtendYMeters * 100.0f);
+            ExtendZTextField.Text = string.Format("{0}", controllerConfig.ExtendZMeters * 100.0f);
+
+            SetVirtualButtonComboBoxValue(SystemButtonComboBox, controllerConfig.SystemButtonID);
+            SetVirtualButtonComboBoxValue(HMDAlignButtonComboBox, controllerConfig.HMDAlignButtonID);
+
+            SetVirtualAxisComboBoxValue(TouchpadXAxisIndexComboBox, controllerConfig.VirtualTouchpadXAxisIndex);
+            SetVirtualAxisComboBoxValue(TouchpadYAxisIndexComboBox, controllerConfig.VirtualTouchpadYAxisIndex);
+            SetVirtualAxisComboBoxValue(TriggerAxisIndexComboBox, controllerConfig.SteamVRTriggerAxisIndex);
+
+            TouchpadMappingsLayoutPanel.Controls.Clear();
+            foreach (ePSMButtonID buttonID in VirtualButtons) {
+                eEmulatedTrackpadAction trackpadAction = controllerConfig.getTrackpadActionForButton(buttonID);
+
+                if (trackpadAction != eEmulatedTrackpadAction.None) {
+                    TouchpadMappingsLayoutPanel.Controls.Add(new ButtonMapping(VirtualButtons, buttonID, trackpadAction));
+                }
+            }
         }
 
-        public void Save()
+        public void SaveToConfig()
         {
-            throw new NotImplementedException();
+            foreach (ePSMButtonID buttonID in VirtualButtons) {
+                controllerConfig.setTrackpadActionForButton(buttonID, eEmulatedTrackpadAction.None);
+            }
+
+            foreach (ButtonMapping mapping in TouchpadMappingsLayoutPanel.Controls.Cast<ButtonMapping>()) {
+                controllerConfig.setTrackpadActionForButton(mapping.GetButtonID(), mapping.GetTrackpadAction());
+            }
         }
     }
 }
