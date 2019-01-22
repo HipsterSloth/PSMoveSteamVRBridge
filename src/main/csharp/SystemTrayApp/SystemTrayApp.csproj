@@ -81,6 +81,22 @@
     <Compile Include="Config\PSNaviControllerConfig.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Config\ControllerConfig.cs" />
+    <Compile Include="Renderer\GlCamera.cs" />
+    <Compile Include="Renderer\GlMaterial.cs" />
+    <Compile Include="Renderer\GlModelInstance.cs" />
+    <Compile Include="Renderer\GlProgram.cs" />
+    <Compile Include="Renderer\GlResourceManager.cs" />
+    <Compile Include="Renderer\GlScene.cs" />
+    <Compile Include="Renderer\GlTexture.cs" />
+    <Compile Include="Renderer\GlTriangulatedMesh.cs" />
+    <Compile Include="Renderer\GlVertexDefinition.cs" />
+    <Compile Include="SteamVR\SteamVRController.cs" />
+    <Compile Include="SteamVR\SteamVRHeadMountedDisplay.cs" />
+    <Compile Include="SteamVR\SteamVRRenderModel.cs" />
+    <Compile Include="SteamVR\SteamVRResourceManager.cs" />
+    <Compile Include="SteamVR\SteamVRTrackedDevice.cs" />
+    <Compile Include="SteamVR\SteamVRTracker.cs" />
+    <Compile Include="SynchronizedContext.cs" />
     <Compile Include="UI\ButtonMapping.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -140,8 +156,8 @@
       <DependentUpon>SteamVRWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="Config\ConfigManager.cs" />
-    <Compile Include="PSMoveServiceContext.cs" />
-    <Compile Include="SteamVRContext.cs" />
+    <Compile Include="PSMoveService\PSMoveServiceContext.cs" />
+    <Compile Include="SteamVR\SteamVRContext.cs" />
     <Compile Include="..\..\..\..\deps\OpenVR\src\OpenVR\headers\openvr_api.cs" />
     <Compile Include="UI\VirtualControllerPanel.cs">
       <SubType>UserControl</SubType>
@@ -149,6 +165,7 @@
     <Compile Include="UI\VirtualControllerPanel.Designer.cs">
       <DependentUpon>VirtualControllerPanel.cs</DependentUpon>
     </Compile>
+    <Compile Include="Utility\MathUtility.cs" />
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Resources\Default.ico" />

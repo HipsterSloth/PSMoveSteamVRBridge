@@ -72,6 +72,7 @@
             this.materialTabControl1.SelectedIndex = 0;
             this.materialTabControl1.Size = new System.Drawing.Size(755, 441);
             this.materialTabControl1.TabIndex = 6;
+            this.materialTabControl1.Selected += MaterialTabControl1_Selected;
             // 
             // tabPage1
             // 

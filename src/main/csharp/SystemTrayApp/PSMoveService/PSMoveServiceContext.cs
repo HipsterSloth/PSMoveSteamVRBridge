@@ -14,7 +14,7 @@ namespace SystemTrayApp
         private static string PSMOVESTEAMVRBRIDE_REGKEY_PATH = @"SOFTWARE\WOW6432Node\PSMoveSteamVRBridge\PSMoveSteamVRBridge";
         private static string PSMOVESERVICE_PROCESS_NAME = "PSMoveService";
         private static double POLL_INTERVAL_5FPS = 1.0 / 5.0; // ms
-        private static double POLL_INTERVAL_60FPS = 1.0 / 60.0; // ms
+        //private static double POLL_INTERVAL_60FPS = 1.0 / 60.0; // ms
 
         private static readonly Lazy<PSMoveServiceContext> lazy = 
             new Lazy<PSMoveServiceContext>(() => new PSMoveServiceContext());

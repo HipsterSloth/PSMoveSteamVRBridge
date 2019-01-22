@@ -33,6 +33,10 @@
             this.SteamVRConnectButton = new MaterialSkin.Controls.MaterialRaisedButton();
             this.VirtualHMDFilterTextField = new MaterialSkin.Controls.MaterialSingleLineTextField();
             this.VirtualHMDFilterLabel = new MaterialSkin.Controls.MaterialLabel();
+            this.SteamVRCurrentStatus = new MaterialSkin.Controls.MaterialLabel();
+            this.SteamVRStatusLabel = new MaterialSkin.Controls.MaterialLabel();
+            this.HMD_icon = new System.Windows.Forms.PictureBox();
+            ((System.ComponentModel.ISupportInitialize)(this.HMD_icon)).BeginInit();
             this.SuspendLayout();
             // 
             // ReloadHmdSettingsButton
@@ -103,7 +107,7 @@
             // 
             this.VirtualHMDFilterTextField.Depth = 0;
             this.VirtualHMDFilterTextField.Hint = "";
-            this.VirtualHMDFilterTextField.Location = new System.Drawing.Point(142, 48);
+            this.VirtualHMDFilterTextField.Location = new System.Drawing.Point(153, 75);
             this.VirtualHMDFilterTextField.MaxLength = 32767;
             this.VirtualHMDFilterTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.VirtualHMDFilterTextField.Name = "VirtualHMDFilterTextField";
@@ -123,17 +127,54 @@
             this.VirtualHMDFilterLabel.Depth = 0;
             this.VirtualHMDFilterLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.VirtualHMDFilterLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.VirtualHMDFilterLabel.Location = new System.Drawing.Point(7, 48);
+            this.VirtualHMDFilterLabel.Location = new System.Drawing.Point(18, 75);
             this.VirtualHMDFilterLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.VirtualHMDFilterLabel.Name = "VirtualHMDFilterLabel";
             this.VirtualHMDFilterLabel.Size = new System.Drawing.Size(129, 19);
             this.VirtualHMDFilterLabel.TabIndex = 11;
             this.VirtualHMDFilterLabel.Text = "Virtual HMD Filter";
             // 
+            // SteamVRCurrentStatus
+            // 
+            this.SteamVRCurrentStatus.AutoSize = true;
+            this.SteamVRCurrentStatus.Depth = 0;
+            this.SteamVRCurrentStatus.Font = new System.Drawing.Font("Roboto", 11F);
+            this.SteamVRCurrentStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.SteamVRCurrentStatus.Location = new System.Drawing.Point(149, 45);
+            this.SteamVRCurrentStatus.MouseState = MaterialSkin.MouseState.HOVER;
+            this.SteamVRCurrentStatus.Name = "SteamVRCurrentStatus";
+            this.SteamVRCurrentStatus.Size = new System.Drawing.Size(121, 19);
+            this.SteamVRCurrentStatus.TabIndex = 21;
+            this.SteamVRCurrentStatus.Text = "DISCONNECTED";
+            // 
+            // SteamVRStatusLabel
+            // 
+            this.SteamVRStatusLabel.AutoSize = true;
+            this.SteamVRStatusLabel.Depth = 0;
+            this.SteamVRStatusLabel.Font = new System.Drawing.Font("Roboto", 11F);
+            this.SteamVRStatusLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.SteamVRStatusLabel.Location = new System.Drawing.Point(18, 45);
+            this.SteamVRStatusLabel.MouseState = MaterialSkin.MouseState.HOVER;
+            this.SteamVRStatusLabel.Name = "SteamVRStatusLabel";
+            this.SteamVRStatusLabel.Size = new System.Drawing.Size(75, 19);
+            this.SteamVRStatusLabel.TabIndex = 20;
+            this.SteamVRStatusLabel.Text = "Steam VR";
+            // 
+            // HMD_icon
+            // 
+            this.HMD_icon.Location = new System.Drawing.Point(22, 149);
+            this.HMD_icon.Name = "HMD_icon";
+            this.HMD_icon.Size = new System.Drawing.Size(64, 64);
+            this.HMD_icon.TabIndex = 22;
+            this.HMD_icon.TabStop = false;
+            // 
             // HMDPanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.HMD_icon);
+            this.Controls.Add(this.SteamVRCurrentStatus);
+            this.Controls.Add(this.SteamVRStatusLabel);
             this.Controls.Add(this.ReloadHmdSettingsButton);
             this.Controls.Add(this.SaveHMDSettingsButton);
             this.Controls.Add(this.SteamVRDisconnectButton);
@@ -142,6 +183,7 @@
             this.Controls.Add(this.VirtualHMDFilterLabel);
             this.Name = "HMDPanel";
             this.Size = new System.Drawing.Size(747, 415);
+            ((System.ComponentModel.ISupportInitialize)(this.HMD_icon)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -155,5 +197,8 @@
         private MaterialSkin.Controls.MaterialRaisedButton SteamVRConnectButton;
         private MaterialSkin.Controls.MaterialSingleLineTextField VirtualHMDFilterTextField;
         private MaterialSkin.Controls.MaterialLabel VirtualHMDFilterLabel;
+        private MaterialSkin.Controls.MaterialLabel SteamVRCurrentStatus;
+        private MaterialSkin.Controls.MaterialLabel SteamVRStatusLabel;
+        private System.Windows.Forms.PictureBox HMD_icon;
     }
 }

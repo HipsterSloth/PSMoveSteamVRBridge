@@ -22,6 +22,7 @@ namespace SystemTrayApp
         [STAThread]
         static void Main()
         {
+            SteamVRContext.Instance.Init();
             PSMoveServiceContext.Instance.Init();
 
             Application.EnableVisualStyles();
@@ -29,6 +30,7 @@ namespace SystemTrayApp
             Application.Run(new AppWindow());
 
             PSMoveServiceContext.Instance.Cleanup();
+            SteamVRContext.Instance.Cleanup();
         }
     }
 }

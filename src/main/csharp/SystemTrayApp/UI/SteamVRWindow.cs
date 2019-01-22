@@ -11,213 +11,118 @@ using System.Windows.Forms;
 using MaterialSkin.Controls;
 
 using OpenGL;
-//using OpenGL.Objects;
-//using OpenGL.Objects.Scene;
-//using OpenGL.Objects.State;
 
 namespace SystemTrayApp
 {
     public partial class SteamVRWindow : MaterialForm
     {
-        private float _ViewAzimuth;
-        private float _ViewElevation;
-        private float _ViewLever = 4.0f;
-        private float _ViewStrideLat, _ViewStrideAlt;
+        private ColorRGBA k_clear_color = new ColorRGBA(0.447f, 0.565f, 0.604f, 1.0f);
+
+        private float k_camera_vfov = 35.0f;
+        private float k_camera_z_near = 0.1f;
+        private float k_camera_z_far = 5000.0f;
 
         private readonly List<Keys> _PressedKeys = new List<Keys>();
         private System.Drawing.Point? _Mouse;
 
-        //private SceneGraph _CubeScene;
+        private Dictionary<uint, GlModelInstance> _trackedDevices = new Dictionary<uint, GlModelInstance>();
 
-        //private ArrayBuffer<Vertex3f> _CubeArrayPosition;
-        //private ArrayBuffer<ColorRGBF> _CubeArrayColor;
-        //private ArrayBuffer<Vertex3f> _CubeArrayNormal;
-        //private VertexArrays _CubeArrays;
+        private GlResourceManager _glResourceManager = new GlResourceManager();
+        private GlScene _glScene = new GlScene();
 
-        //private GraphicsContext _Context;
-        //private SceneObjectLightSpot spotLight;
-        //private SceneObjectLightDirectional _GlobalLightObject;
+        private GlProgramCode _steamVRModelProgramCode = 
+            new GlProgramCode( 
+		        "render model",    
+		        // vertex shader
+		        @"#version 410
+		        uniform mat4 matrix;
+		        layout(location = 0) in vec4 position;
+		        layout(location = 1) in vec3 v3NormalIn;
+		        layout(location = 2) in vec2 v2TexCoordsIn;
+		        out vec2 v2TexCoord;
+		        void main()
+		        {
+		        	v2TexCoord = v2TexCoordsIn;
+		        	gl_Position = matrix * vec4(position.xyz, 1);
+		        }",    
+		        //fragment shader
+		        @"#version 410 core
+		        uniform sampler2D diffuse;
+		        in vec2 v2TexCoord;
+		        out vec4 outputColor;
+		        void main()
+		        {
+		           outputColor = texture( diffuse, v2TexCoord);
+		        }");
 
         public SteamVRWindow()
         {
             InitializeComponent();
+
+            // Add the initial set of devices
+            List<SteamVRTrackedDevice> TrackedDevicesList = SteamVRContext.Instance.FetchLoadedTrackedDeviceList();
+            foreach (var device in TrackedDevicesList)
+            {
+                HandleTrackedDeviceActivated(device);
+            }
+
+            SteamVRContext.Instance.TrackedDeviceActivatedEvent += OnTrackedDeviceActivated;
+            SteamVRContext.Instance.TrackedDeviceDeactivatedEvent += OnTrackedDeviceDeactivated;
+            SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent += OnTrackedDevicesPoseUpdate;
         }
 
-        //private SceneObjectGeometry CreatePlane()
-        //{
-        //    SceneObjectGeometry geometry = new SceneObjectGeometry("Plane");
-
-        //    geometry.VertexArray = VertexArrays.CreatePlane(50.0f, 50.0f, 0.0f, 1, 1);
-        //    geometry.ObjectState.DefineState(new CullFaceState(FrontFaceDirection.Ccw, CullFaceMode.Back));
-        //    geometry.ObjectState.DefineState(new TransformState());
-
-        //    MaterialState cubeMaterialState = new MaterialState();
-        //    cubeMaterialState.FrontMaterial = new MaterialState.Material(ColorRGBAF.ColorWhite * 0.5f);
-        //    cubeMaterialState.FrontMaterial.Ambient = ColorRGBAF.ColorBlack;
-        //    cubeMaterialState.FrontMaterial.Diffuse = ColorRGBAF.ColorWhite * 0.5f;
-        //    cubeMaterialState.FrontMaterial.Specular = ColorRGBAF.ColorBlack;
-        //    geometry.ObjectState.DefineState(cubeMaterialState);
-
-        //    geometry.LocalModel.RotateX(-90.0);
-
-        //    geometry.ProgramTag = ShadersLibrary.Instance.CreateProgramTag("OpenGL.Standard+PhongFragment");
-
-        //    return (geometry);
-        //}
-
-        private const float _CubeSize = 1.0f;
-
-        private Vertex3f[] ArrayPosition
+        public void OnTrackedDeviceActivated(SteamVRTrackedDevice device)
         {
-            get
+            SynchronizedInvoke.Invoke(this, () => HandleTrackedDeviceActivated(device));
+        }
+
+        public void OnTrackedDeviceDeactivated(SteamVRTrackedDevice device)
+        {
+            SynchronizedInvoke.Invoke(this, () => HandleTrackedDeviceDeactivated(device));
+        }
+
+        public void OnTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
+        {
+            SynchronizedInvoke.Invoke(this, () => HandleTrackedDevicesPoseUpdate(poses));
+        }
+
+        private void HandleTrackedDeviceActivated(SteamVRTrackedDevice device)
+        {
+            if (device.RenderModel != null)
             {
-                Vertex3f[] arrayPosition = new Vertex3f[36];
-                int i = 0;
+                string instanceName = string.Format("SteamVRDevice_{0}", device.DeviceID);
+                GlModelInstance instance = _glResourceManager.AllocateGlModel(instanceName, device.RenderModel, _steamVRModelProgramCode);
 
-                // +Y
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, +_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, +_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, +_CubeSize);
+                instance.ModelMatrix.Set(device.Transform);
 
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, +_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, -_CubeSize);
-
-                // -Y
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, -_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, -_CubeSize, +_CubeSize);
-
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, -_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, +_CubeSize);
-
-                // +X
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, -_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, +_CubeSize);
-
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, -_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, -_CubeSize, +_CubeSize);
-
-                // -X
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, +_CubeSize, +_CubeSize);
-
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, +_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, +_CubeSize, -_CubeSize);
-
-                // +Z
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, -_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, +_CubeSize);
-
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, +_CubeSize);
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, +_CubeSize, +_CubeSize);
-
-                // -Z
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, +_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, -_CubeSize);
-
-                arrayPosition[i++] = new Vertex3f(-_CubeSize, -_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, +_CubeSize, -_CubeSize);
-                arrayPosition[i++] = new Vertex3f(+_CubeSize, -_CubeSize, -_CubeSize);
-
-                return (arrayPosition);
+                _glScene.AddInstance(instance);
+                _trackedDevices.Add(device.DeviceID, instance);
             }
         }
 
-        private Vertex3f[] ArrayNormals
+        private void HandleTrackedDeviceDeactivated(SteamVRTrackedDevice device)
         {
-            get
+            if (_trackedDevices.ContainsKey(device.DeviceID))
             {
-                Vertex3f[] arrayNormal = new Vertex3f[36];
-                int v = 0;
-
-                for (int i = 0; i < 6; i++)
-                    arrayNormal[v++] = -Vertex3f.UnitY;
-                for (int i = 0; i < 6; i++)
-                    arrayNormal[v++] = Vertex3f.UnitY;
-                for (int i = 0; i < 6; i++)
-                    arrayNormal[v++] = -Vertex3f.UnitX;
-                for (int i = 0; i < 6; i++)
-                    arrayNormal[v++] = Vertex3f.UnitX;
-                for (int i = 0; i < 6; i++)
-                    arrayNormal[v++] = -Vertex3f.UnitZ;
-                for (int i = 0; i < 6; i++)
-                    arrayNormal[v++] = Vertex3f.UnitZ;
-
-                return (arrayNormal);
+                _trackedDevices.Remove(device.DeviceID);
             }
         }
 
-        private ColorRGBF[] ArrayColors
+        private void HandleTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
         {
-            get
+            foreach (var KVPair in poses)
             {
-                ColorRGBF[] arrayColor = new ColorRGBF[36];
-                int v = 0;
+                uint deviceID = KVPair.Key;
 
-                for (int i = 0; i < 12; i++)
-                    arrayColor[v++] = ColorRGBF.ColorRed;
-                for (int i = 0; i < 12; i++)
-                    arrayColor[v++] = ColorRGBF.ColorGreen;
-                for (int i = 0; i < 12; i++)
-                    arrayColor[v++] = ColorRGBF.ColorBlue;
+                if (_trackedDevices.ContainsKey(deviceID))
+                {
+                    OpenGL.ModelMatrix newPose= KVPair.Value;
+                    GlModelInstance model = _trackedDevices[deviceID];
 
-                return (arrayColor);
+                    model.ModelMatrix.Set(newPose);
+                }
             }
         }
-
-        //private SceneObjectGeometry CreateCubeGeometry()
-        //{
-        //    SceneObjectGeometry cubeGeometry = new SceneObjectGeometry("Cube");
-
-        //    cubeGeometry.ObjectState.DefineState(new CullFaceState(FrontFaceDirection.Ccw, CullFaceMode.Back));
-        //    cubeGeometry.ObjectState.DefineState(new TransformState());
-
-        //    MaterialState cubeMaterialState = new MaterialState();
-        //    cubeMaterialState.FrontMaterial = new MaterialState.Material(ColorRGBAF.ColorWhite * 0.5f);
-        //    cubeMaterialState.FrontMaterial.Ambient = ColorRGBAF.ColorBlack;
-        //    cubeMaterialState.FrontMaterial.Diffuse = ColorRGBAF.ColorWhite * 0.5f;
-        //    cubeMaterialState.FrontMaterial.Specular = ColorRGBAF.ColorWhite * 0.5f;
-        //    cubeMaterialState.FrontMaterial.Shininess = 10.0f;
-        //    cubeGeometry.ObjectState.DefineState(cubeMaterialState);
-
-        //    if (_CubeArrayPosition == null) {
-        //        _CubeArrayPosition = new ArrayBuffer<Vertex3f>();
-        //        _CubeArrayPosition.Create(ArrayPosition);
-        //    }
-
-        //    if (_CubeArrayColor == null) {
-        //        _CubeArrayColor = new ArrayBuffer<ColorRGBF>();
-        //        _CubeArrayColor.Create(ArrayColors);
-        //    }
-
-        //    if (_CubeArrayNormal == null) {
-        //        _CubeArrayNormal = new ArrayBuffer<Vertex3f>();
-        //        _CubeArrayNormal.Create(ArrayNormals);
-        //    }
-
-        //    if (_CubeArrays == null) {
-        //        _CubeArrays = new VertexArrays();
-        //        _CubeArrays.SetArray(_CubeArrayPosition, VertexArraySemantic.Position);
-        //        _CubeArrays.SetArray(_CubeArrayColor, VertexArraySemantic.Color);
-        //        _CubeArrays.SetArray(_CubeArrayNormal, VertexArraySemantic.Normal);
-        //        _CubeArrays.SetElementArray(PrimitiveType.Triangles);
-        //    }
-
-        //    cubeGeometry.VertexArray = _CubeArrays;
-
-        //    cubeGeometry.BoundingVolume = new BoundingBox(-Vertex3f.One * _CubeSize, Vertex3f.One * _CubeSize);
-
-        //    return (cubeGeometry);
-        //}
 
         protected override void OnLoad(EventArgs e)
         {
@@ -227,45 +132,26 @@ namespace SystemTrayApp
         protected override void OnClosing(CancelEventArgs e)
         {
             base.OnClosing(e);
+
+            SteamVRContext.Instance.TrackedDeviceActivatedEvent -= OnTrackedDeviceActivated;
+            SteamVRContext.Instance.TrackedDeviceDeactivatedEvent -= OnTrackedDeviceDeactivated;
+            SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent -= OnTrackedDevicesPoseUpdate;
         }
 
         private void glControl_ContextCreated(object sender, GlControlEventArgs e)
         {
-            //// Wrap GL context with GraphicsContext
-            //_Context = new GraphicsContext(e.DeviceContext, e.RenderContext);
-            
-            //// Scene
-            //_CubeScene = new SceneGraph(
-            //    SceneGraphFlags.CullingViewFrustum | SceneGraphFlags.StateSorting | SceneGraphFlags.Lighting | SceneGraphFlags.ShadowMaps
-            //    //| SceneGraphFlags.BoundingVolumes
-            //    );
-            //_CubeScene.SceneRoot = new SceneObjectGeometry();
-            //_CubeScene.SceneRoot.ObjectState.DefineState(new DepthTestState(DepthFunction.Less));
+            GlControl senderControl = (GlControl)sender;
 
-            //_CubeScene.CurrentView = new SceneObjectCamera();
-            //_CubeScene.SceneRoot.Link(_CubeScene.CurrentView);
+            Gl.ClearColor(k_clear_color.Red, k_clear_color.Green, k_clear_color.Blue, k_clear_color.Alpha);
+            Gl.Viewport(0, 0, senderControl.Width, senderControl.Height);
 
-            //// Global lighting
-            //SceneObjectLightZone globalLightZone = new SceneObjectLightZone();
+            Gl.Enable(EnableCap.Texture2d);
+            Gl.Enable(EnableCap.DepthTest);
 
-            //_GlobalLightObject = new SceneObjectLightDirectional();
-            //_GlobalLightObject.Direction = (-Vertex3f.UnitX + Vertex3f.UnitY - Vertex3f.UnitZ).Normalized;
-            //globalLightZone.Link(_GlobalLightObject);
-
-            //_CubeScene.SceneRoot.Link(globalLightZone);
-
-            //// Horizontal plane
-            //globalLightZone.Link(CreatePlane());
-
-            //SceneObjectGeometry cubeColored = CreateCubeGeometry();
-            //cubeColored.ProgramTag = ShadersLibrary.Instance.CreateProgramTag("OpenGL.Standard+Color");
-            //cubeColored.LocalModel.Translate(0.0f, 5.0f, 0.0f);
-            //globalLightZone.Link(cubeColored);
-
-            //_CubeScene.Create(_Context);
-
-            Gl.ClearColor(0.1f, 0.1f, 0.1f, 0.0f);
-            Gl.Enable(EnableCap.Multisample);
+            _glScene.Camera.ProjectionMatrix.SetPerspective(
+                k_camera_vfov,
+                senderControl.Width / senderControl.Height, 
+                k_camera_z_near, k_camera_z_far);
         }
 
         private void glControl_Render(object sender, GlControlEventArgs e)
@@ -277,32 +163,26 @@ namespace SystemTrayApp
             Gl.Viewport(0, 0, senderControl.Width, senderControl.Height);
             Gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            //_CubeScene.CurrentView.ProjectionMatrix = new PerspectiveProjectionMatrix(45.0f, senderAspectRatio, 0.1f, 100.0f);
-            //_CubeScene.CurrentView.LocalModel.SetIdentity();
-            //_CubeScene.CurrentView.LocalModel.Translate(_ViewStrideLat, _ViewStrideAlt, 0.0f);
-            //_CubeScene.CurrentView.LocalModel.RotateY(_ViewAzimuth);
-            //_CubeScene.CurrentView.LocalModel.RotateX(_ViewElevation);
-            //_CubeScene.CurrentView.LocalModel.Translate(0.0f, 0.0f, _ViewLever);
-            //_CubeScene.UpdateViewMatrix();
-
-            //_CubeScene.Draw(_Context);
+            _glScene.Render(e.DeviceContext);
         }
 
         private void glControl_ContextUpdate(object sender, GlControlEventArgs e)
         {
+            _glResourceManager.NotifyGLContextUpdated(e.DeviceContext);
+
             foreach (Keys pressedKey in _PressedKeys) {
                 switch (pressedKey) {
                     case Keys.A:
-                        _ViewStrideLat -= 0.1f;
+                        _glScene.Camera.ZOffset -= 0.1f;
                         break;
                     case Keys.D:
-                        _ViewStrideLat += 0.1f;
+                        _glScene.Camera.ZOffset += 0.1f;
                         break;
                     case Keys.W:
-                        _ViewStrideAlt += 0.1f;
+                        _glScene.Camera.YOffset += 0.1f;
                         break;
                     case Keys.S:
-                        _ViewStrideAlt -= 0.1f;
+                        _glScene.Camera.YOffset -= 0.1f;
                         break;
                 }
             }
@@ -310,25 +190,24 @@ namespace SystemTrayApp
 
         private void glControl_ContextDestroying(object sender, GlControlEventArgs e)
         {
-            //_CubeScene.Dispose();
-            //_Context.Dispose();
+            _glResourceManager.NotifyGLContextDisposed(e.DeviceContext);
         }
 
         private void glControl_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
+            {
                 _Mouse = e.Location;
+                _glScene.Camera.onMouseButtonDown();
+            }
         }
 
         private void glControl_MouseMove(object sender, MouseEventArgs e)
         {
             if (_Mouse.HasValue) {
                 System.Drawing.Point delta = _Mouse.Value - (System.Drawing.Size)e.Location;
-
-                _ViewAzimuth += delta.X * 0.5f;
-                _ViewElevation += delta.Y * 0.5f;
-
                 _Mouse = e.Location;
+                _glScene.Camera.onMouseMotion(delta.X, delta.Y);
             }
         }
 
@@ -339,14 +218,15 @@ namespace SystemTrayApp
 
         private void glControl_MouseWheel(object sender, MouseEventArgs e)
         {
-            _ViewLever += e.Delta / 60.0f;
-            _ViewLever = Math.Max(2.5f, _ViewLever);
+            _glScene.Camera.onMouseWheel(e.Delta);
         }
 
         private void glControl_KeyDown(object sender, KeyEventArgs e)
         {
             if (_PressedKeys.Contains(e.KeyCode) == false)
+            {
                 _PressedKeys.Add(e.KeyCode);
+            }
         }
 
         private void glControl_KeyUp(object sender, KeyEventArgs e)

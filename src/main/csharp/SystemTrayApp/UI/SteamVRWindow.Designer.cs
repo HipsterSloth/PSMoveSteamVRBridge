@@ -40,7 +40,7 @@ namespace SystemTrayApp
             this.glControl.AnimationTimer = false;
             this.glControl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.glControl.ColorBits = ((uint)(24u));
-            this.glControl.DepthBits = ((uint)(0u));
+            this.glControl.DepthBits = ((uint)(24u));
             this.glControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.glControl.Location = new System.Drawing.Point(0, 0);
             this.glControl.MultisampleBits = ((uint)(0u));
