@@ -16,44 +16,11 @@ namespace SystemTrayApp
 {
     public partial class SteamVRWindow : MaterialForm
     {
-        private ColorRGBA k_clear_color = new ColorRGBA(0.447f, 0.565f, 0.604f, 1.0f);
-
-        private float k_camera_vfov = 35.0f;
-        private float k_camera_z_near = 0.1f;
-        private float k_camera_z_far = 5000.0f;
-
         private readonly List<Keys> _PressedKeys = new List<Keys>();
         private System.Drawing.Point? _Mouse;
 
-        private Dictionary<uint, GlModelInstance> _trackedDevices = new Dictionary<uint, GlModelInstance>();
-
-        private GlResourceManager _glResourceManager = new GlResourceManager();
+        private Dictionary<uint, SteamVRDeviceInstance> _trackedDevices = new Dictionary<uint, SteamVRDeviceInstance>();
         private GlScene _glScene = new GlScene();
-
-        private GlProgramCode _steamVRModelProgramCode = 
-            new GlProgramCode( 
-		        "render model",    
-		        // vertex shader
-		        @"#version 410
-		        uniform mat4 matrix;
-		        layout(location = 0) in vec4 position;
-		        layout(location = 1) in vec3 v3NormalIn;
-		        layout(location = 2) in vec2 v2TexCoordsIn;
-		        out vec2 v2TexCoord;
-		        void main()
-		        {
-		        	v2TexCoord = v2TexCoordsIn;
-		        	gl_Position = matrix * vec4(position.xyz, 1);
-		        }",    
-		        //fragment shader
-		        @"#version 410 core
-		        uniform sampler2D diffuse;
-		        in vec2 v2TexCoord;
-		        out vec4 outputColor;
-		        void main()
-		        {
-		           outputColor = texture( diffuse, v2TexCoord);
-		        }");
 
         public SteamVRWindow()
         {
@@ -90,12 +57,9 @@ namespace SystemTrayApp
         {
             if (device.RenderModel != null)
             {
-                string instanceName = string.Format("SteamVRDevice_{0}", device.DeviceID);
-                GlModelInstance instance = _glResourceManager.AllocateGlModel(instanceName, device.RenderModel, _steamVRModelProgramCode);
+                SteamVRDeviceInstance instance = new SteamVRDeviceInstance();
 
-                instance.ModelMatrix.Set(device.Transform);
-
-                _glScene.AddInstance(instance);
+                instance.AddToScene(_glScene, device);
                 _trackedDevices.Add(device.DeviceID, instance);
             }
         }
@@ -104,6 +68,7 @@ namespace SystemTrayApp
         {
             if (_trackedDevices.ContainsKey(device.DeviceID))
             {
+                _trackedDevices[device.DeviceID].RemoveFromScene(_glScene);
                 _trackedDevices.Remove(device.DeviceID);
             }
         }
@@ -117,7 +82,7 @@ namespace SystemTrayApp
                 if (_trackedDevices.ContainsKey(deviceID))
                 {
                     OpenGL.ModelMatrix newPose= KVPair.Value;
-                    GlModelInstance model = _trackedDevices[deviceID];
+                    SteamVRDeviceInstance model = _trackedDevices[deviceID];
 
                     model.ModelMatrix.Set(newPose);
                 }
@@ -142,33 +107,24 @@ namespace SystemTrayApp
         {
             GlControl senderControl = (GlControl)sender;
 
-            Gl.ClearColor(k_clear_color.Red, k_clear_color.Green, k_clear_color.Blue, k_clear_color.Alpha);
-            Gl.Viewport(0, 0, senderControl.Width, senderControl.Height);
-
-            Gl.Enable(EnableCap.Texture2d);
-            Gl.Enable(EnableCap.DepthTest);
-
-            _glScene.Camera.ProjectionMatrix.SetPerspective(
-                k_camera_vfov,
-                senderControl.Width / senderControl.Height, 
-                k_camera_z_near, k_camera_z_far);
+            _glScene.NotifyGLContextCreated(senderControl.Width, senderControl.Height);
         }
 
         private void glControl_Render(object sender, GlControlEventArgs e)
         {
             GlControl senderControl = (GlControl)sender;
-            float senderAspectRatio = (float)senderControl.Width / senderControl.Height;
 
-            // Clear
-            Gl.Viewport(0, 0, senderControl.Width, senderControl.Height);
-            Gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            _glScene.Render(e.DeviceContext);
+            _glScene.NotifyGLContextRender(senderControl.Width, senderControl.Height, e.DeviceContext);
         }
 
         private void glControl_ContextUpdate(object sender, GlControlEventArgs e)
         {
-            _glResourceManager.NotifyGLContextUpdated(e.DeviceContext);
+            _glScene.NotifyGLContextUpdated(e.DeviceContext);
+
+            // Update child component transforms
+            foreach (var KVPair in _trackedDevices) {
+                KVPair.Value.PollComponentState();
+            }
 
             foreach (Keys pressedKey in _PressedKeys) {
                 switch (pressedKey) {
@@ -190,7 +146,7 @@ namespace SystemTrayApp
 
         private void glControl_ContextDestroying(object sender, GlControlEventArgs e)
         {
-            _glResourceManager.NotifyGLContextDisposed(e.DeviceContext);
+            _glScene.ResourceManager.NotifyGLContextDisposed(e.DeviceContext);
         }
 
         private void glControl_MouseDown(object sender, MouseEventArgs e)

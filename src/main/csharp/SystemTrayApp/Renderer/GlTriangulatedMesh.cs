@@ -14,6 +14,8 @@ namespace SystemTrayApp
     {
         private bool disposed = false;
 
+        private string _name;
+
         private GlVertexDefinition _vertexDefinition;
 
         private IntPtr _vertexData;
@@ -27,12 +29,14 @@ namespace SystemTrayApp
         private uint _glIndexBuffer = 0;
 
         public GlTriangulatedMesh(
+            string name,
             GlVertexDefinition vertexDefintion,
             IntPtr vertexData, 
             uint vertexCount,
             IntPtr indexData,
             uint triangleCount)
         {
+            _name = name;
             _vertexDefinition = vertexDefintion;
             _vertexData= vertexData;
             _vertexCount= vertexCount;

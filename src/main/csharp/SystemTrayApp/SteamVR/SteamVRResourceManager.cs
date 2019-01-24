@@ -13,7 +13,7 @@ namespace SystemTrayApp
     {
         private Dictionary<string, Image> ImageCache = new Dictionary<string, Image>();
         private Dictionary<string, SteamVRRenderModel> RenderModelCache = new Dictionary<string, SteamVRRenderModel>();
-        private bool HasPendingAsyncRenderModelLoads = false;
+        private Dictionary<string, SteamVRRenderModelComponent> RenderModelComponentCache = new Dictionary<string, SteamVRRenderModelComponent>();
 
         public static SteamVRResourceManager Instance
         {
@@ -27,25 +27,6 @@ namespace SystemTrayApp
 
         public void Init()
         {
-        }
-
-        public void PollAsyncLoadRequests()
-        {
-            if (HasPendingAsyncRenderModelLoads)
-            {
-                HasPendingAsyncRenderModelLoads = false;
-
-                foreach (var element in RenderModelCache)
-                {
-                    SteamVRRenderModel renderModel = element.Value;
-
-                    if (renderModel.IsLoading)
-                    {
-                        renderModel.PollAsyncLoad();
-                        HasPendingAsyncRenderModelLoads |= renderModel.IsLoading;
-                    }
-                }
-            }
         }
 
         public void Cleanup()
@@ -104,30 +85,38 @@ namespace SystemTrayApp
                 }
                 else
                 {
-                    try
+                    SteamVRRenderModel renderModel = new SteamVRRenderModel(renderModelName);
+
+                    if (renderModel.LoadResources())
                     {
-                        SteamVRRenderModel renderModel = new SteamVRRenderModel(renderModelName);
+                        RenderModelCache.Add(renderModelName, renderModel);
 
-                        if (renderModel != null)
-                        {
-                            if (renderModel.StartAsyncLoad())
-                            {
-                                RenderModelCache.Add(renderModelName, renderModel);
-
-                                if (renderModel.LoadingState != SteamVRRenderModel.RenderModelLoadingState.Loaded)
-                                {
-                                    HasPendingAsyncRenderModelLoads= true;
-                                }
-
-                                return renderModel;
-                            }
-                        }
-
-                        return null;
+                        return renderModel;
                     }
-                    catch (Exception) 
+                }
+            }
+
+            return null;
+        }
+
+        public SteamVRRenderModelComponent FetchRenderModelComponentResource(string componentName, string renderModelName)
+        {
+            if (renderModelName.Length > 0)
+            {
+                if (RenderModelComponentCache.ContainsKey(renderModelName))
+                {
+                    return RenderModelComponentCache[renderModelName];
+                }
+                else 
+                {
+                    SteamVRRenderModelComponent renderModelComponent = 
+                        new SteamVRRenderModelComponent(componentName, renderModelName);
+
+                    if (renderModelComponent.LoadResources())
                     {
-                        return null;
+                        RenderModelComponentCache.Add(renderModelName, renderModelComponent);
+
+                        return renderModelComponent;
                     }
                 }
             }

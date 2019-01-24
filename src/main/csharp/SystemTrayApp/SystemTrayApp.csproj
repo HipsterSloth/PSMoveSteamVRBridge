@@ -90,9 +90,11 @@
     <Compile Include="Renderer\GlTexture.cs" />
     <Compile Include="Renderer\GlTriangulatedMesh.cs" />
     <Compile Include="Renderer\GlVertexDefinition.cs" />
+    <Compile Include="Renderer\SteamVRDeviceInstance.cs" />
     <Compile Include="SteamVR\SteamVRController.cs" />
     <Compile Include="SteamVR\SteamVRHeadMountedDisplay.cs" />
     <Compile Include="SteamVR\SteamVRRenderModel.cs" />
+    <Compile Include="SteamVR\SteamVRRenderModelComponent.cs" />
     <Compile Include="SteamVR\SteamVRResourceManager.cs" />
     <Compile Include="SteamVR\SteamVRTrackedDevice.cs" />
     <Compile Include="SteamVR\SteamVRTracker.cs" />
@@ -166,6 +168,7 @@
       <DependentUpon>VirtualControllerPanel.cs</DependentUpon>
     </Compile>
     <Compile Include="Utility\MathUtility.cs" />
+    <Compile Include="Utility\SteamVRUtility.cs" />
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Resources\Default.ico" />

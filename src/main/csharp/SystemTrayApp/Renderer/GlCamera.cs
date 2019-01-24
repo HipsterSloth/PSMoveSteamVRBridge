@@ -11,8 +11,8 @@ namespace SystemTrayApp
     public class GlCamera
     {
         private static float k_camera_mouse_zoom_scalar = 0.01f;
-        private static float k_camera_mouse_pan_scalar = 0.5f;
-        private static float k_camera_min_zoom = 1.0f;
+        private static float k_camera_mouse_pan_scalar = 0.1f;
+        private static float k_camera_min_zoom = 0.01f;
 
         private PerspectiveProjectionMatrix _projectionMatrix;
         public PerspectiveProjectionMatrix ProjectionMatrix

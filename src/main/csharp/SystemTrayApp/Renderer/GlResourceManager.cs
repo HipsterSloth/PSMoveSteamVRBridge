@@ -71,7 +71,7 @@ namespace SystemTrayApp
             ProgramCache.Clear();
         }
 
-        public GlModelInstance AllocateGlModel(string name, SteamVRRenderModel renderModel, GlProgramCode code)
+        public GlModelInstance AllocateGlModel(string name, SteamVRRenderModelComponent renderModel, GlProgramCode code)
         {
             GlMaterial material = FetchMaterial(renderModel, code);
             GlTriangulatedMesh mesh= FetchTriangulatedMeshResource(renderModel);
@@ -93,7 +93,7 @@ namespace SystemTrayApp
             }
         }
 
-        public GlMaterial FetchMaterial(SteamVRRenderModel renderModel, GlProgramCode code)
+        public GlMaterial FetchMaterial(SteamVRRenderModelComponent renderModel, GlProgramCode code)
         {
             string materialName = string.Format("{0}_{1}", renderModel.RenderModelName, code.shaderName);
 
@@ -110,7 +110,7 @@ namespace SystemTrayApp
             }
         }
 
-        public GlTexture FetchTextureResource(SteamVRRenderModel renderModel)
+        public GlTexture FetchTextureResource(SteamVRRenderModelComponent renderModel)
         {
             if (TextureCache.ContainsKey(renderModel.RenderModelName)) {
                 return TextureCache[renderModel.RenderModelName];
@@ -124,7 +124,7 @@ namespace SystemTrayApp
             }
         }
 
-        public GlTriangulatedMesh FetchTriangulatedMeshResource(SteamVRRenderModel renderModel)
+        public GlTriangulatedMesh FetchTriangulatedMeshResource(SteamVRRenderModelComponent renderModel)
         {
             if (MeshCache.ContainsKey(renderModel.RenderModelName)) {
                 return MeshCache[renderModel.RenderModelName];
@@ -134,6 +134,7 @@ namespace SystemTrayApp
                 RenderModel_t vrModel= renderModel.RenderModel;
                 GlTriangulatedMesh mesh = 
                     new GlTriangulatedMesh(
+                        renderModel.RenderModelName,
                         renderModel.GetVertexDefinition(),
                         vrModel.rVertexData, vrModel.unVertexCount, vrModel.rIndexData, vrModel.unTriangleCount);
 

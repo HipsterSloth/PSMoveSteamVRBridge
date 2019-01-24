@@ -95,11 +95,6 @@ namespace SystemTrayApp
             _isPoseValid = false;
         }
 
-        public bool GetIsLoadingResources()
-        {
-            return _renderModel != null && _renderModel.IsLoading;
-        }
-
         public virtual void UpdateProperties(CVRSystem SteamVRSystem)
         {
             _trackingSystem = FetchStringProperty(SteamVRSystem, ETrackedDeviceProperty.Prop_TrackingSystemName_String, "");
@@ -226,11 +221,7 @@ namespace SystemTrayApp
 
         public void SetTransform(HmdMatrix34_t mat)
         {
-            _transform = new OpenGL.ModelMatrix(new float[] {
-                mat.m0, mat.m4, mat.m8, 0.0f,
-                mat.m1, mat.m5, mat.m9, 0.0f,
-                mat.m2, mat.m6, mat.m10, 0.0f,
-                mat.m3, mat.m7, mat.m11, 1.0f});
+            _transform = SteamVRUtility.ConvertToGlModelMatrix(mat);
         }
     }
 }

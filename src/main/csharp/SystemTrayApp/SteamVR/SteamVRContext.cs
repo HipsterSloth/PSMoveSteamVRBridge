@@ -26,8 +26,7 @@ namespace SystemTrayApp
         private CVRSystem SteamVRSystem;
         private TrackedDevicePose_t[] DevicePoses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
 
-        private List<SteamVRTrackedDevice> PendingDeviceList = new List<SteamVRTrackedDevice>();
-        private Dictionary<uint, SteamVRTrackedDevice> LoadedDeviceTable = new Dictionary<uint, SteamVRTrackedDevice>();
+        private Dictionary<uint, SteamVRTrackedDevice> DeviceTable = new Dictionary<uint, SteamVRTrackedDevice>();
 
         private SteamVRContext()
         {
@@ -133,8 +132,7 @@ namespace SystemTrayApp
                 }
 
                 // Forget about all tracked devices
-                PendingDeviceList.Clear();
-                LoadedDeviceTable.Clear();
+                DeviceTable.Clear();
 
                 // Disconnected the timer callback
                 PollTimer.Elapsed -= RunFrame;
@@ -182,28 +180,6 @@ namespace SystemTrayApp
 
             if (IsConnected)
             {
-                // Update any pending resource loads
-                resourceManager.PollAsyncLoadRequests();
-
-                // See if any pending resource loads have completed
-                for (int ListIndex= PendingDeviceList.Count - 1; ListIndex >= 0; --ListIndex)
-                {
-                    SteamVRTrackedDevice device = PendingDeviceList[ListIndex];
-
-                    if (!device.GetIsLoadingResources())
-                    {
-                        // Move the device into the loaded set
-                        PendingDeviceList.Remove(device);
-                        LoadedDeviceTable.Add(device.DeviceID, device);
-
-                        // Now it's safe to notify clients that the device has been added
-                        if (TrackedDeviceActivatedEvent != null)
-                        {
-                            TrackedDeviceActivatedEvent(device);
-                        }
-                    }
-                }
-
                 // Fetch the latest controller pose data
                 if (TrackedDevicesPoseUpdateEvent != null)
                 {
@@ -218,7 +194,7 @@ namespace SystemTrayApp
                         {
                             if (HandleTrackedDevicePoseUpdated(DeviceIndex, DevicePoses[DeviceIndex]))
                             {
-                                UpdatePosesTable.Add(DeviceIndex, LoadedDeviceTable[DeviceIndex].Transform);
+                                UpdatePosesTable.Add(DeviceIndex, DeviceTable[DeviceIndex].Transform);
                             }
                         }
                     }
@@ -238,7 +214,7 @@ namespace SystemTrayApp
 
         public List<SteamVRTrackedDevice> FetchLoadedTrackedDeviceList()
         {
-            return new List<SteamVRTrackedDevice>(LoadedDeviceTable.Values);
+            return new List<SteamVRTrackedDevice>(DeviceTable.Values);
         }
 
         private void HandleTrackedDeviceActivated(uint trackedDeviceIndex)
@@ -248,22 +224,19 @@ namespace SystemTrayApp
             switch (SteamVRSystem.GetTrackedDeviceClass(trackedDeviceIndex))
             {
                 case ETrackedDeviceClass.HMD:
-                    if (!LoadedDeviceTable.ContainsKey(trackedDeviceIndex) &&
-                        !PendingDeviceList.Exists(x => x.DeviceID == trackedDeviceIndex))
+                    if (!DeviceTable.ContainsKey(trackedDeviceIndex))
                     {
                         device = new SteamVRHeadMountedDisplay(trackedDeviceIndex);
                     }
                     break;
                 case ETrackedDeviceClass.Controller:
-                    if (!LoadedDeviceTable.ContainsKey(trackedDeviceIndex) &&
-                        !PendingDeviceList.Exists(x => x.DeviceID == trackedDeviceIndex))
+                    if (!DeviceTable.ContainsKey(trackedDeviceIndex))
                     {
                         device = new SteamVRController(trackedDeviceIndex);
                     }
                     break;
                 case ETrackedDeviceClass.TrackingReference:
-                    if (!LoadedDeviceTable.ContainsKey(trackedDeviceIndex) &&
-                        !PendingDeviceList.Exists(x => x.DeviceID == trackedDeviceIndex))
+                    if (!DeviceTable.ContainsKey(trackedDeviceIndex))
                     {
                         device = new SteamVRTracker(trackedDeviceIndex);
                     }
@@ -276,49 +249,41 @@ namespace SystemTrayApp
                 device.UpdateProperties(SteamVRSystem);
 
                 // Add the device to the pending-load set
-                PendingDeviceList.Add(device);
+                DeviceTable.Add(trackedDeviceIndex, device);
             }
         }
 
         private void HandleTrackedDevicePropertyChanged(uint trackedDeviceIndex)
         {
-            if (LoadedDeviceTable.ContainsKey(trackedDeviceIndex)) 
+            if (DeviceTable.ContainsKey(trackedDeviceIndex)) 
             {
-                SteamVRTrackedDevice device= LoadedDeviceTable[trackedDeviceIndex];
+                SteamVRTrackedDevice device= DeviceTable[trackedDeviceIndex];
 
                 // Refresh all the properties on the device
                 device.UpdateProperties(SteamVRSystem);
 
-                // See if the device has to load resources as a result of property changes
-                if (device.GetIsLoadingResources())
-                {
-                    // Tell any clients that the device has been "disconnected" during the load phase
-                    HandleTrackedDeviceDeactivated(trackedDeviceIndex);
-
-                    // Put the device back in the pending list
-                    PendingDeviceList.Add(device);
+                if (TrackedDeviceActivatedEvent != null) {
+                    TrackedDeviceActivatedEvent(device);
                 }
             }
         }
 
         private void HandleTrackedDeviceDeactivated(uint trackedDeviceIndex)
         {
-            PendingDeviceList.RemoveAll(x => x.DeviceID == trackedDeviceIndex);
-
-            if (LoadedDeviceTable.ContainsKey(trackedDeviceIndex)) {
+            if (DeviceTable.ContainsKey(trackedDeviceIndex)) {
                 if (TrackedDeviceDeactivatedEvent != null) {
-                    TrackedDeviceDeactivatedEvent(LoadedDeviceTable[trackedDeviceIndex]);
+                    TrackedDeviceDeactivatedEvent(DeviceTable[trackedDeviceIndex]);
                 }
 
-                LoadedDeviceTable.Remove(trackedDeviceIndex);
+                DeviceTable.Remove(trackedDeviceIndex);
             }
         }
 
         private bool HandleTrackedDevicePoseUpdated(uint trackedDeviceIndex, TrackedDevicePose_t pose)
         {
-            if (LoadedDeviceTable.ContainsKey(trackedDeviceIndex))
+            if (DeviceTable.ContainsKey(trackedDeviceIndex))
             {
-                LoadedDeviceTable[trackedDeviceIndex].ApplyPoseUpdate(pose);
+                DeviceTable[trackedDeviceIndex].ApplyPoseUpdate(pose);
 
                 return true;
             }

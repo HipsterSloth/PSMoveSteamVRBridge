@@ -9,10 +9,17 @@ namespace SystemTrayApp
 {
     public class GlModelInstance
     {
-        private string _name = "";
+        private string _name;
         public string Name
         {
             get { return _name; }
+        }
+
+        private bool _visible;
+        public bool Visible
+        {
+            get { return _visible; }
+            set { _visible = value; }
         }
 
         private ModelMatrix _modelMatrix = new ModelMatrix();
@@ -37,6 +44,7 @@ namespace SystemTrayApp
         public GlModelInstance(string name, GlTriangulatedMesh mesh, GlMaterial material)
         {
             _name = name;
+            _visible = true;
             _mesh = mesh;
             _material = material;
         }
