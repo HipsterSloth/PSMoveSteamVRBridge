@@ -217,9 +217,6 @@
       <HintPath>..\packages\MaterialSkin.Updated.0.2.2\lib\MaterialSkin.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OpenGL.Net-CoreProfile">
-      <HintPath>..\packages\OpenGL.Net.CoreProfile.0.7.1\lib\net461\OpenGL.Net-CoreProfile.dll</HintPath>
-    </Reference>
     <Reference Include="OpenGL.Net.Math">
       <HintPath>..\packages\OpenGL.Net.Math.0.7.1\lib\net461\OpenGL.Net.Math.dll</HintPath>
     </Reference>
