@@ -121,12 +121,10 @@ namespace SystemTrayApp
                             ref component.componentModeState,
                             ref component.componentState))
                 {
-                    ModelMatrix localMat= 
-                        SteamVRUtility.ConvertToGlModelMatrix(component.componentState.mTrackingToComponentLocal);
                     ModelMatrix componentMat = 
                         SteamVRUtility.ConvertToGlModelMatrix(component.componentState.mTrackingToComponentRenderModel);
 
-                    component.glComponentInstance.ModelMatrix.Set(_modelMatrix * componentMat * localMat);
+                    component.glComponentInstance.ModelMatrix.Set(_modelMatrix * componentMat);
                     component.glComponentInstance.Visible = 
                         (component.componentState.uProperties & (uint)EVRComponentProperty.IsVisible) != 0;
                 }

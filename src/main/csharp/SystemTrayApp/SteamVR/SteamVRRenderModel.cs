@@ -82,7 +82,7 @@ namespace SystemTrayApp
 
                 _components = componentList.ToArray();
             }
-            else 
+            else
             {
                 SteamVRRenderModelComponent ModelComponent =
                     SteamVRResourceManager.Instance.FetchRenderModelComponentResource("", _renderModelName);

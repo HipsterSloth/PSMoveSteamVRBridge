@@ -67,7 +67,7 @@ namespace SystemTrayApp
         {
             if (GlContext == _glContext) {
                 Gl.BindVertexArray(_glVertArray);
-                Gl.DrawElements(PrimitiveType.Triangles, (int)_vertexCount, DrawElementsType.UnsignedShort, IntPtr.Zero);
+                Gl.DrawElements(PrimitiveType.Triangles, (int)_triangleCount*3, DrawElementsType.UnsignedShort, IntPtr.Zero);
                 Gl.BindVertexArray(0);
             }
         }
@@ -101,7 +101,7 @@ namespace SystemTrayApp
                 // Create and populate the index buffer
                 _glIndexBuffer = Gl.GenBuffer();
                 Gl.BindBuffer(BufferTarget.ElementArrayBuffer, _glIndexBuffer);
-                Gl.BufferData(BufferTarget.ElementArrayBuffer, (uint)Marshal.SizeOf(typeof(UInt16)) * _vertexCount, _indexData, BufferUsage.StaticDraw);
+                Gl.BufferData(BufferTarget.ElementArrayBuffer, (uint)Marshal.SizeOf(typeof(UInt16)) * _triangleCount * 3, _indexData, BufferUsage.StaticDraw);
 
                 Gl.BindVertexArray(0);
             }
