@@ -9,19 +9,22 @@ using System.ComponentModel;
 
 namespace SystemTrayApp
 {
-    public class PSMoveServiceContext
+    public class PSMoveServiceContext : SynchronizedContext
     {
         private static string PSMOVESTEAMVRBRIDE_REGKEY_PATH = @"SOFTWARE\WOW6432Node\PSMoveSteamVRBridge\PSMoveSteamVRBridge";
         private static string PSMOVESERVICE_PROCESS_NAME = "PSMoveService";
         private static double POLL_INTERVAL_5FPS = 1.0 / 5.0; // ms
         //private static double POLL_INTERVAL_60FPS = 1.0 / 60.0; // ms
 
-        private static readonly Lazy<PSMoveServiceContext> lazy = 
+        private static readonly Lazy<PSMoveServiceContext> _lazyInstance = 
             new Lazy<PSMoveServiceContext>(() => new PSMoveServiceContext());
-        public static PSMoveServiceContext Instance { get { return lazy.Value; } }        
+        public static PSMoveServiceContext Instance 
+        { 
+            get { return _lazyInstance.Value; }
+        }
 
-        private bool bInitialized;
-        private Timer PollTimer;
+        private bool _bInitialized;
+        private Timer _pollTimer;
 
         public enum PSMConnectionState
         {
@@ -30,11 +33,28 @@ namespace SystemTrayApp
             connected
         }
 
-        private PSMConnectionState connection_state;
+        private PSMConnectionState _connectionState;
         public PSMConnectionState ConnectionState
         {
-            get { return connection_state; }
-            set { connection_state = value; }
+            get { return _connectionState; }
+        }
+
+        private PSMClientControllerInfo[] _controllerInfoList;
+        public PSMClientControllerInfo[] ControllerInfoList
+        {
+            get { return _controllerInfoList; }
+        }
+
+        private PSMClientHMDInfo[] _hmdInfoList;
+        public PSMClientHMDInfo[] HmdInfoList
+        {
+            get { return _hmdInfoList; }
+        }
+
+        private PSMClientTrackerInfo[] _trackerInfoList;
+        public PSMClientTrackerInfo[] TrackerInfoList
+        {
+            get { return _trackerInfoList; }
         }
 
         public delegate void ConnectedToPSMService();
@@ -43,25 +63,46 @@ namespace SystemTrayApp
         public delegate void DisconnectedFromPSMService();
         public event DisconnectedFromPSMService DisconnectedFromPSMServiceEvent;
 
+        public delegate void PSMMessagesPolled();
+        public event PSMMessagesPolled PSMMessagesPolledEvent;
+
+        public delegate void ControllerListUpdated();
+        public event ControllerListUpdated ControllerListUpdatedEvent;
+
+        public delegate void TrackerListUpdated();
+        public event TrackerListUpdated TrackerListUpdatedEvent;
+
+        public delegate void HmdListUpdated();
+        public event HmdListUpdated HmdListUpdatedEvent;
+
+        public delegate void ControllerConfigListPreUpdate();
+        public event ControllerConfigListPreUpdate ControllerConfigListPreUpdateEvent;
+
+        public delegate void ControllerConfigListPostUpdate(List<ControllerConfig> newControllerConfigList);
+        public event ControllerConfigListPostUpdate ControllerConfigListPostUpdateEvent;
+
         private PSMoveServiceContext()
         {
-            PollTimer = new System.Timers.Timer();
-            bInitialized = false;
-            ConnectionState = PSMConnectionState.disconnected;
+            _controllerInfoList = new PSMClientControllerInfo[0];
+            _hmdInfoList = new PSMClientHMDInfo[0];
+            _trackerInfoList = new PSMClientTrackerInfo[0];
+            _pollTimer = new System.Timers.Timer();
+            _bInitialized = false;
+            _connectionState = PSMConnectionState.disconnected;
         }
 
         public bool Init()
         {
-            if (!bInitialized)
+            if (!_bInitialized)
             {
                 // Create a timer to poll PSMoveService state with
-                PollTimer.Elapsed += RunFrame;
-                PollTimer.AutoReset = false; // NO AUTO RESET! Restart in RunFrame().
-                PollTimer.Enabled = true;
-                PollTimer.Interval = POLL_INTERVAL_5FPS;
-                PollTimer.Start();
+                _pollTimer.Elapsed += RunFrame;
+                _pollTimer.AutoReset = false; // NO AUTO RESET! Restart in RunFrame().
+                _pollTimer.Enabled = true;
+                _pollTimer.Interval = POLL_INTERVAL_5FPS;
+                _pollTimer.Start();
 
-                bInitialized = true;
+                _bInitialized = true;
             }
 
             return true;
@@ -69,22 +110,22 @@ namespace SystemTrayApp
 
         public void Cleanup()
         {
-            if (bInitialized)
+            if (_bInitialized)
             {
                 // Disconnected the timer callback
-                PollTimer.Elapsed -= RunFrame;
+                _pollTimer.Elapsed -= RunFrame;
 
                 // Shutdown PSMove Client API
                 PSMoveClient.PSM_Shutdown();
-                ConnectionState = PSMConnectionState.disconnected;
-                bInitialized = false;
+                _connectionState = PSMConnectionState.disconnected;
+                _bInitialized = false;
             }
         }
 
         private void RunFrame(object sender, ElapsedEventArgs e)
         {
-            if (ConnectionState == PSMConnectionState.connected ||
-                ConnectionState == PSMConnectionState.waitingForConnectionResponse)
+            if (_connectionState == PSMConnectionState.connected ||
+                _connectionState == PSMConnectionState.waitingForConnectionResponse)
             {
                 // Update any controllers that are currently listening
                 PSMoveClient.PSM_UpdateNoPollMessages();
@@ -101,6 +142,10 @@ namespace SystemTrayApp
                             break;
                     }
                 }
+
+                if (PSMMessagesPolledEvent != null) {
+                    PSMMessagesPolledEvent();
+                }
             }
             else
             {
@@ -110,7 +155,7 @@ namespace SystemTrayApp
             // Restart the timer once event handling is complete.
             // This prevents overlapping callings to RunFrame.
             // In practice this is only an issue when debugging.
-            PollTimer.Start();
+            _pollTimer.Start();
         }
 
         private void HandleClientPSMoveResponse(PSMMessage message)
@@ -140,6 +185,19 @@ namespace SystemTrayApp
                             "NotifyClientPSMoveResponse - Tracker Count = {0} (request id {1}).",
                             message.response_data.payload.tracker_list.count, 
                             message.response_data.request_id));
+                    HandleTrackerListReponse(
+                        message.response_data.payload.tracker_list,
+                        message.response_data.opaque_request_handle);
+                    break;
+                case PSMResponsePayloadType._responsePayloadType_HmdList:
+                    Trace.TraceInformation(
+                        string.Format(
+                            "NotifyClientPSMoveResponse - HMD Count = {0} (request id {1}).",
+                            message.response_data.payload.hmd_list.count,
+                            message.response_data.request_id));
+                    HandleHmdListReponse(
+                        message.response_data.payload.hmd_list,
+                        message.response_data.opaque_request_handle);
                     break;
                 default:
                     Trace.TraceInformation(
@@ -213,7 +271,7 @@ namespace SystemTrayApp
                             service_version));
 
                         // Connection is now ready
-                        ConnectionState = PSMConnectionState.connected;
+                        _connectionState = PSMConnectionState.connected;
 
                         // Fire off connection delegate
                         ConnectedToPSMServiceEvent();
@@ -245,7 +303,7 @@ namespace SystemTrayApp
         void HandleFailedToConnectToPSMoveService()
         {
             Trace.TraceInformation("HandleFailedToConnectToPSMoveService - Called");
-            ConnectionState = PSMConnectionState.disconnected;
+            _connectionState = PSMConnectionState.disconnected;
         }
 
         void HandleDisconnectedFromPSMoveService()
@@ -255,14 +313,8 @@ namespace SystemTrayApp
             // Fire off disconnection delegate
             DisconnectedFromPSMServiceEvent();
 
-            ConnectionState = PSMConnectionState.disconnected;
+            _connectionState = PSMConnectionState.disconnected;
         }
-
-        public delegate void ControllerListPreUpdate();
-        public event ControllerListPreUpdate ControllerListPreUpdateEvent;
-
-        public delegate void ControllerListPostUpdate(List<ControllerConfig> newControllerConfigList);
-        public event ControllerListPostUpdate ControllerListPostUpdateEvent;
 
         void HandleControllerListChanged()
         {
@@ -282,16 +334,18 @@ namespace SystemTrayApp
                     controller_list.count));
 
             // Notify any listeners that the controller list is about to change changed
-            if (ControllerListPreUpdateEvent != null) {
-                ControllerListPreUpdateEvent();
+            if (ControllerConfigListPreUpdateEvent != null) {
+                ControllerConfigListPreUpdateEvent();
             }
 
             // Rebuild the controller list and assigning to the config manager
             List<ControllerConfig> controllerConfigList = new List<ControllerConfig>();
             {
-                PSMClientControllerInfo[] controllers = controller_list.controllers;
-                for (int list_index = 0; list_index < controllers.Length; ++list_index) {
-                    PSMClientControllerInfo controller_info = controllers[list_index];
+                // Update the controller info list
+                _controllerInfoList = controller_list.controllers;
+
+                for (int list_index = 0; list_index < _controllerInfoList.Length; ++list_index) {
+                    PSMClientControllerInfo controller_info = _controllerInfoList[list_index];
                     int psmControllerId = controller_info.controller_id;
                     PSMControllerType psmControllerType = controller_info.controller_type;
                     string psmControllerSerial = controller_info.controller_serial.Replace(":", "_");
@@ -333,8 +387,43 @@ namespace SystemTrayApp
             }
 
             // Notify any listeners that the controller list changed
-            if (ControllerListPostUpdateEvent != null) {
-                ControllerListPostUpdateEvent(controllerConfigList);
+            if (ControllerConfigListPostUpdateEvent != null) {
+                ControllerConfigListPostUpdateEvent(controllerConfigList);
+            }
+            if (ControllerListUpdatedEvent != null) {
+                ControllerListUpdatedEvent();
+            } 
+        }
+
+        void HandleTrackerListReponse(PSMTrackerList tracker_list, IntPtr response_handle)
+        {
+            Trace.TraceInformation(
+                string.Format(
+                    "CServerDriver_PSMoveService::HandleTrackerListReponse - Received {0} trackers",
+                    tracker_list.count));
+
+            // Update the tracker info list
+            _trackerInfoList = tracker_list.trackers;
+
+            // Notify any listeners that the tracker list changed
+            if (TrackerListUpdatedEvent != null) {
+                TrackerListUpdatedEvent();
+            }
+        }
+
+        void HandleHmdListReponse(PSMHmdList hmd_list, IntPtr response_handle)
+        {
+            Trace.TraceInformation(
+                string.Format(
+                    "CServerDriver_PSMoveService::HandleHmdListReponse - Received {0} HMDs",
+                    hmd_list.count));
+
+            // Update the HMD info list
+            _hmdInfoList = hmd_list.hmds;
+
+            // Notify any listeners that the tracker list changed
+            if (HmdListUpdatedEvent != null) {
+                HmdListUpdatedEvent();
             }
         }
 
@@ -357,7 +446,7 @@ namespace SystemTrayApp
                     PSMoveSteamVRBridgeConfig config = PSMoveSteamVRBridgeConfig.Instance;
 
                     if (PSMoveClient.PSM_InitializeAsync(config.ServerAddress, config.ServerPort) != PSMResult.PSMResult_Error) {
-                        ConnectionState = PSMConnectionState.waitingForConnectionResponse;
+                        _connectionState = PSMConnectionState.waitingForConnectionResponse;
                         return true;
                     }
                     else {
@@ -380,7 +469,7 @@ namespace SystemTrayApp
                 }
 
                 PSMoveClient.PSM_Shutdown();
-                ConnectionState = PSMConnectionState.disconnected;
+                _connectionState = PSMConnectionState.disconnected;
             }
         }
 

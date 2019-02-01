@@ -77,10 +77,14 @@
   <ItemGroup>
     <Compile Include="Config\ConfigBase.cs" />
     <Compile Include="Config\DS4ControllerConfig.cs" />
+    <Compile Include="Config\FreePIEConfig.cs" />
     <Compile Include="Config\VirtualControllerConfig.cs" />
     <Compile Include="Config\PSNaviControllerConfig.cs" />
-    <Compile Include="Constants.cs" />
+    <Compile Include="PSMoveService\PSMConstants.cs" />
     <Compile Include="Config\ControllerConfig.cs" />
+    <Compile Include="FreePIE\FreePIEApi.cs" />
+    <Compile Include="FreePIE\FreePIEContext.cs" />
+    <Compile Include="PSMoveService\PSMDevicePool.cs" />
     <Compile Include="Renderer\GlCamera.cs" />
     <Compile Include="Renderer\GlMaterial.cs" />
     <Compile Include="Renderer\GlModelInstance.cs" />
@@ -117,12 +121,6 @@
     <Compile Include="UI\Dualshock4ControllerPanel.Designer.cs">
       <DependentUpon>Dualshock4ControllerPanel.cs</DependentUpon>
     </Compile>
-    <Compile Include="UI\HMDPanel.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="UI\HMDPanel.Designer.cs">
-      <DependentUpon>HMDPanel.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="UI\AppWindow.cs">
       <SubType>Form</SubType>
@@ -131,6 +129,24 @@
       <DependentUpon>AppWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="Config\PSMoveControllerConfig.cs" />
+    <Compile Include="UI\FreePIEHmdSlotMapping.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\FreePIEHmdSlotMapping.Designer.cs">
+      <DependentUpon>FreePIEHmdSlotMapping.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\FreePIEPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\FreePIEPanel.Designer.cs">
+      <DependentUpon>FreePIEPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\FreePIEControllerSlotMapping.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\FreePIEControllerSlotMapping.Designer.cs">
+      <DependentUpon>FreePIEControllerSlotMapping.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\IControllerPanel.cs" />
     <Compile Include="UI\PSMoveControllerPanel.cs">
       <SubType>UserControl</SubType>
@@ -150,6 +166,18 @@
     </Compile>
     <Compile Include="UI\PSNaviControllerPanel.Designer.cs">
       <DependentUpon>PSNaviControllerPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SteamVRDeviceEntry.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SteamVRDeviceEntry.Designer.cs">
+      <DependentUpon>SteamVRDeviceEntry.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SteamVRPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SteamVRPanel.Designer.cs">
+      <DependentUpon>SteamVRPanel.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\SteamVRWindow.cs">
       <SubType>Form</SubType>
@@ -251,8 +279,14 @@
     <EmbeddedResource Include="UI\Dualshock4ControllerPanel.resx">
       <DependentUpon>Dualshock4ControllerPanel.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="UI\HMDPanel.resx">
-      <DependentUpon>HMDPanel.cs</DependentUpon>
+    <EmbeddedResource Include="UI\FreePIEHmdSlotMapping.resx">
+      <DependentUpon>FreePIEHmdSlotMapping.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\FreePIEPanel.resx">
+      <DependentUpon>FreePIEPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\FreePIEControllerSlotMapping.resx">
+      <DependentUpon>FreePIEControllerSlotMapping.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UI\PSMoveControllerPanel.resx">
       <DependentUpon>PSMoveControllerPanel.cs</DependentUpon>
@@ -262,6 +296,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UI\PSNaviControllerPanel.resx">
       <DependentUpon>PSNaviControllerPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SteamVRDeviceEntry.resx">
+      <DependentUpon>SteamVRDeviceEntry.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SteamVRPanel.resx">
+      <DependentUpon>SteamVRPanel.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UI\SteamVRWindow.resx">
       <DependentUpon>SteamVRWindow.cs</DependentUpon>

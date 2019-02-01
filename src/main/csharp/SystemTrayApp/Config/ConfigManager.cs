@@ -8,63 +8,72 @@ namespace SystemTrayApp
 {
     public sealed class ConfigManager
     {
-        private List<ControllerConfig> controllerConfigList;
-        private static readonly Lazy<ConfigManager> lazy =
+        private List<ControllerConfig> _controllerConfigList;
+        private static readonly Lazy<ConfigManager> _lazySingleton =
             new Lazy<ConfigManager>(() => new ConfigManager());
 
-        public static ConfigManager Instance { get { return lazy.Value; } }
+        public static ConfigManager Instance { get { return _lazySingleton.Value; } }
         
         private ConfigManager()
         {
-            psm_steamvr_bridge_config = new PSMoveSteamVRBridgeConfig();
-            controllerConfigList = new List<ControllerConfig>();
+            _psmSteamVRBBridgeConfig = new PSMoveSteamVRBridgeConfig();
+            _freePIEConfig = new FreePIEConfig();
+            _controllerConfigList = new List<ControllerConfig>();
         }
 
         public void LoadAll()
         {
-            psm_steamvr_bridge_config.Load();
+            _psmSteamVRBBridgeConfig.Load();
+            _freePIEConfig.Load();
             LoadAllControllerConfigs();
         }
 
         public void SaveAll()
         {
-            psm_steamvr_bridge_config.Save();
+            _psmSteamVRBBridgeConfig.Save();
+            _freePIEConfig.Save();
             SaveAllControllerConfigs();
         }
 
         public void LoadAllControllerConfigs()
         {
-            foreach (ControllerConfig config in controllerConfigList) {
+            foreach (ControllerConfig config in _controllerConfigList) {
                 config.Load();
             }
         }
 
         public void SaveAllControllerConfigs()
         {
-            foreach (ControllerConfig config in controllerConfigList) {
+            foreach (ControllerConfig config in _controllerConfigList) {
                 config.Save();
             }
         }
 
-        public PSMoveSteamVRBridgeConfig psm_steamvr_bridge_config;
+        public PSMoveSteamVRBridgeConfig _psmSteamVRBBridgeConfig;
         public PSMoveSteamVRBridgeConfig PSMSteamVRBridgeConfig
         {
-            get { return psm_steamvr_bridge_config; }
+            get { return _psmSteamVRBBridgeConfig; }
+        }
+
+        public FreePIEConfig _freePIEConfig;
+        public FreePIEConfig FreePIEConfig
+        {
+            get { return _freePIEConfig; }
         }
 
         public void SetControllerConfigList(List<ControllerConfig> configList)
         {
-            controllerConfigList = configList;
+            _controllerConfigList = configList;
         }
 
         public int GetControllerCount()
         {
-            return controllerConfigList.Count;
+            return _controllerConfigList.Count;
         }
 
         public ControllerConfig GetControllerConfig(int ControllerIndex)
         {
-            return controllerConfigList[ControllerIndex];
+            return _controllerConfigList[ControllerIndex];
         }
     }
 }

@@ -38,6 +38,10 @@
             this.serverPortLabel = new MaterialSkin.Controls.MaterialLabel();
             this.ServerAddressTextField = new MaterialSkin.Controls.MaterialSingleLineTextField();
             this.serverAddressLabel = new MaterialSkin.Controls.MaterialLabel();
+            this.PSMDevicesPanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.PSMDevicesLabel = new MaterialSkin.Controls.MaterialLabel();
+            this.ControllerSettingsButton = new MaterialSkin.Controls.MaterialRaisedButton();
+            this.PSMGroupBox = new System.Windows.Forms.GroupBox();
             this.SuspendLayout();
             // 
             // StopPSMButton
@@ -78,7 +82,7 @@
             this.PSMCurrentStatus.Depth = 0;
             this.PSMCurrentStatus.Font = new System.Drawing.Font("Roboto", 11F);
             this.PSMCurrentStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.PSMCurrentStatus.Location = new System.Drawing.Point(129, 49);
+            this.PSMCurrentStatus.Location = new System.Drawing.Point(130, 98);
             this.PSMCurrentStatus.MouseState = MaterialSkin.MouseState.HOVER;
             this.PSMCurrentStatus.Name = "PSMCurrentStatus";
             this.PSMCurrentStatus.Size = new System.Drawing.Size(121, 19);
@@ -91,7 +95,7 @@
             this.PSMStatusLabel.Depth = 0;
             this.PSMStatusLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.PSMStatusLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.PSMStatusLabel.Location = new System.Drawing.Point(17, 49);
+            this.PSMStatusLabel.Location = new System.Drawing.Point(18, 98);
             this.PSMStatusLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.PSMStatusLabel.Name = "PSMStatusLabel";
             this.PSMStatusLabel.Size = new System.Drawing.Size(113, 19);
@@ -104,7 +108,7 @@
             this.ReloadPSMSettingsButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ReloadPSMSettingsButton.Depth = 0;
             this.ReloadPSMSettingsButton.Icon = null;
-            this.ReloadPSMSettingsButton.Location = new System.Drawing.Point(608, 373);
+            this.ReloadPSMSettingsButton.Location = new System.Drawing.Point(22, 217);
             this.ReloadPSMSettingsButton.MouseState = MaterialSkin.MouseState.HOVER;
             this.ReloadPSMSettingsButton.Name = "ReloadPSMSettingsButton";
             this.ReloadPSMSettingsButton.Primary = true;
@@ -120,7 +124,7 @@
             this.SavePSMSettingsButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.SavePSMSettingsButton.Depth = 0;
             this.SavePSMSettingsButton.Icon = null;
-            this.SavePSMSettingsButton.Location = new System.Drawing.Point(686, 373);
+            this.SavePSMSettingsButton.Location = new System.Drawing.Point(100, 217);
             this.SavePSMSettingsButton.MouseState = MaterialSkin.MouseState.HOVER;
             this.SavePSMSettingsButton.Name = "SavePSMSettingsButton";
             this.SavePSMSettingsButton.Primary = true;
@@ -135,7 +139,7 @@
             this.AutoLaunchPSMCheckBox.AutoSize = true;
             this.AutoLaunchPSMCheckBox.Depth = 0;
             this.AutoLaunchPSMCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.AutoLaunchPSMCheckBox.Location = new System.Drawing.Point(21, 135);
+            this.AutoLaunchPSMCheckBox.Location = new System.Drawing.Point(22, 184);
             this.AutoLaunchPSMCheckBox.Margin = new System.Windows.Forms.Padding(0);
             this.AutoLaunchPSMCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
             this.AutoLaunchPSMCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
@@ -151,7 +155,7 @@
             this.ServerPortTextField.BackColor = System.Drawing.Color.Silver;
             this.ServerPortTextField.Depth = 0;
             this.ServerPortTextField.Hint = "";
-            this.ServerPortTextField.Location = new System.Drawing.Point(133, 109);
+            this.ServerPortTextField.Location = new System.Drawing.Point(134, 158);
             this.ServerPortTextField.MaxLength = 256;
             this.ServerPortTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.ServerPortTextField.Name = "ServerPortTextField";
@@ -171,7 +175,7 @@
             this.serverPortLabel.Depth = 0;
             this.serverPortLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.serverPortLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.serverPortLabel.Location = new System.Drawing.Point(17, 109);
+            this.serverPortLabel.Location = new System.Drawing.Point(18, 158);
             this.serverPortLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.serverPortLabel.Name = "serverPortLabel";
             this.serverPortLabel.Size = new System.Drawing.Size(83, 19);
@@ -183,7 +187,7 @@
             this.ServerAddressTextField.BackColor = System.Drawing.Color.Silver;
             this.ServerAddressTextField.Depth = 0;
             this.ServerAddressTextField.Hint = "";
-            this.ServerAddressTextField.Location = new System.Drawing.Point(133, 80);
+            this.ServerAddressTextField.Location = new System.Drawing.Point(134, 129);
             this.ServerAddressTextField.MaxLength = 256;
             this.ServerAddressTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.ServerAddressTextField.Name = "ServerAddressTextField";
@@ -203,17 +207,71 @@
             this.serverAddressLabel.Depth = 0;
             this.serverAddressLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.serverAddressLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.serverAddressLabel.Location = new System.Drawing.Point(17, 80);
+            this.serverAddressLabel.Location = new System.Drawing.Point(18, 129);
             this.serverAddressLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.serverAddressLabel.Name = "serverAddressLabel";
             this.serverAddressLabel.Size = new System.Drawing.Size(110, 19);
             this.serverAddressLabel.TabIndex = 11;
             this.serverAddressLabel.Text = "Server Address";
             // 
+            // PSMDevicesPanel
+            // 
+            this.PSMDevicesPanel.AutoScroll = true;
+            this.PSMDevicesPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.PSMDevicesPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.PSMDevicesPanel.Location = new System.Drawing.Point(406, 79);
+            this.PSMDevicesPanel.Name = "PSMDevicesPanel";
+            this.PSMDevicesPanel.Padding = new System.Windows.Forms.Padding(0, 0, 10, 0);
+            this.PSMDevicesPanel.Size = new System.Drawing.Size(302, 292);
+            this.PSMDevicesPanel.TabIndex = 70;
+            this.PSMDevicesPanel.WrapContents = false;
+            // 
+            // PSMDevicesLabel
+            // 
+            this.PSMDevicesLabel.AutoSize = true;
+            this.PSMDevicesLabel.Depth = 0;
+            this.PSMDevicesLabel.Font = new System.Drawing.Font("Roboto", 11F);
+            this.PSMDevicesLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.PSMDevicesLabel.Location = new System.Drawing.Point(402, 49);
+            this.PSMDevicesLabel.MouseState = MaterialSkin.MouseState.HOVER;
+            this.PSMDevicesLabel.Name = "PSMDevicesLabel";
+            this.PSMDevicesLabel.Size = new System.Drawing.Size(170, 19);
+            this.PSMDevicesLabel.TabIndex = 69;
+            this.PSMDevicesLabel.Text = "PSMoveService Devices";
+            // 
+            // ControllerSettingsButton
+            // 
+            this.ControllerSettingsButton.AutoSize = true;
+            this.ControllerSettingsButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.ControllerSettingsButton.Depth = 0;
+            this.ControllerSettingsButton.Icon = null;
+            this.ControllerSettingsButton.Location = new System.Drawing.Point(22, 274);
+            this.ControllerSettingsButton.MouseState = MaterialSkin.MouseState.HOVER;
+            this.ControllerSettingsButton.Name = "ControllerSettingsButton";
+            this.ControllerSettingsButton.Primary = true;
+            this.ControllerSettingsButton.Size = new System.Drawing.Size(174, 36);
+            this.ControllerSettingsButton.TabIndex = 71;
+            this.ControllerSettingsButton.Text = "Controller Settings";
+            this.ControllerSettingsButton.UseVisualStyleBackColor = true;
+            // 
+            // PSMGroupBox
+            // 
+            this.PSMGroupBox.BackColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.PSMGroupBox.Location = new System.Drawing.Point(6, 79);
+            this.PSMGroupBox.Name = "PSMGroupBox";
+            this.PSMGroupBox.Size = new System.Drawing.Size(361, 189);
+            this.PSMGroupBox.TabIndex = 72;
+            this.PSMGroupBox.TabStop = false;
+            this.PSMGroupBox.Text = "Service Settings";
+            this.PSMGroupBox.Paint += PSMGroupBox_Paint;
+            // 
             // PSMoveServicePanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.ControllerSettingsButton);
+            this.Controls.Add(this.PSMDevicesPanel);
+            this.Controls.Add(this.PSMDevicesLabel);
             this.Controls.Add(this.StopPSMButton);
             this.Controls.Add(this.StartPSMButton);
             this.Controls.Add(this.PSMCurrentStatus);
@@ -225,6 +283,7 @@
             this.Controls.Add(this.serverPortLabel);
             this.Controls.Add(this.ServerAddressTextField);
             this.Controls.Add(this.serverAddressLabel);
+            this.Controls.Add(this.PSMGroupBox);
             this.Name = "PSMoveServicePanel";
             this.Size = new System.Drawing.Size(747, 415);
             this.ResumeLayout(false);
@@ -245,5 +304,9 @@
         private MaterialSkin.Controls.MaterialLabel serverPortLabel;
         private MaterialSkin.Controls.MaterialSingleLineTextField ServerAddressTextField;
         private MaterialSkin.Controls.MaterialLabel serverAddressLabel;
+        private System.Windows.Forms.FlowLayoutPanel PSMDevicesPanel;
+        private MaterialSkin.Controls.MaterialLabel PSMDevicesLabel;
+        private MaterialSkin.Controls.MaterialRaisedButton ControllerSettingsButton;
+        private System.Windows.Forms.GroupBox PSMGroupBox;
     }
 }

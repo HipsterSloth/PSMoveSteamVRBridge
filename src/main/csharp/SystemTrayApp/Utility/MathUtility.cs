@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using PSMoveService;
 
 namespace SystemTrayApp
 {
@@ -126,6 +127,16 @@ namespace SystemTrayApp
             return (float)Math.Sin((double)radians);
         }
 
+        public static float atan2f(float y, float x)
+        {
+            return (float)Math.Atan2((double)y, (double)x);
+        }
+
+        public static float asinf(float x)
+        {
+            return (float)Math.Asin((float)x);
+        }
+
         public static float wrap_range(float value, float range_min, float range_max)
         {
             Debug.Assert(range_max > range_min);
@@ -157,6 +168,21 @@ namespace SystemTrayApp
             }
 
             return wrap_range(lerpf(wrapped_a, wrapped_b, u), range_min, range_max);
+        }
+
+        public static float ExtractYaw(PSMQuatf q)
+        {
+            return atan2f(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * q.y * q.y - 2 * q.z * q.z);
+        }
+
+        public static float ExtractPitch(PSMQuatf q)
+        {
+            return atan2f(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * q.x * q.x - 2 * q.z * q.z);
+        }
+
+        public static float ExtractRoll(PSMQuatf q)
+        {
+            return asinf(2 * q.x * q.y + 2 * q.z * q.w);
         }
     }
 }

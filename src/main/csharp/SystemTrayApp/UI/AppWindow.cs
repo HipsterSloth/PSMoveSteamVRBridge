@@ -19,7 +19,7 @@ namespace SystemTrayApp
 
         private PSMoveServicePanel psmServicePanel;
         private ControllerPanel controllerPanel;
-        private HMDPanel hmdPanel;
+        private FreePIEPanel freePiePanel;
 
         private readonly MaterialSkinManager materialSkinManager;
 
@@ -32,8 +32,8 @@ namespace SystemTrayApp
             this.tabPage1.Controls.Add(psmServicePanel);
             controllerPanel = new ControllerPanel();
             this.tabPage2.Controls.Add(controllerPanel);
-            hmdPanel = new HMDPanel();
-            this.tabPage3.Controls.Add(hmdPanel);
+            freePiePanel = new FreePIEPanel();
+            this.tabPage3.Controls.Add(freePiePanel);
 
             // Initialize MaterialSkinManager
             materialSkinManager = MaterialSkinManager.Instance;
@@ -93,7 +93,7 @@ namespace SystemTrayApp
                 }
                 else if (currentTabPage == this.tabPage3)
                 {
-                    hmdPanel.OnTabExited();
+                    freePiePanel.OnTabExited();
                 }
 
                 // Enter the new tab
@@ -107,7 +107,7 @@ namespace SystemTrayApp
                 }
                 else if (NewTabPage == this.tabPage3)
                 {
-                    hmdPanel.OnTabEntered();
+                    freePiePanel.OnTabEntered();
                 }
 
                 currentTabPage = NewTabPage;

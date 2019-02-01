@@ -22,8 +22,8 @@ namespace SystemTrayApp
             // Rebuild the panels when the controller list changes
             // These are fired from the 
             ControllerPanels = new List<IControllerPanel>();
-            PSMoveServiceContext.Instance.ControllerListPreUpdateEvent += OnControllerListPreChanged;
-            PSMoveServiceContext.Instance.ControllerListPostUpdateEvent += OnControllerListPostChanged;
+            PSMoveServiceContext.Instance.ControllerConfigListPreUpdateEvent += OnControllerListPreChanged;
+            PSMoveServiceContext.Instance.ControllerConfigListPostUpdateEvent += OnControllerListPostChanged;
             PSMoveServiceContext.Instance.DisconnectedFromPSMServiceEvent += OnDisconnectedFromPSMServiceEvent;
         }
 
