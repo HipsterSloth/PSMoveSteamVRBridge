@@ -63,12 +63,19 @@ namespace SystemTrayApp
         {
             bool bLoadOk = false;
 
-            using (StreamReader reader = File.OpenText(FetchOrCreateConfigPath())) {
-                JsonValue pt = JsonValue.Load(reader);
-                bLoadOk = ReadFromJSON(pt);
-                if (bLoadOk) {
-                    IsDirty = false;
+            try {
+                using (StreamReader reader = File.OpenText(path)) {
+                    JsonValue pt = JsonValue.Load(reader);
+                    bLoadOk = ReadFromJSON(pt);
+                    if (bLoadOk) {
+                        IsDirty = false;
+                    }
                 }
+            }
+            catch(FileNotFoundException)
+            {
+                Trace.TraceWarning(string.Format("ConfigBase - Config file not found: {0}", path));
+                bLoadOk = false;
             }
 
             return bLoadOk;

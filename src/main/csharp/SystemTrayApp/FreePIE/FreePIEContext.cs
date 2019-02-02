@@ -198,10 +198,16 @@ namespace SystemTrayApp
 
                     // Add the FreePIE DLL directory to the DLL search list
                     SetDllDirectory(_freePieRuntimePath);
-                    _bIsInitialized = true;
 
                     // Get the max allowed slot count in free pie
-                    _freePIEMaxSlotCount = FreePIEApi.freepie_io_6dof_slots();
+                    try {
+                        _freePIEMaxSlotCount = FreePIEApi.freepie_io_6dof_slots();
+                        _bIsInitialized = true;
+                    }
+                    catch(Exception e)
+                    {
+                        Trace.TraceWarning(string.Format("Failed to access FreePIE DLL: {0}", e.Message));
+                    }
                 }
             }
 
@@ -346,14 +352,14 @@ namespace SystemTrayApp
         {
             string dll_path = "";
 
-            if (PSMoveSteamVRBridgeConfig.Instance.UseInstallationPath) {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                    dll_path = 
-                        Microsoft.Win32.Registry.GetValue(
-                            string.Format("{0}\\Software\\{1}", Microsoft.Win32.Registry.CurrentUser, "FreePIE"),
-                            "path", 
-                            null) as string;
-                }
+            if (!Environment.Is64BitProcess && //TODO: 64-bit dll for FreePIE not included in FreePIE install at the moment
+                RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                dll_path = 
+                    Microsoft.Win32.Registry.GetValue(
+                        string.Format("{0}\\Software\\{1}", Microsoft.Win32.Registry.CurrentUser, "FreePIE"),
+                        "path", 
+                        null) as string;
             }
 
             if (dll_path.Length == 0) {

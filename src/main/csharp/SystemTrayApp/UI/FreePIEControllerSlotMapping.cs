@@ -101,7 +101,7 @@ namespace SystemTrayApp
             ComboBox PropertyComboBox, out eControllerPropertySource Property)
         {
             Source= ((KeyValuePair<string, eControllerSource>)SourceComboBox.SelectedItem).Value;
-            Property = ((KeyValuePair<string, eControllerPropertySource>)SourceComboBox.SelectedItem).Value;
+            Property = ((KeyValuePair<string, eControllerPropertySource>)PropertyComboBox.SelectedItem).Value;
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -112,6 +112,34 @@ namespace SystemTrayApp
             }
 
             this.Parent.Controls.Remove(this);
+        }
+
+        private void UpButton_Click(object sender, EventArgs e)
+        {
+            int thisIndex= this.Parent.Controls.IndexOf(this);
+
+            if (thisIndex > 0)
+            {
+                int otherIndex = thisIndex - 1;
+                var otherControl = this.Parent.Controls[otherIndex];
+
+                this.Parent.Controls.SetChildIndex(this, otherIndex);
+                this.Parent.Controls.SetChildIndex(otherControl, thisIndex);
+            }
+        }
+
+        private void DownButton_Click(object sender, EventArgs e)
+        {
+            int thisIndex = this.Parent.Controls.IndexOf(this);
+
+            if (thisIndex < this.Parent.Controls.Count - 1)
+            {
+                int otherIndex = thisIndex + 1;
+                var otherControl = this.Parent.Controls[otherIndex];
+
+                this.Parent.Controls.SetChildIndex(this, otherIndex);
+                this.Parent.Controls.SetChildIndex(otherControl, thisIndex);
+            }
         }
     }
 }

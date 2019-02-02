@@ -122,22 +122,7 @@ namespace SystemTrayApp
 
         private void AddControllerBindingButton_Click(object sender, EventArgs e)
         {
-            FreePIEControllerSlotDefinition slotDefinition = new FreePIEControllerSlotDefinition();
-            slotDefinition.SlotIndex = BindingsLayoutPanel.Controls.Count - 1;
-            slotDefinition.xProperty.controllerSource = eControllerSource.CONTROLLER_0;
-            slotDefinition.xProperty.controllerPropertySource = eControllerPropertySource.POSITION_X;
-            slotDefinition.yProperty.controllerSource = eControllerSource.CONTROLLER_0;
-            slotDefinition.yProperty.controllerPropertySource = eControllerPropertySource.POSITION_Y;
-            slotDefinition.zProperty.controllerSource = eControllerSource.CONTROLLER_0;
-            slotDefinition.zProperty.controllerPropertySource = eControllerPropertySource.POSITION_Z;
-
-            slotDefinition.pitchProperty.controllerSource = eControllerSource.CONTROLLER_0;
-            slotDefinition.pitchProperty.controllerPropertySource = eControllerPropertySource.ORIENTATION_PITCH;
-            slotDefinition.rollProperty.controllerSource = eControllerSource.CONTROLLER_0;
-            slotDefinition.rollProperty.controllerPropertySource = eControllerPropertySource.ORIENTATION_ROLL;
-            slotDefinition.yawProperty.controllerSource = eControllerSource.CONTROLLER_0;
-            slotDefinition.yawProperty.controllerPropertySource = eControllerPropertySource.ORIENTATION_YAW;
-
+            FreePIEControllerSlotDefinition slotDefinition = new FreePIEControllerSlotDefinition(BindingsLayoutPanel.Controls.Count - 1);
             FreePIEControllerSlotMapping slotMapping= new FreePIEControllerSlotMapping(slotDefinition);
             slotMapping.SlotMappingDeletedEvent += HandleSlotMappingDeleted;
 
@@ -151,22 +136,7 @@ namespace SystemTrayApp
 
         private void AddHMDBindingButton_Click(object sender, EventArgs e)
         {
-            FreePIEHmdSlotDefinition slotDefinition = new FreePIEHmdSlotDefinition();
-            slotDefinition.SlotIndex = BindingsLayoutPanel.Controls.Count - 1;
-            slotDefinition.xProperty.hmdSource = eHmdSource.HMD_0;
-            slotDefinition.xProperty.hmdPropertySource = eHmdPropertySource.POSITION_X;
-            slotDefinition.yProperty.hmdSource = eHmdSource.HMD_0;
-            slotDefinition.yProperty.hmdPropertySource = eHmdPropertySource.POSITION_Y;
-            slotDefinition.zProperty.hmdSource = eHmdSource.HMD_0;
-            slotDefinition.zProperty.hmdPropertySource = eHmdPropertySource.POSITION_Z;
-
-            slotDefinition.pitchProperty.hmdSource = eHmdSource.HMD_0;
-            slotDefinition.pitchProperty.hmdPropertySource = eHmdPropertySource.ORIENTATION_PITCH;
-            slotDefinition.rollProperty.hmdSource = eHmdSource.HMD_0;
-            slotDefinition.rollProperty.hmdPropertySource = eHmdPropertySource.ORIENTATION_ROLL;
-            slotDefinition.yawProperty.hmdSource = eHmdSource.HMD_0;
-            slotDefinition.yawProperty.hmdPropertySource = eHmdPropertySource.ORIENTATION_YAW;
-
+            FreePIEHmdSlotDefinition slotDefinition = new FreePIEHmdSlotDefinition(BindingsLayoutPanel.Controls.Count - 1);
             FreePIEHmdSlotMapping slotMapping = new FreePIEHmdSlotMapping(slotDefinition);
             slotMapping.SlotMappingDeletedEvent += HandleSlotMappingDeleted;
 
@@ -188,16 +158,14 @@ namespace SystemTrayApp
             {
                 if (BindingPanel is FreePIEControllerSlotMapping)
                 {
-                    FreePIEControllerSlotDefinition slotDefinition = new FreePIEControllerSlotDefinition();
-                    slotDefinition.SlotIndex = slotIndex;
+                    FreePIEControllerSlotDefinition slotDefinition = new FreePIEControllerSlotDefinition(slotIndex);
                     slotIndex++;
 
                     ((FreePIEControllerSlotMapping)BindingPanel).FetchSlotDefinition(slotDefinition);
                 }
                 else if (BindingPanel is FreePIEHmdSlotMapping)
                 {
-                    FreePIEHmdSlotDefinition slotDefinition = new FreePIEHmdSlotDefinition();
-                    slotDefinition.SlotIndex = slotIndex;
+                    FreePIEHmdSlotDefinition slotDefinition = new FreePIEHmdSlotDefinition(slotIndex);
                     slotIndex++;
 
                     ((FreePIEHmdSlotMapping)BindingPanel).FetchSlotDefinition(slotDefinition);

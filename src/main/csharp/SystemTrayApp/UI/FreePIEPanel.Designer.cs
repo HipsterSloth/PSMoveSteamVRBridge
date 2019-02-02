@@ -98,7 +98,7 @@
             // 
             this.BindingsLayoutPanel.Location = new System.Drawing.Point(3, 69);
             this.BindingsLayoutPanel.Name = "BindingsLayoutPanel";
-            this.BindingsLayoutPanel.Size = new System.Drawing.Size(741, 291);
+            this.BindingsLayoutPanel.Size = new System.Drawing.Size(741, 343);
             this.BindingsLayoutPanel.TabIndex = 26;
             // 
             // AddControllerBindingButton
@@ -139,11 +139,11 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.AddHMDBindingButton);
             this.Controls.Add(this.AddControllerBindingButton);
-            this.Controls.Add(this.BindingsLayoutPanel);
             this.Controls.Add(this.FreePIEDisconnectBtn);
             this.Controls.Add(this.FreePIEConnectBtn);
             this.Controls.Add(this.FreePIECurrentStatus);
             this.Controls.Add(this.FreePIEStatusLabel);
+            this.Controls.Add(this.BindingsLayoutPanel);
             this.Name = "FreePIEPanel";
             this.Size = new System.Drawing.Size(747, 415);
             this.ResumeLayout(false);

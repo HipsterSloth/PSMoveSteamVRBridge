@@ -46,6 +46,8 @@
             this.YawSourceComboBox = new System.Windows.Forms.ComboBox();
             this.YawLabel = new MaterialSkin.Controls.MaterialLabel();
             this.CloseButton = new System.Windows.Forms.Button();
+            this.UpButton = new System.Windows.Forms.Button();
+            this.DownButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // XLabel
@@ -232,11 +234,33 @@
             this.CloseButton.UseVisualStyleBackColor = true;
             this.CloseButton.Click += new System.EventHandler(this.CloseButton_Click);
             // 
+            // UpButton
+            // 
+            this.UpButton.Location = new System.Drawing.Point(704, 30);
+            this.UpButton.Name = "UpButton";
+            this.UpButton.Size = new System.Drawing.Size(23, 23);
+            this.UpButton.TabIndex = 19;
+            this.UpButton.Text = "↑";
+            this.UpButton.UseVisualStyleBackColor = true;
+            this.UpButton.Click += new System.EventHandler(this.UpButton_Click);
+            // 
+            // DownButton
+            // 
+            this.DownButton.Location = new System.Drawing.Point(704, 54);
+            this.DownButton.Name = "DownButton";
+            this.DownButton.Size = new System.Drawing.Size(23, 23);
+            this.DownButton.TabIndex = 20;
+            this.DownButton.Text = "↓";
+            this.DownButton.UseVisualStyleBackColor = true;
+            this.DownButton.Click += new System.EventHandler(this.DownButton_Click);
+            // 
             // FreePIEControllerSlotMapping
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.Controls.Add(this.DownButton);
+            this.Controls.Add(this.UpButton);
             this.Controls.Add(this.CloseButton);
             this.Controls.Add(this.YawPropertyComboBox);
             this.Controls.Add(this.YawSourceComboBox);
@@ -284,5 +308,7 @@
         private System.Windows.Forms.ComboBox YawSourceComboBox;
         private MaterialSkin.Controls.MaterialLabel YawLabel;
         private System.Windows.Forms.Button CloseButton;
+        private System.Windows.Forms.Button UpButton;
+        private System.Windows.Forms.Button DownButton;
     }
 }

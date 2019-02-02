@@ -12,6 +12,12 @@ namespace SystemTrayApp
         public eControllerSource controllerSource;
         public eControllerPropertySource controllerPropertySource;
 
+        public FreePIEControllerProperty(eControllerSource source, eControllerPropertySource property)
+        {
+            controllerSource = source;
+            controllerPropertySource = property;
+        }
+
         public JsonObject WriteToJSON()
         {
             JsonObject pt = new JsonObject();
@@ -42,6 +48,12 @@ namespace SystemTrayApp
         public eHmdSource hmdSource;
         public eHmdPropertySource hmdPropertySource;
 
+        public FreePIEHmdProperty(eHmdSource source, eHmdPropertySource property)
+        {
+            hmdSource = source;
+            hmdPropertySource = property;
+        }
+
         public JsonObject WriteToJSON()
         {
             JsonObject pt = new JsonObject();
@@ -71,6 +83,11 @@ namespace SystemTrayApp
     {
         public int SlotIndex;
 
+        public FreePIESlotDefinition(int slotIndex)
+        {
+            SlotIndex = slotIndex;
+        }
+
         public virtual void WriteToJSON(JsonValue pt)
         {
             pt["slot_index"] = SlotIndex;
@@ -95,6 +112,16 @@ namespace SystemTrayApp
         public FreePIEControllerProperty pitchProperty;
         public FreePIEControllerProperty rollProperty;
         public FreePIEControllerProperty yawProperty;
+
+        public FreePIEControllerSlotDefinition(int slotIndex) : base(slotIndex)
+        {            
+            xProperty = new FreePIEControllerProperty(eControllerSource.CONTROLLER_0, eControllerPropertySource.POSITION_X);
+            yProperty = new FreePIEControllerProperty(eControllerSource.CONTROLLER_0, eControllerPropertySource.POSITION_Y);
+            zProperty = new FreePIEControllerProperty(eControllerSource.CONTROLLER_0, eControllerPropertySource.POSITION_Z);
+            pitchProperty = new FreePIEControllerProperty(eControllerSource.CONTROLLER_0, eControllerPropertySource.ORIENTATION_PITCH);
+            rollProperty = new FreePIEControllerProperty(eControllerSource.CONTROLLER_0, eControllerPropertySource.ORIENTATION_ROLL);
+            yawProperty = new FreePIEControllerProperty(eControllerSource.CONTROLLER_0, eControllerPropertySource.ORIENTATION_YAW);
+        }
 
         public override void WriteToJSON(JsonValue pt)
         {
@@ -139,6 +166,16 @@ namespace SystemTrayApp
         public FreePIEHmdProperty rollProperty;
         public FreePIEHmdProperty yawProperty;
 
+        public FreePIEHmdSlotDefinition(int slotIndex) : base(slotIndex)
+        {
+            xProperty = new FreePIEHmdProperty(eHmdSource.HMD_0, eHmdPropertySource.POSITION_X);
+            yProperty = new FreePIEHmdProperty(eHmdSource.HMD_0, eHmdPropertySource.POSITION_Y);
+            zProperty = new FreePIEHmdProperty(eHmdSource.HMD_0, eHmdPropertySource.POSITION_Z);
+            pitchProperty = new FreePIEHmdProperty(eHmdSource.HMD_0, eHmdPropertySource.ORIENTATION_PITCH);
+            rollProperty = new FreePIEHmdProperty(eHmdSource.HMD_0, eHmdPropertySource.ORIENTATION_ROLL);
+            yawProperty = new FreePIEHmdProperty(eHmdSource.HMD_0, eHmdPropertySource.ORIENTATION_YAW);
+        }
+
         public override void WriteToJSON(JsonValue pt)
         {
             pt["slot_type"] = "hmd";
@@ -177,6 +214,7 @@ namespace SystemTrayApp
     {
         public FreePIEConfig() : base("FreePIEConfig")
         {
+            _slotDefinitions = new FreePIESlotDefinition[0];
         }
 
         public static FreePIEConfig Instance
@@ -238,7 +276,7 @@ namespace SystemTrayApp
 
                         if (slot_type == "hmd")
                         {
-                            FreePIEHmdSlotDefinition hmdDefinition = new FreePIEHmdSlotDefinition();
+                            FreePIEHmdSlotDefinition hmdDefinition = new FreePIEHmdSlotDefinition(slotIndex);
 
                             if (hmdDefinition.ReadFromJSON(slotDefinitionJson))
                                 slotDefinitions.Add(hmdDefinition);
@@ -247,7 +285,7 @@ namespace SystemTrayApp
                         }
                         else if (slot_type == "controller")
                         {
-                            FreePIEControllerSlotDefinition controllerDefinition = new FreePIEControllerSlotDefinition();
+                            FreePIEControllerSlotDefinition controllerDefinition = new FreePIEControllerSlotDefinition(slotIndex);
 
                             if (controllerDefinition.ReadFromJSON(slotDefinitionJson))
                                 slotDefinitions.Add(controllerDefinition);
