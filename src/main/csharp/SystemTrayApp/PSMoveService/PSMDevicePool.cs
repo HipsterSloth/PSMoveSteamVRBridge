@@ -175,98 +175,125 @@ namespace SystemTrayApp
 
         struct PSMControllerState
         {
-            public PSMClientControllerInfo ControllerInfo;
+            public ControllerInfo ControllerInfo;
             public PSMController Controller;
             public bool IsStreaming;
         }
 
         struct PSMHmdState
         {
-            public PSMClientHMDInfo HmdInfo;
+            public HMDInfo HmdInfo;
             public PSMHeadMountedDisplay Hmd;
             public bool IsStreaming;
         }
 
-        PSMControllerState[] controllers;
-        PSMHmdState[] hmds;
+        private static int _initializedDevicePoolCount = 0;
+        public static int InitializedDevicePoolCount
+        {
+            get { return _initializedDevicePoolCount; }
+        }
+
+        bool _isInitialized;
+        PSMControllerState[] _controllers;
+        PSMHmdState[] _hmds;
 
         public PSMDevicePool()
         {
-            controllers = new PSMControllerState[PSMoveClient.PSMOVESERVICE_MAX_CONTROLLER_COUNT];
-            hmds = new PSMHmdState[PSMoveClient.PSMOVESERVICE_MAX_HMD_COUNT];
+            _isInitialized = false;
+            _controllers = new PSMControllerState[PSMoveClient.PSMOVESERVICE_MAX_CONTROLLER_COUNT];
+            _hmds = new PSMHmdState[PSMoveClient.PSMOVESERVICE_MAX_HMD_COUNT];
         }
 
         public void Init()
         {
-            for (int controllerID = 0; controllerID < controllers.Length; ++controllerID)
+            if (_isInitialized)
+                return;
+
+            for (int controllerID = 0; controllerID < _controllers.Length; ++controllerID)
             {
-                if (PSMoveClient.PSM_AllocateControllerListener(controllerID) == PSMResult.PSMResult_Success) 
+                if (PSMoveClient.PSM_AllocateControllerListener(controllerID) == PSMResult.PSMResult_Success)
                 {
-                    controllers[controllerID].Controller = PSMoveClient.PSM_GetController(controllerID);
+                    _controllers[controllerID].Controller = PSMoveClient.PSM_GetController(controllerID);
                 }
             }
 
-            for (int hmdID = 0; hmdID < hmds.Length; ++hmdID)
+            for (int hmdID = 0; hmdID < _hmds.Length; ++hmdID)
             {
                 if (PSMoveClient.PSM_AllocateHmdListener(hmdID) == PSMResult.PSMResult_Success)
                 {
-                    hmds[hmdID].Hmd = PSMoveClient.PSM_GetHmd(hmdID);
+                    _hmds[hmdID].Hmd = PSMoveClient.PSM_GetHmd(hmdID);
                 }
             }
+
+            _isInitialized = true;
+            _initializedDevicePoolCount++;
+
+            // Fetch the most recent list of devices posted
+            RefreshControllerList();
+            RefreshHmdList();
         }
 
         public void Cleanup()
         {
-            for (int controllerID = 0; controllerID < controllers.Length; ++controllerID)
+            if (!_isInitialized)
+                return;
+
+            for (int controllerID = 0; controllerID < _controllers.Length; ++controllerID)
             {
-                if (controllers[controllerID].IsStreaming)
+                if (_controllers[controllerID].IsStreaming)
                 {
                     int request_id = -1;
                     PSMoveClient.PSM_StopControllerDataStreamAsync(controllerID, out request_id);
                     PSMoveClient.PSM_EatResponse(request_id);
 
-                    controllers[controllerID].IsStreaming = false;
+                    _controllers[controllerID].IsStreaming = false;
                 }
 
                 PSMoveClient.PSM_FreeControllerListener(controllerID);
-                controllers[controllerID].Controller = null;
+                _controllers[controllerID].Controller = null;
             }
 
-            for (int hmdID = 0; hmdID < hmds.Length; ++hmdID)
+            for (int hmdID = 0; hmdID < _hmds.Length; ++hmdID)
             {
-                if (hmds[hmdID].IsStreaming) {
+                if (_hmds[hmdID].IsStreaming) {
                     int request_id = -1;
                     PSMoveClient.PSM_StopHmdDataStreamAsync(hmdID, out request_id);
                     PSMoveClient.PSM_EatResponse(request_id);
 
-                    hmds[hmdID].IsStreaming = false;
+                    _hmds[hmdID].IsStreaming = false;
                 }
 
                 PSMoveClient.PSM_FreeHmdListener(hmdID);
-                hmds[hmdID].Hmd = null;
+                _hmds[hmdID].Hmd = null;
             }
+
+            _isInitialized = false;
+            _initializedDevicePoolCount--;
         }
 
         public void RefreshControllerList()
         {
-            PSMClientControllerInfo[] ControllerInfoList = PSMoveServiceContext.Instance.ControllerInfoList;
+            if (!_isInitialized)
+                return;
+
+            ControllerInfo[] ControllerInfoList = PSMoveServiceContext.Instance.ControllerInfoList;
 
             // Strip off old controller info from every controller state entry
-            for (int controllerID = 0; controllerID < controllers.Length; ++controllerID)
+            for (int controllerID = 0; controllerID < _controllers.Length; ++controllerID)
             {
-                controllers[controllerID].ControllerInfo = null;
+                _controllers[controllerID].ControllerInfo = null;
             }
 
             // Update the controller state list with the new controller list
-            foreach (PSMClientControllerInfo controllerInfo in ControllerInfoList) 
+            foreach (ControllerInfo controllerInfo in ControllerInfoList) 
             {
                 int controllerId = controllerInfo.controller_id;
 
                 // Assign the latest controller info to the controller state
-                controllers[controllerId].ControllerInfo = controllerInfo;
+                _controllers[controllerId].ControllerInfo = controllerInfo;
 
                 // Start streaming controller data if we aren't already
-                if (!controllers[controllerId].IsStreaming) 
+                if (!_controllers[controllerId].IsStreaming) 
                 {
                     uint data_stream_flags =
                         (uint)PSMControllerDataStreamFlags.PSMStreamFlags_includePositionData |
@@ -276,43 +303,46 @@ namespace SystemTrayApp
                     PSMoveClient.PSM_StartControllerDataStreamAsync(controllerInfo.controller_id, data_stream_flags, out request_id);
                     PSMoveClient.PSM_EatResponse(request_id);
 
-                    controllers[controllerId].IsStreaming = true;
+                    _controllers[controllerId].IsStreaming = true;
                 }
             }
 
             // For any controller state entry that didn't get update
             // make sure to turn off streaming if it was streaming previously
-            for (int controllerID = 0; controllerID < controllers.Length; ++controllerID) 
+            for (int controllerID = 0; controllerID < _controllers.Length; ++controllerID) 
             {
-                if (controllers[controllerID].ControllerInfo == null && controllers[controllerID].IsStreaming)
+                if (_controllers[controllerID].ControllerInfo == null && _controllers[controllerID].IsStreaming)
                 {
                     int request_id = -1;
                     PSMoveClient.PSM_StopControllerDataStreamAsync(controllerID, out request_id);
                     PSMoveClient.PSM_EatResponse(request_id);
 
-                    controllers[controllerID].IsStreaming = false;
+                    _controllers[controllerID].IsStreaming = false;
                 }
             }
         }
 
         public void RefreshHmdList()
         {
-            PSMClientHMDInfo[] HmdInfoList = PSMoveServiceContext.Instance.HmdInfoList;
+            if (!_isInitialized)
+                return;
+
+            HMDInfo[] HmdInfoList = PSMoveServiceContext.Instance.HmdInfoList;
 
             // Strip off old hmd info from every hmd state entry
-            for (int hmdID = 0; hmdID < hmds.Length; ++hmdID) {
-                hmds[hmdID].HmdInfo = null;
+            for (int hmdID = 0; hmdID < _hmds.Length; ++hmdID) {
+                _hmds[hmdID].HmdInfo = null;
             }
 
             // Update the hmd state list with the new hmd list
-            foreach (PSMClientHMDInfo hmdInfo in HmdInfoList) {
+            foreach (HMDInfo hmdInfo in HmdInfoList) {
                 int hmdId = hmdInfo.hmd_id;
 
                 // Assign the latest hmd info to the hmd state
-                hmds[hmdId].HmdInfo = hmdInfo;
+                _hmds[hmdId].HmdInfo = hmdInfo;
 
                 // Start streaming hmd data if we aren't already
-                if (!hmds[hmdId].IsStreaming) {
+                if (!_hmds[hmdId].IsStreaming) {
                     uint data_stream_flags =
                         (uint)PSMControllerDataStreamFlags.PSMStreamFlags_includePositionData |
                         (uint)PSMControllerDataStreamFlags.PSMStreamFlags_includeCalibratedSensorData;
@@ -321,28 +351,28 @@ namespace SystemTrayApp
                     PSMoveClient.PSM_StartHmdDataStreamAsync(hmdInfo.hmd_id, data_stream_flags, out request_id);
                     PSMoveClient.PSM_EatResponse(request_id);
 
-                    hmds[hmdId].IsStreaming = true;
+                    _hmds[hmdId].IsStreaming = true;
                 }
             }
 
             // For any hmd state entry that didn't get update
             // make sure to turn off streaming if it was streaming previously
-            for (int hmdID = 0; hmdID < hmds.Length; ++hmdID) {
-                if (hmds[hmdID].HmdInfo == null && hmds[hmdID].IsStreaming) {
+            for (int hmdID = 0; hmdID < _hmds.Length; ++hmdID) {
+                if (_hmds[hmdID].HmdInfo == null && _hmds[hmdID].IsStreaming) {
                     int request_id = -1;
                     PSMoveClient.PSM_StopHmdDataStreamAsync(hmdID, out request_id);
                     PSMoveClient.PSM_EatResponse(request_id);
 
-                    hmds[hmdID].IsStreaming = false;
+                    _hmds[hmdID].IsStreaming = false;
                 }
             }
         }
 
         public bool GetController(eControllerSource source, out PSMController controller)
         {
-            int controllerIndex = (int)source;
-            if (controllerIndex >= 0 && controllerIndex < controllers.Length && controllers[controllerIndex].Controller != null) {
-                controller = controllers[controllerIndex].Controller;
+            int controllerIndex = (int)source - 1;
+            if (controllerIndex >= 0 && controllerIndex < _controllers.Length && _controllers[controllerIndex].Controller != null) {
+                controller = _controllers[controllerIndex].Controller;
                 return true;
             }
             else {
@@ -541,9 +571,9 @@ namespace SystemTrayApp
 
         public bool GetHMD(eHmdSource source, out PSMHeadMountedDisplay hmd)
         {
-            int hmdIndex = (int)source;
-            if (hmdIndex >= 0 && hmdIndex < hmds.Length && hmds[hmdIndex].Hmd != null) {
-                hmd = hmds[hmdIndex].Hmd;
+            int hmdIndex = (int)source - 1;
+            if (hmdIndex >= 0 && hmdIndex < _hmds.Length && _hmds[hmdIndex].Hmd != null) {
+                hmd = _hmds[hmdIndex].Hmd;
                 return true;
             }
             else {

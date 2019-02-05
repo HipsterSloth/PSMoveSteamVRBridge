@@ -34,6 +34,8 @@
             this.BindingsLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.AddControllerBindingButton = new MaterialSkin.Controls.MaterialRaisedButton();
             this.AddHMDBindingButton = new MaterialSkin.Controls.MaterialRaisedButton();
+            this.TriggerAxisLabel = new MaterialSkin.Controls.MaterialLabel();
+            this.TriggerAxisComboBox = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // FreePIEDisconnectBtn
@@ -71,10 +73,11 @@
             // FreePIECurrentStatus
             // 
             this.FreePIECurrentStatus.AutoSize = true;
+            this.FreePIECurrentStatus.BackColor = System.Drawing.SystemColors.ActiveBorder;
             this.FreePIECurrentStatus.Depth = 0;
             this.FreePIECurrentStatus.Font = new System.Drawing.Font("Roboto", 11F);
             this.FreePIECurrentStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.FreePIECurrentStatus.Location = new System.Drawing.Point(126, 46);
+            this.FreePIECurrentStatus.Location = new System.Drawing.Point(80, 47);
             this.FreePIECurrentStatus.MouseState = MaterialSkin.MouseState.HOVER;
             this.FreePIECurrentStatus.Name = "FreePIECurrentStatus";
             this.FreePIECurrentStatus.Size = new System.Drawing.Size(121, 19);
@@ -96,10 +99,14 @@
             // 
             // BindingsLayoutPanel
             // 
+            this.BindingsLayoutPanel.AutoScroll = true;
+            this.BindingsLayoutPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.BindingsLayoutPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.BindingsLayoutPanel.Location = new System.Drawing.Point(3, 69);
             this.BindingsLayoutPanel.Name = "BindingsLayoutPanel";
-            this.BindingsLayoutPanel.Size = new System.Drawing.Size(741, 343);
+            this.BindingsLayoutPanel.Size = new System.Drawing.Size(741, 291);
             this.BindingsLayoutPanel.TabIndex = 26;
+            this.BindingsLayoutPanel.WrapContents = false;
             // 
             // AddControllerBindingButton
             // 
@@ -133,10 +140,67 @@
             this.AddHMDBindingButton.UseVisualStyleBackColor = true;
             this.AddHMDBindingButton.Click += new System.EventHandler(this.AddHMDBindingButton_Click);
             // 
+            // TriggerAxisLabel
+            // 
+            this.TriggerAxisLabel.AutoSize = true;
+            this.TriggerAxisLabel.Depth = 0;
+            this.TriggerAxisLabel.Font = new System.Drawing.Font("Roboto", 11F);
+            this.TriggerAxisLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.TriggerAxisLabel.Location = new System.Drawing.Point(403, 378);
+            this.TriggerAxisLabel.MouseState = MaterialSkin.MouseState.HOVER;
+            this.TriggerAxisLabel.Name = "TriggerAxisLabel";
+            this.TriggerAxisLabel.Size = new System.Drawing.Size(208, 19);
+            this.TriggerAxisLabel.TabIndex = 29;
+            this.TriggerAxisLabel.Text = "Virtual Controller Trigger Axis";
+            // 
+            // TriggerAxisComboBox
+            // 
+            this.TriggerAxisComboBox.FormattingEnabled = true;
+            this.TriggerAxisComboBox.Items.AddRange(new object[] {
+            "NONE",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "20",
+            "21",
+            "22",
+            "23",
+            "24",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "30",
+            "31"});
+            this.TriggerAxisComboBox.Location = new System.Drawing.Point(618, 375);
+            this.TriggerAxisComboBox.Name = "TriggerAxisComboBox";
+            this.TriggerAxisComboBox.Size = new System.Drawing.Size(54, 21);
+            this.TriggerAxisComboBox.TabIndex = 30;
+            // 
             // FreePIEPanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.TriggerAxisComboBox);
+            this.Controls.Add(this.TriggerAxisLabel);
             this.Controls.Add(this.AddHMDBindingButton);
             this.Controls.Add(this.AddControllerBindingButton);
             this.Controls.Add(this.FreePIEDisconnectBtn);
@@ -160,5 +224,7 @@
         private System.Windows.Forms.FlowLayoutPanel BindingsLayoutPanel;
         private MaterialSkin.Controls.MaterialRaisedButton AddControllerBindingButton;
         private MaterialSkin.Controls.MaterialRaisedButton AddHMDBindingButton;
+        private MaterialSkin.Controls.MaterialLabel TriggerAxisLabel;
+        private System.Windows.Forms.ComboBox TriggerAxisComboBox;
     }
 }

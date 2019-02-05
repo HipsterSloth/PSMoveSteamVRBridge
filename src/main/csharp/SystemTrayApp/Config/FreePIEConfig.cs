@@ -22,8 +22,8 @@ namespace SystemTrayApp
         {
             JsonObject pt = new JsonObject();
 
-            pt["controller_source"] = PSMDevicePool.ControllerSourceNames[(int)controllerSource];
-            pt["controller_property_source"] = PSMDevicePool.ControllerPropertySourceNames[(int)controllerPropertySource];
+            pt["controller_source"] = controllerSource.ToString();
+            pt["controller_property_source"] = controllerPropertySource.ToString();
 
             return pt;
         }
@@ -58,8 +58,8 @@ namespace SystemTrayApp
         {
             JsonObject pt = new JsonObject();
 
-            pt["hmd_source"] = PSMDevicePool.HmdSourceNames[(int)hmdSource];
-            pt["hmd_property_source"] = PSMDevicePool.HmdPropertySourceNames[(int)hmdPropertySource];
+            pt["hmd_source"] = hmdSource.ToString();
+            pt["hmd_property_source"] = hmdPropertySource.ToString();
 
             return pt;
         }

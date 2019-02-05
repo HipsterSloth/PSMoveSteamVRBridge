@@ -148,10 +148,23 @@ namespace SystemTrayApp
             get { return _bIsInitialized; }
         }
 
-        private bool _bIsConnected;
+        public enum FreePIEConnectionState
+        {
+            disconnected,
+            waitingForPSMoveService,
+            connected,
+            failed
+        }
+
+        private FreePIEConnectionState _connectionState;
+        public FreePIEConnectionState ConnectionState
+        {
+            get { return _connectionState; }
+        }
+
         public bool IsConnected
         {
-            get { return _bIsConnected; }
+            get { return _connectionState == FreePIEConnectionState.connected; }
         }
 
         private string _freePieRuntimePath;
@@ -169,6 +182,9 @@ namespace SystemTrayApp
         public delegate void ConnectedToFreePIE();
         public event ConnectedToFreePIE ConnectedToFreePIEEvent;
 
+        public delegate void FreePIEConnectionFailure(string Reason);
+        public event FreePIEConnectionFailure FreePIEConnectionFailureEvent;
+
         public delegate void DisconnectedFromFreePIE();
         public event DisconnectedFromFreePIE DisconnectedFromFreePIEEvent;
 
@@ -178,7 +194,7 @@ namespace SystemTrayApp
             _freePIESlotStates = new FreePIESlotState[0];
             _freePIEOutput = new FreePIEApi.FreepieData[0];
             _psmDevicePool = new PSMDevicePool();
-            _bIsConnected = false;
+            _connectionState = FreePIEConnectionState.disconnected;
             _bIsInitialized = false;
             _freePIEMaxSlotCount = 4;
         }
@@ -190,11 +206,13 @@ namespace SystemTrayApp
                 _freePieRuntimePath = GetFreePieDLLPath();
 
                 if (_freePieRuntimePath.Length > 0)
-                {           
+                {
                     // Start listening to PSMoveService device events
+                    PSMoveServiceContext.Instance.ConnectedToPSMServiceEvent += OnConnectedToPSMServiceEvent;
+                    PSMoveServiceContext.Instance.DisconnectedFromPSMServiceEvent += OnDisconnectedFromPSMServiceEvent;
                     PSMoveServiceContext.Instance.ControllerListUpdatedEvent += OnControllerListUpdatedEvent;
                     PSMoveServiceContext.Instance.HmdListUpdatedEvent += OnHmdListUpdatedEvent;
-                    PSMoveServiceContext.Instance.DisconnectedFromPSMServiceEvent += OnDisconnectedFromPSMServiceEvent;
+                    PSMoveServiceContext.Instance.PSMMessagesPolledEvent += OnPSMMessagesPolledEvent;
 
                     // Add the FreePIE DLL directory to the DLL search list
                     SetDllDirectory(_freePieRuntimePath);
@@ -221,77 +239,116 @@ namespace SystemTrayApp
                 DisconnectFromFreePIE();
 
                 // Stop listening to PSMoveService device events
+                PSMoveServiceContext.Instance.ConnectedToPSMServiceEvent -= OnConnectedToPSMServiceEvent;
+                PSMoveServiceContext.Instance.DisconnectedFromPSMServiceEvent -= OnDisconnectedFromPSMServiceEvent;
                 PSMoveServiceContext.Instance.ControllerListUpdatedEvent -= OnControllerListUpdatedEvent;
                 PSMoveServiceContext.Instance.HmdListUpdatedEvent -= OnHmdListUpdatedEvent;
-                PSMoveServiceContext.Instance.DisconnectedFromPSMServiceEvent -= OnDisconnectedFromPSMServiceEvent;
+                PSMoveServiceContext.Instance.PSMMessagesPolledEvent -= OnPSMMessagesPolledEvent;
 
                 _bIsInitialized = false;
             }
         }
 
-        public bool ConnectToFreePIE(FreePIESlotDefinition[] newSlots)
+        public void ConnectToFreePIE(FreePIESlotDefinition[] newSlots)
         {
-            if (!_bIsConnected) {
+            if (_connectionState == FreePIEConnectionState.disconnected ||
+                _connectionState == FreePIEConnectionState.failed)
+            {
+                InitSlotStates(newSlots);
 
                 if (PSMoveServiceContext.Instance.IsConnected)
                 {
-                    PSMoveServiceContext.Instance.PSMMessagesPolledEvent += OnPSMMessagesPolledEvent;
-
-                    RebuildSlotStates(newSlots);
-
-                    if (ConnectedToFreePIEEvent != null) {
-                        ConnectedToFreePIEEvent();
+                    OnConnectedToFreePIE();
+                }
+                else 
+                {
+                    if (PSMoveServiceContext.Instance.LaunchPSMoveServiceProcess())
+                    {
+                        _connectionState = FreePIEConnectionState.waitingForPSMoveService;
                     }
-
-                    _bIsConnected = true;
+                    else 
+                    {
+                        _connectionState = FreePIEConnectionState.failed;
+                        if (FreePIEConnectionFailureEvent != null)
+                        {
+                            FreePIEConnectionFailureEvent("Can't launch PSMoveService");
+                        }
+                    }
                 }
             }
-
-            return true;
         }
 
         public void DisconnectFromFreePIE()
         {
-            if (_bIsConnected) {
-                PSMoveServiceContext.Instance.PSMMessagesPolledEvent -= OnPSMMessagesPolledEvent;
-
+            if (_connectionState == FreePIEConnectionState.connected)
+            {
+                _psmDevicePool.Cleanup();
                 CleanupSlotStates();
 
+                _connectionState = FreePIEConnectionState.disconnected;
                 if (DisconnectedFromFreePIEEvent != null) {
                     DisconnectedFromFreePIEEvent();
                 }
+            }
+        }
 
-                // Shutdown SteamVR connection
-                _bIsConnected = false;
+        private void OnConnectedToFreePIE()
+        {
+            _psmDevicePool.Init();
+
+            _connectionState = FreePIEConnectionState.connected;
+            if (ConnectedToFreePIEEvent != null)
+            {
+                ConnectedToFreePIEEvent();
+            }
+        }
+
+        private void OnConnectedToPSMServiceEvent()
+        {
+            if (_connectionState == FreePIEConnectionState.waitingForPSMoveService)
+            {
+                OnConnectedToFreePIE();
+            }
+        }
+
+        private void OnDisconnectedFromPSMServiceEvent()
+        {
+            if (_connectionState == FreePIEConnectionState.connected)
+            {
+                DisconnectFromFreePIE();
             }
         }
 
         private void OnHmdListUpdatedEvent()
         {
-            _psmDevicePool.RefreshHmdList();
-            UpdateSlotStates();
-            PublishSlotStates();
+            if (_connectionState == FreePIEConnectionState.connected)
+            {
+                _psmDevicePool.RefreshHmdList();
+                UpdateSlotStates();
+                PublishSlotStates();
+            }
         }
 
         private void OnControllerListUpdatedEvent()
         {
-            _psmDevicePool.RefreshControllerList();
-            UpdateSlotStates();
-            PublishSlotStates();
+            if (_connectionState == FreePIEConnectionState.connected)
+            {
+                _psmDevicePool.RefreshControllerList();
+                UpdateSlotStates();
+                PublishSlotStates();
+            }
         }
 
         private void OnPSMMessagesPolledEvent()
         {
-            UpdateSlotStates();
-            PublishSlotStates();
+            if (_connectionState == FreePIEConnectionState.connected)
+            {
+                UpdateSlotStates();
+                PublishSlotStates();
+            }
         }
 
-        private void OnDisconnectedFromPSMServiceEvent()
-        {
-            DisconnectFromFreePIE();
-        }
-
-        private void RebuildSlotStates(FreePIESlotDefinition[] newSlots)
+        private void InitSlotStates(FreePIESlotDefinition[] newSlots)
         {
             if (newSlots.Length <= _freePIEMaxSlotCount)
             {
@@ -310,7 +367,6 @@ namespace SystemTrayApp
                 for (int slotIndex= 0; slotIndex < _freePIESlotDefinitions.Length; ++slotIndex)
                 {
                     _freePIESlotStates[slotIndex] = new FreePIESlotState();
-                    _freePIEOutput[slotIndex] = _freePIESlotStates[slotIndex].SlotData;
                 }
             }
         }
@@ -328,6 +384,12 @@ namespace SystemTrayApp
 
         private void PublishSlotStates()
         {
+            // Copy the slot data to the final output array
+            for (int slotIndex = 0; slotIndex < _freePIESlotDefinitions.Length; ++slotIndex)
+            {
+                _freePIEOutput[slotIndex] = _freePIESlotStates[slotIndex].SlotData;
+            }
+
             int result = FreePIEApi.freepie_io_6dof_write(0, _freePIEOutput.Length, _freePIEOutput);
             if (result == FreePIEApi.FREEPIE_IO_ERROR_OUT_OF_BOUNDS) {
                 Trace.TraceError("FreePIEContext - Could not write slots to freepie: OUT OF BOUNDS");
@@ -341,7 +403,6 @@ namespace SystemTrayApp
         {
             _freePIESlotStates = new FreePIESlotState[0];
             _freePIEOutput = new FreePIEApi.FreepieData[0];
-            _psmDevicePool.Cleanup();
         }
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]

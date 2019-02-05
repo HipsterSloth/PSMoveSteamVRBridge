@@ -12,6 +12,9 @@ namespace SystemTrayApp
 {
     public partial class FreePIEHmdSlotMapping : UserControl
     {
+        public delegate void SlotMappingChanged();
+        public event SlotMappingChanged SlotMappingChangedEvent;
+
         public delegate void SlotMappingDeleted();
         public event SlotMappingDeleted SlotMappingDeletedEvent;
 
@@ -78,6 +81,8 @@ namespace SystemTrayApp
             YawPropertyComboBox.Enabled = bIsEnabled;
             RollSourceComboBox.Enabled = bIsEnabled;
             RollPropertyComboBox.Enabled = bIsEnabled;
+            DownButton.Enabled = bIsEnabled;
+            UpButton.Enabled = bIsEnabled;
             CloseButton.Enabled = bIsEnabled;
         }
 
@@ -89,11 +94,21 @@ namespace SystemTrayApp
             SourceComboBox.DisplayMember = "Key";
             SourceComboBox.ValueMember = "Value";
             SourceComboBox.SelectedValue = Source;
+            SourceComboBox.SelectedIndexChanged += SourceComboBox_SelectedIndexChanged;
 
             PropertyComboBox.DataSource = new BindingSource(PropertyTable, null);
             PropertyComboBox.DisplayMember = "Key";
             PropertyComboBox.ValueMember = "Value";
             PropertyComboBox.SelectedValue = Property;
+            PropertyComboBox.SelectedIndexChanged += SourceComboBox_SelectedIndexChanged;
+        }
+
+        private void SourceComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (SlotMappingChangedEvent != null)
+            {
+                SlotMappingChangedEvent();
+            }
         }
 
         private void FetchComboBoxValues(
