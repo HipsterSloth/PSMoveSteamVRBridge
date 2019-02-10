@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace SystemTrayApp
 {
-    public partial class FreePIEPanel : UserControl
+    public partial class FreePIEPanel : UserControl, IAppPanel
     {
         private bool bNeedsSlotRebuild;
 
@@ -103,12 +103,12 @@ namespace SystemTrayApp
             FreePIEConfig.Instance.Save();
         }
 
-        public void OnTabEntered()
+        public void OnPanelEntered()
         {
             ReloadFromConfig();
         }
 
-        public void OnTabExited()
+        public void OnPanelExited()
         {
 
         }

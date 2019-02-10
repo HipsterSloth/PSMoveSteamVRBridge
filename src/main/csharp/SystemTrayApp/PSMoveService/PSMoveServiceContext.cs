@@ -403,7 +403,7 @@ namespace SystemTrayApp
 
             // Make the polling interval run more frequently when there are active controller streams
             _pollTimer.Interval =
-                (PSMDevicePool.InitializedDevicePoolCount > 0)
+                (PSMControllerPool.InitializedControllerPoolCount > 0 || PSMHmdPool.InitializedHmdPoolCount > 0)
                 ? POLL_INTERVAL_60FPS : POLL_INTERVAL_5FPS;
 
             // Restart the timer once event handling is complete.

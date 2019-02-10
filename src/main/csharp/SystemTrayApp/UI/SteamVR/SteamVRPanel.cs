@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace SystemTrayApp
 {
-    public partial class SteamVRPanel : UserControl
+    public partial class SteamVRPanel : UserControl, IAppPanel
     {
         private SteamVRWindow steamVRWindow;
 
@@ -44,7 +44,7 @@ namespace SystemTrayApp
             SynchronizedInvoke.Invoke(this, () => HandleTrackedDeviceDeactivated(device));
         }
 
-        public void OnTabEntered()
+        public void OnPanelEntered()
         {
             if (SteamVRContext.Instance.IsConnected) {
                 SteamVRConnectButton.Visible = false;
@@ -56,7 +56,7 @@ namespace SystemTrayApp
             }
         }
 
-        public void OnTabExited()
+        public void OnPanelExited()
         {
         }
 
@@ -123,6 +123,11 @@ namespace SystemTrayApp
                 case Valve.VR.ETrackedDeviceClass.TrackingReference:
                     break;
             }
+        }
+
+        private void HMDAlignButton_Click(object sender, EventArgs e)
+        {
+            AppWindow.Instance.SetSteamVRPanel(new TestVideoFeed());
         }
     }
 }

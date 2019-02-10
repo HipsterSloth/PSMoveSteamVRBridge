@@ -27,69 +27,72 @@ namespace SystemTrayApp
                 _slotData = new FreePIEApi.FreepieData();
             }
 
-            public void UpdateSlotData(FreePIESlotDefinition slotDefinition, PSMDevicePool psmDevicePool)
+            public void UpdateSlotData(
+                FreePIESlotDefinition slotDefinition, 
+                PSMControllerPool psmControllerPool,
+                PSMHmdPool psmHmdPool)
             {
                 if (slotDefinition is FreePIEControllerSlotDefinition)
                 {
                     FreePIEControllerSlotDefinition controllerSlotDef = (FreePIEControllerSlotDefinition)slotDefinition;
 
-                    _slotData.x = FetchControllerSlotData(controllerSlotDef.xProperty, psmDevicePool);
-                    _slotData.y = FetchControllerSlotData(controllerSlotDef.yProperty, psmDevicePool);
-                    _slotData.z = FetchControllerSlotData(controllerSlotDef.zProperty, psmDevicePool);
-                    _slotData.pitch = FetchControllerSlotData(controllerSlotDef.pitchProperty, psmDevicePool);
-                    _slotData.roll = FetchControllerSlotData(controllerSlotDef.rollProperty, psmDevicePool);
-                    _slotData.yaw = FetchControllerSlotData(controllerSlotDef.yawProperty, psmDevicePool);
+                    _slotData.x = FetchControllerSlotData(controllerSlotDef.xProperty, psmControllerPool);
+                    _slotData.y = FetchControllerSlotData(controllerSlotDef.yProperty, psmControllerPool);
+                    _slotData.z = FetchControllerSlotData(controllerSlotDef.zProperty, psmControllerPool);
+                    _slotData.pitch = FetchControllerSlotData(controllerSlotDef.pitchProperty, psmControllerPool);
+                    _slotData.roll = FetchControllerSlotData(controllerSlotDef.rollProperty, psmControllerPool);
+                    _slotData.yaw = FetchControllerSlotData(controllerSlotDef.yawProperty, psmControllerPool);
                 }
                 else if (slotDefinition is FreePIEHmdSlotDefinition) 
                 {
                     FreePIEHmdSlotDefinition hmdSlotDef = (FreePIEHmdSlotDefinition)slotDefinition;
 
-                    _slotData.x = FetchHmdSlotData(hmdSlotDef.xProperty, psmDevicePool);
-                    _slotData.y = FetchHmdSlotData(hmdSlotDef.yProperty, psmDevicePool);
-                    _slotData.z = FetchHmdSlotData(hmdSlotDef.zProperty, psmDevicePool);
-                    _slotData.pitch = FetchHmdSlotData(hmdSlotDef.pitchProperty, psmDevicePool);
-                    _slotData.roll = FetchHmdSlotData(hmdSlotDef.rollProperty, psmDevicePool);
-                    _slotData.yaw = FetchHmdSlotData(hmdSlotDef.yawProperty, psmDevicePool);
+                    _slotData.x = FetchHmdSlotData(hmdSlotDef.xProperty, psmHmdPool);
+                    _slotData.y = FetchHmdSlotData(hmdSlotDef.yProperty, psmHmdPool);
+                    _slotData.z = FetchHmdSlotData(hmdSlotDef.zProperty, psmHmdPool);
+                    _slotData.pitch = FetchHmdSlotData(hmdSlotDef.pitchProperty, psmHmdPool);
+                    _slotData.roll = FetchHmdSlotData(hmdSlotDef.rollProperty, psmHmdPool);
+                    _slotData.yaw = FetchHmdSlotData(hmdSlotDef.yawProperty, psmHmdPool);
                 }
             }
 
-            private float FetchControllerSlotData(FreePIEControllerProperty property, PSMDevicePool psmDevicePool)
+            private float FetchControllerSlotData(FreePIEControllerProperty property, PSMControllerPool psmControllerPool)
             {
                 switch(property.controllerPropertySource) {
                     case eControllerPropertySource.POSITION_X:
-                        return psmDevicePool.GetControllerPosition(property.controllerSource).x;
+                        return psmControllerPool.GetControllerPosition(property.controllerSource).x;
                     case eControllerPropertySource.POSITION_Y:
-                        return psmDevicePool.GetControllerPosition(property.controllerSource).y;
+                        return psmControllerPool.GetControllerPosition(property.controllerSource).y;
                     case eControllerPropertySource.POSITION_Z:
-                        return psmDevicePool.GetControllerPosition(property.controllerSource).z;
+                        return psmControllerPool.GetControllerPosition(property.controllerSource).z;
                     case eControllerPropertySource.ORIENTATION_ROLL:
-                        return MathUtility.ExtractRoll(psmDevicePool.GetControllerOrientation(property.controllerSource));
+                        return MathUtility.ExtractRoll(psmControllerPool.GetControllerOrientation(property.controllerSource));
                     case eControllerPropertySource.ORIENTATION_PITCH:
-                        return MathUtility.ExtractPitch(psmDevicePool.GetControllerOrientation(property.controllerSource));
+                        return MathUtility.ExtractPitch(psmControllerPool.GetControllerOrientation(property.controllerSource));
                     case eControllerPropertySource.ORIENTATION_YAW:
-                        return MathUtility.ExtractYaw(psmDevicePool.GetControllerOrientation(property.controllerSource));
+                        return MathUtility.ExtractYaw(psmControllerPool.GetControllerOrientation(property.controllerSource));
                     case eControllerPropertySource.ACCELEROMETER_X:
-                        return psmDevicePool.GetControllerAccelerometer(property.controllerSource).x;
+                        return psmControllerPool.GetControllerAccelerometer(property.controllerSource).x;
                     case eControllerPropertySource.ACCELEROMETER_Y:
-                        return psmDevicePool.GetControllerAccelerometer(property.controllerSource).y;
+                        return psmControllerPool.GetControllerAccelerometer(property.controllerSource).y;
                     case eControllerPropertySource.ACCELEROMETER_Z:
-                        return psmDevicePool.GetControllerAccelerometer(property.controllerSource).z;
+                        return psmControllerPool.GetControllerAccelerometer(property.controllerSource).z;
                     case eControllerPropertySource.GYROSCOPE_X:
-                        return psmDevicePool.GetControllerGyroscope(property.controllerSource).x;
+                        return psmControllerPool.GetControllerGyroscope(property.controllerSource).x;
                     case eControllerPropertySource.GYROSCOPE_Y:
-                        return psmDevicePool.GetControllerGyroscope(property.controllerSource).y;
+                        return psmControllerPool.GetControllerGyroscope(property.controllerSource).y;
                     case eControllerPropertySource.GYROSCOPE_Z:
-                        return psmDevicePool.GetControllerGyroscope(property.controllerSource).z;
+                        return psmControllerPool.GetControllerGyroscope(property.controllerSource).z;
                     case eControllerPropertySource.MAGNETOMETER_X:
-                        return psmDevicePool.GetControllerMagnetometer(property.controllerSource).x;
+                        return psmControllerPool.GetControllerMagnetometer(property.controllerSource).x;
                     case eControllerPropertySource.MAGNETOMETER_Y:
-                        return psmDevicePool.GetControllerMagnetometer(property.controllerSource).y;
+                        return psmControllerPool.GetControllerMagnetometer(property.controllerSource).y;
                     case eControllerPropertySource.MAGNETOMETER_Z:
-                        return psmDevicePool.GetControllerMagnetometer(property.controllerSource).z;
+                        return psmControllerPool.GetControllerMagnetometer(property.controllerSource).z;
                     case eControllerPropertySource.BUTTONS:
-                        return psmDevicePool.GetControllerButtonBitmaskAsFloat(property.controllerSource);
+                        return psmControllerPool.GetControllerButtonBitmaskAsFloat(property.controllerSource);
                     case eControllerPropertySource.TRIGGER:
-                        return psmDevicePool.GetTriggerValue(property.controllerSource);
+                        return psmControllerPool.GetTriggerValue(property.controllerSource);
                     default:
                         break;
 
@@ -97,33 +100,33 @@ namespace SystemTrayApp
                 return 0;
             }
 
-            private float FetchHmdSlotData(FreePIEHmdProperty property, PSMDevicePool _psmDevicePool)
+            private float FetchHmdSlotData(FreePIEHmdProperty property, PSMHmdPool psmHmdPool)
             {
                 switch (property.hmdPropertySource) {
                     case eHmdPropertySource.POSITION_X:
-                        return _psmDevicePool.GetHmdPosition(property.hmdSource).x;
+                        return psmHmdPool.GetHmdPosition(property.hmdSource).x;
                     case eHmdPropertySource.POSITION_Y:
-                        return _psmDevicePool.GetHmdPosition(property.hmdSource).y;
+                        return psmHmdPool.GetHmdPosition(property.hmdSource).y;
                     case eHmdPropertySource.POSITION_Z:
-                        return _psmDevicePool.GetHmdPosition(property.hmdSource).z;
+                        return psmHmdPool.GetHmdPosition(property.hmdSource).z;
                     case eHmdPropertySource.ORIENTATION_ROLL:
-                        return MathUtility.ExtractRoll(_psmDevicePool.GetHmdOrientation(property.hmdSource));
+                        return MathUtility.ExtractRoll(psmHmdPool.GetHmdOrientation(property.hmdSource));
                     case eHmdPropertySource.ORIENTATION_PITCH:
-                        return MathUtility.ExtractPitch(_psmDevicePool.GetHmdOrientation(property.hmdSource));
+                        return MathUtility.ExtractPitch(psmHmdPool.GetHmdOrientation(property.hmdSource));
                     case eHmdPropertySource.ORIENTATION_YAW:
-                        return MathUtility.ExtractYaw(_psmDevicePool.GetHmdOrientation(property.hmdSource));
+                        return MathUtility.ExtractYaw(psmHmdPool.GetHmdOrientation(property.hmdSource));
                     case eHmdPropertySource.ACCELEROMETER_X:
-                        return _psmDevicePool.GetHmdAccelerometer(property.hmdSource).x;
+                        return psmHmdPool.GetHmdAccelerometer(property.hmdSource).x;
                     case eHmdPropertySource.ACCELEROMETER_Y:
-                        return _psmDevicePool.GetHmdAccelerometer(property.hmdSource).y;
+                        return psmHmdPool.GetHmdAccelerometer(property.hmdSource).y;
                     case eHmdPropertySource.ACCELEROMETER_Z:
-                        return _psmDevicePool.GetHmdAccelerometer(property.hmdSource).z;
+                        return psmHmdPool.GetHmdAccelerometer(property.hmdSource).z;
                     case eHmdPropertySource.GYROSCOPE_X:
-                        return _psmDevicePool.GetHmdGyroscope(property.hmdSource).x;
+                        return psmHmdPool.GetHmdGyroscope(property.hmdSource).x;
                     case eHmdPropertySource.GYROSCOPE_Y:
-                        return _psmDevicePool.GetHmdGyroscope(property.hmdSource).y;
+                        return psmHmdPool.GetHmdGyroscope(property.hmdSource).y;
                     case eHmdPropertySource.GYROSCOPE_Z:
-                        return _psmDevicePool.GetHmdGyroscope(property.hmdSource).z;
+                        return psmHmdPool.GetHmdGyroscope(property.hmdSource).z;
                     default:
                         break;
 
@@ -140,7 +143,8 @@ namespace SystemTrayApp
 
         private FreePIESlotState[] _freePIESlotStates;
         private FreePIEApi.FreepieData[] _freePIEOutput;
-        private PSMDevicePool _psmDevicePool;
+        private PSMControllerPool _psmControllerPool;
+        private PSMHmdPool _psmHmdPool;
 
         private bool _bIsInitialized;
         public bool IsInitialized
@@ -193,7 +197,8 @@ namespace SystemTrayApp
             _freePIESlotDefinitions = new FreePIESlotDefinition[0];
             _freePIESlotStates = new FreePIESlotState[0];
             _freePIEOutput = new FreePIEApi.FreepieData[0];
-            _psmDevicePool = new PSMDevicePool();
+            _psmControllerPool = new PSMControllerPool();
+            _psmHmdPool = new PSMHmdPool();
             _connectionState = FreePIEConnectionState.disconnected;
             _bIsInitialized = false;
             _freePIEMaxSlotCount = 4;
@@ -282,7 +287,8 @@ namespace SystemTrayApp
         {
             if (_connectionState == FreePIEConnectionState.connected)
             {
-                _psmDevicePool.Cleanup();
+                _psmControllerPool.Cleanup();
+                _psmHmdPool.Cleanup();
                 CleanupSlotStates();
 
                 _connectionState = FreePIEConnectionState.disconnected;
@@ -294,7 +300,8 @@ namespace SystemTrayApp
 
         private void OnConnectedToFreePIE()
         {
-            _psmDevicePool.Init();
+            _psmControllerPool.Init();
+            _psmHmdPool.Init();
 
             _connectionState = FreePIEConnectionState.connected;
             if (ConnectedToFreePIEEvent != null)
@@ -323,7 +330,7 @@ namespace SystemTrayApp
         {
             if (_connectionState == FreePIEConnectionState.connected)
             {
-                _psmDevicePool.RefreshHmdList();
+                _psmHmdPool.RefreshHmdList();
                 UpdateSlotStates();
                 PublishSlotStates();
             }
@@ -333,7 +340,7 @@ namespace SystemTrayApp
         {
             if (_connectionState == FreePIEConnectionState.connected)
             {
-                _psmDevicePool.RefreshControllerList();
+                _psmControllerPool.RefreshControllerList();
                 UpdateSlotStates();
                 PublishSlotStates();
             }
@@ -378,7 +385,7 @@ namespace SystemTrayApp
                 FreePIESlotDefinition slotDefinition = _freePIESlotDefinitions[slotIndex];
                 FreePIESlotState slotState = _freePIESlotStates[slotIndex];
 
-                slotState.UpdateSlotData(slotDefinition, _psmDevicePool);
+                slotState.UpdateSlotData(slotDefinition, _psmControllerPool, _psmHmdPool);
             }
         }
 

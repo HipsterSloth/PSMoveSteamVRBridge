@@ -18,8 +18,8 @@ namespace SystemTrayApp
         public delegate void SlotMappingDeleted();
         public event SlotMappingDeleted SlotMappingDeletedEvent;
 
-        private static Dictionary<string, eControllerSource> SourceTable = PSMDevicePool.MakeControllerSourceDictionary();
-        private static Dictionary<string, eControllerPropertySource> PropertyTable = PSMDevicePool.MakeControllerPropertyDictionary();
+        private static Dictionary<string, eControllerSource> SourceTable = PSMControllerPool.MakeControllerSourceDictionary();
+        private static Dictionary<string, eControllerPropertySource> PropertyTable = PSMControllerPool.MakeControllerPropertyDictionary();
 
         public FreePIEControllerSlotMapping(FreePIEControllerSlotDefinition slotDefinition)
         {

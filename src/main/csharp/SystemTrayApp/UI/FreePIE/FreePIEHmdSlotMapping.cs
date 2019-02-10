@@ -18,8 +18,8 @@ namespace SystemTrayApp
         public delegate void SlotMappingDeleted();
         public event SlotMappingDeleted SlotMappingDeletedEvent;
 
-        private static Dictionary<string, eHmdSource> SourceTable = PSMDevicePool.MakeHmdSourceDictionary();
-        private static Dictionary<string, eHmdPropertySource> PropertyTable = PSMDevicePool.MakeHmdPropertyDictionary();
+        private static Dictionary<string, eHmdSource> SourceTable = PSMHmdPool.MakeHmdSourceDictionary();
+        private static Dictionary<string, eHmdPropertySource> PropertyTable = PSMHmdPool.MakeHmdPropertyDictionary();
 
         public FreePIEHmdSlotMapping(FreePIEHmdSlotDefinition slotDefinition)
         {

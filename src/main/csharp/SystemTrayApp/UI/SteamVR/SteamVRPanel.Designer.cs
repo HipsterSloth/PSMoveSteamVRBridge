@@ -134,6 +134,7 @@
             this.HMDAlignButton.TabIndex = 69;
             this.HMDAlignButton.Text = "HMD Alignment Tool";
             this.HMDAlignButton.UseVisualStyleBackColor = true;
+            this.HMDAlignButton.Click += new System.EventHandler(this.HMDAlignButton_Click);
             // 
             // TrackingTestToolButton
             // 

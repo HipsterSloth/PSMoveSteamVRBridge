@@ -14,6 +14,9 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <DebugSymbols>true</DebugSymbols>
@@ -84,7 +87,9 @@
     <Compile Include="Config\ControllerConfig.cs" />
     <Compile Include="FreePIE\FreePIEApi.cs" />
     <Compile Include="FreePIE\FreePIEContext.cs" />
-    <Compile Include="PSMoveService\PSMDevicePool.cs" />
+    <Compile Include="PSMoveService\PSMControllerPool.cs" />
+    <Compile Include="PSMoveService\PSMHmdPool.cs" />
+    <Compile Include="PSMoveService\PSMTrackerPool.cs" />
     <Compile Include="Renderer\GlCamera.cs" />
     <Compile Include="Renderer\GlMaterial.cs" />
     <Compile Include="Renderer\GlModelInstance.cs" />
@@ -103,6 +108,13 @@
     <Compile Include="SteamVR\SteamVRTrackedDevice.cs" />
     <Compile Include="SteamVR\SteamVRTracker.cs" />
     <Compile Include="SynchronizedContext.cs" />
+    <Compile Include="UI\Common\TrackerVideoFrame.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\Common\TrackerVideoFrame.Designer.cs">
+      <DependentUpon>TrackerVideoFrame.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\IAppPanel.cs" />
     <Compile Include="UI\PSMoveService\Controllers\ButtonMapping.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -166,6 +178,12 @@
     </Compile>
     <Compile Include="UI\PSMoveService\Controllers\PSNaviControllerPanel.Designer.cs">
       <DependentUpon>PSNaviControllerPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SteamVR\HMDAlignTool\TestVideoFeed.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SteamVR\HMDAlignTool\TestVideoFeed.Designer.cs">
+      <DependentUpon>TestVideoFeed.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\SteamVR\SteamVRDeviceEntry.cs">
       <SubType>UserControl</SubType>
@@ -270,6 +288,9 @@
       <DependentUpon>AppWindow.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="UI\Common\TrackerVideoFrame.resx">
+      <DependentUpon>TrackerVideoFrame.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\PSMoveService\Controllers\ButtonMapping.resx">
       <DependentUpon>ButtonMapping.cs</DependentUpon>
     </EmbeddedResource>
@@ -297,6 +318,9 @@
     <EmbeddedResource Include="UI\PSMoveService\Controllers\PSNaviControllerPanel.resx">
       <DependentUpon>PSNaviControllerPanel.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="UI\SteamVR\HMDAlignTool\TestVideoFeed.resx">
+      <DependentUpon>TestVideoFeed.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\SteamVR\SteamVRDeviceEntry.resx">
       <DependentUpon>SteamVRDeviceEntry.cs</DependentUpon>
     </EmbeddedResource>
@@ -320,6 +344,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
@@ -330,5 +355,9 @@
   <PropertyGroup Condition="'$(Configuration)' == 'MinSizeRel'">
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'RelWithDebInfo'">
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>copy /Y "$(ProjectDir)..\..\..\..\deps\PSMoveService\src\PSMoveService\bin\PSMoveClient*.dll" "$(ProjectDir)..\..\..\..\build\PSMoveSteamVRBridge"
+copy /Y "$(ProjectDir)..\..\..\..\deps\PSMoveService\src\PSMoveService\bin\PSMoveService*.exe" "$(ProjectDir)..\..\..\..\build\PSMoveSteamVRBridge"</PostBuildEvent>
   </PropertyGroup>
 </Project>

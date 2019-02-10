@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace SystemTrayApp
 {
-    public partial class PSMoveServicePanel : UserControl
+    public partial class PSMoveServicePanel : UserControl, IAppPanel
     {
         public PSMoveServicePanel()
         {
@@ -53,7 +53,7 @@ namespace SystemTrayApp
             }
         }
 
-        public void OnTabEntered()
+        public void OnPanelEntered()
         {
             PSMoveSteamVRBridgeConfig config = PSMoveSteamVRBridgeConfig.Instance;
 
@@ -82,7 +82,7 @@ namespace SystemTrayApp
             }
         }
 
-        public void OnTabExited()
+        public void OnPanelExited()
         {
             AutoLaunchPSMCheckBox.CheckedChanged -= new System.EventHandler(this.AutoLaunchPSMCheckBox_CheckedChanged);
             ServerAddressTextField.Enter -= new System.EventHandler(this.ServerAddressTextField_Changed);

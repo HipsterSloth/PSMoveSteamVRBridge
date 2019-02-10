@@ -43,37 +43,7 @@ namespace SystemTrayApp
         COUNT
     }
 
-    public enum eHmdSource
-    {
-        NONE,
-        HMD_0,
-        HMD_1,
-        HMD_2,
-        HMD_3,
-
-        COUNT
-    }
-
-    public enum eHmdPropertySource
-    {
-        NONE,
-        POSITION_X,
-        POSITION_Y,
-        POSITION_Z,
-        ORIENTATION_ROLL,
-        ORIENTATION_PITCH,
-        ORIENTATION_YAW,
-        ACCELEROMETER_X,
-        ACCELEROMETER_Y,
-        ACCELEROMETER_Z,
-        GYROSCOPE_X,
-        GYROSCOPE_Y,
-        GYROSCOPE_Z,
-
-        COUNT
-    }
-
-    public class PSMDevicePool
+    public class PSMControllerPool
     {
         public static string[] ControllerSourceNames = new string[(int)eControllerSource.COUNT] {
             "None",
@@ -88,7 +58,8 @@ namespace SystemTrayApp
         {
             Dictionary<string, eControllerSource> dictionary = new Dictionary<string, eControllerSource>();
 
-            for (int source_index = 0; source_index < (int)eControllerSource.COUNT; ++source_index) {
+            for (int source_index = 0; source_index < (int)eControllerSource.COUNT; ++source_index)
+            {
                 dictionary.Add(ControllerSourceNames[source_index], (eControllerSource)source_index);
             }
 
@@ -120,54 +91,9 @@ namespace SystemTrayApp
         {
             Dictionary<string, eControllerPropertySource> dictionary = new Dictionary<string, eControllerPropertySource>();
 
-            for (int source_index = 0; source_index < (int)eControllerPropertySource.COUNT; ++source_index) {
+            for (int source_index = 0; source_index < (int)eControllerPropertySource.COUNT; ++source_index)
+            {
                 dictionary.Add(ControllerPropertySourceNames[source_index], (eControllerPropertySource)source_index);
-            }
-
-            return dictionary;
-        }
-
-        public static string[] HmdSourceNames = new string[(int)eHmdSource.COUNT] {
-            "None",
-            "HMD 0",
-            "HMD 1",
-            "HMD 2",
-            "HMD 3"
-        };
-
-        public static Dictionary<string, eHmdSource> MakeHmdSourceDictionary()
-        {
-            Dictionary<string, eHmdSource> dictionary = new Dictionary<string, eHmdSource>();
-
-            for (int source_index = 0; source_index < (int)eHmdSource.COUNT; ++source_index) {
-                dictionary.Add(HmdSourceNames[source_index], (eHmdSource)source_index);
-            }
-
-            return dictionary;
-        }
-
-        public static string[] HmdPropertySourceNames = new string[(int)eHmdPropertySource.COUNT] {
-            "None",
-            "Position X",
-            "Position Y",
-            "Position Z",
-            "Orientation X",
-            "Orientation Y",
-            "Orientation Z",
-            "Accelerometer X",
-            "Accelerometer Y",
-            "Accelerometer Z",
-            "Gyroscope X",
-            "Gyroscope Y",
-            "Gyroscope Z",
-        };
-
-        public static Dictionary<string, eHmdPropertySource> MakeHmdPropertyDictionary()
-        {
-            Dictionary<string, eHmdPropertySource> dictionary = new Dictionary<string, eHmdPropertySource>();
-
-            for (int source_index = 0; source_index < (int)eHmdPropertySource.COUNT; ++source_index) {
-                dictionary.Add(HmdPropertySourceNames[source_index], (eHmdPropertySource)source_index);
             }
 
             return dictionary;
@@ -180,28 +106,19 @@ namespace SystemTrayApp
             public bool IsStreaming;
         }
 
-        struct PSMHmdState
+        private static int _initializedControllerPoolCount = 0;
+        public static int InitializedControllerPoolCount
         {
-            public HMDInfo HmdInfo;
-            public PSMHeadMountedDisplay Hmd;
-            public bool IsStreaming;
-        }
-
-        private static int _initializedDevicePoolCount = 0;
-        public static int InitializedDevicePoolCount
-        {
-            get { return _initializedDevicePoolCount; }
+            get { return _initializedControllerPoolCount; }
         }
 
         bool _isInitialized;
         PSMControllerState[] _controllers;
-        PSMHmdState[] _hmds;
 
-        public PSMDevicePool()
+        public PSMControllerPool()
         {
             _isInitialized = false;
             _controllers = new PSMControllerState[PSMoveClient.PSMOVESERVICE_MAX_CONTROLLER_COUNT];
-            _hmds = new PSMHmdState[PSMoveClient.PSMOVESERVICE_MAX_HMD_COUNT];
         }
 
         public void Init()
@@ -217,20 +134,11 @@ namespace SystemTrayApp
                 }
             }
 
-            for (int hmdID = 0; hmdID < _hmds.Length; ++hmdID)
-            {
-                if (PSMoveClient.PSM_AllocateHmdListener(hmdID) == PSMResult.PSMResult_Success)
-                {
-                    _hmds[hmdID].Hmd = PSMoveClient.PSM_GetHmd(hmdID);
-                }
-            }
-
             _isInitialized = true;
-            _initializedDevicePoolCount++;
+            _initializedControllerPoolCount++;
 
             // Fetch the most recent list of devices posted
             RefreshControllerList();
-            RefreshHmdList();
         }
 
         public void Cleanup()
@@ -253,22 +161,8 @@ namespace SystemTrayApp
                 _controllers[controllerID].Controller = null;
             }
 
-            for (int hmdID = 0; hmdID < _hmds.Length; ++hmdID)
-            {
-                if (_hmds[hmdID].IsStreaming) {
-                    int request_id = -1;
-                    PSMoveClient.PSM_StopHmdDataStreamAsync(hmdID, out request_id);
-                    PSMoveClient.PSM_EatResponse(request_id);
-
-                    _hmds[hmdID].IsStreaming = false;
-                }
-
-                PSMoveClient.PSM_FreeHmdListener(hmdID);
-                _hmds[hmdID].Hmd = null;
-            }
-
             _isInitialized = false;
-            _initializedDevicePoolCount--;
+            _initializedControllerPoolCount--;
         }
 
         public void RefreshControllerList()
@@ -285,7 +179,7 @@ namespace SystemTrayApp
             }
 
             // Update the controller state list with the new controller list
-            foreach (ControllerInfo controllerInfo in ControllerInfoList) 
+            foreach (ControllerInfo controllerInfo in ControllerInfoList)
             {
                 int controllerId = controllerInfo.controller_id;
 
@@ -293,7 +187,7 @@ namespace SystemTrayApp
                 _controllers[controllerId].ControllerInfo = controllerInfo;
 
                 // Start streaming controller data if we aren't already
-                if (!_controllers[controllerId].IsStreaming) 
+                if (!_controllers[controllerId].IsStreaming)
                 {
                     uint data_stream_flags =
                         (uint)PSMControllerDataStreamFlags.PSMStreamFlags_includePositionData |
@@ -309,7 +203,7 @@ namespace SystemTrayApp
 
             // For any controller state entry that didn't get update
             // make sure to turn off streaming if it was streaming previously
-            for (int controllerID = 0; controllerID < _controllers.Length; ++controllerID) 
+            for (int controllerID = 0; controllerID < _controllers.Length; ++controllerID)
             {
                 if (_controllers[controllerID].ControllerInfo == null && _controllers[controllerID].IsStreaming)
                 {
@@ -322,60 +216,16 @@ namespace SystemTrayApp
             }
         }
 
-        public void RefreshHmdList()
-        {
-            if (!_isInitialized)
-                return;
-
-            HMDInfo[] HmdInfoList = PSMoveServiceContext.Instance.HmdInfoList;
-
-            // Strip off old hmd info from every hmd state entry
-            for (int hmdID = 0; hmdID < _hmds.Length; ++hmdID) {
-                _hmds[hmdID].HmdInfo = null;
-            }
-
-            // Update the hmd state list with the new hmd list
-            foreach (HMDInfo hmdInfo in HmdInfoList) {
-                int hmdId = hmdInfo.hmd_id;
-
-                // Assign the latest hmd info to the hmd state
-                _hmds[hmdId].HmdInfo = hmdInfo;
-
-                // Start streaming hmd data if we aren't already
-                if (!_hmds[hmdId].IsStreaming) {
-                    uint data_stream_flags =
-                        (uint)PSMControllerDataStreamFlags.PSMStreamFlags_includePositionData |
-                        (uint)PSMControllerDataStreamFlags.PSMStreamFlags_includeCalibratedSensorData;
-
-                    int request_id = -1;
-                    PSMoveClient.PSM_StartHmdDataStreamAsync(hmdInfo.hmd_id, data_stream_flags, out request_id);
-                    PSMoveClient.PSM_EatResponse(request_id);
-
-                    _hmds[hmdId].IsStreaming = true;
-                }
-            }
-
-            // For any hmd state entry that didn't get update
-            // make sure to turn off streaming if it was streaming previously
-            for (int hmdID = 0; hmdID < _hmds.Length; ++hmdID) {
-                if (_hmds[hmdID].HmdInfo == null && _hmds[hmdID].IsStreaming) {
-                    int request_id = -1;
-                    PSMoveClient.PSM_StopHmdDataStreamAsync(hmdID, out request_id);
-                    PSMoveClient.PSM_EatResponse(request_id);
-
-                    _hmds[hmdID].IsStreaming = false;
-                }
-            }
-        }
-
         public bool GetController(eControllerSource source, out PSMController controller)
         {
             int controllerIndex = (int)source - 1;
-            if (controllerIndex >= 0 && controllerIndex < _controllers.Length && _controllers[controllerIndex].Controller != null) {
+            if (controllerIndex >= 0 && controllerIndex < _controllers.Length && _controllers[controllerIndex].Controller != null)
+            {
                 controller = _controllers[controllerIndex].Controller;
                 return true;
             }
-            else {
+            else
+            {
                 controller = null;
                 return false;
             }
@@ -384,8 +234,10 @@ namespace SystemTrayApp
         public PSMVector3f GetControllerPosition(eControllerSource source)
         {
             PSMController controller = null;
-            if (GetController(source, out controller)) {
-                switch (controller.ControllerType) {
+            if (GetController(source, out controller))
+            {
+                switch (controller.ControllerType)
+                {
                     case PSMControllerType.PSMController_Move:
                         return controller.ControllerState.PSMoveState.Pose.Position;
                     case PSMControllerType.PSMController_Navi:
@@ -402,8 +254,10 @@ namespace SystemTrayApp
         public PSMQuatf GetControllerOrientation(eControllerSource source)
         {
             PSMController controller = null;
-            if (GetController(source, out controller)) {
-                switch (controller.ControllerType) {
+            if (GetController(source, out controller))
+            {
+                switch (controller.ControllerType)
+                {
                     case PSMControllerType.PSMController_Move:
                         return controller.ControllerState.PSMoveState.Pose.Orientation;
                     case PSMControllerType.PSMController_Navi:
@@ -420,8 +274,10 @@ namespace SystemTrayApp
         public PSMVector3f GetControllerAccelerometer(eControllerSource source)
         {
             PSMController controller = null;
-            if (GetController(source, out controller)) {
-                switch (controller.ControllerType) {
+            if (GetController(source, out controller))
+            {
+                switch (controller.ControllerType)
+                {
                     case PSMControllerType.PSMController_Move:
                         return controller.ControllerState.PSMoveState.CalibratedSensorData.Accelerometer;
                     case PSMControllerType.PSMController_Navi:
@@ -438,8 +294,10 @@ namespace SystemTrayApp
         public PSMVector3f GetControllerGyroscope(eControllerSource source)
         {
             PSMController controller = null;
-            if (GetController(source, out controller)) {
-                switch (controller.ControllerType) {
+            if (GetController(source, out controller))
+            {
+                switch (controller.ControllerType)
+                {
                     case PSMControllerType.PSMController_Move:
                         return controller.ControllerState.PSMoveState.CalibratedSensorData.Gyroscope;
                     case PSMControllerType.PSMController_Navi:
@@ -456,8 +314,10 @@ namespace SystemTrayApp
         public PSMVector3f GetControllerMagnetometer(eControllerSource source)
         {
             PSMController controller = null;
-            if (GetController(source, out controller)) {
-                if (controller.ControllerType == PSMControllerType.PSMController_Move) {
+            if (GetController(source, out controller))
+            {
+                if (controller.ControllerType == PSMControllerType.PSMController_Move)
+                {
                     return controller.ControllerState.PSMoveState.CalibratedSensorData.Magnetometer;
                 }
             }
@@ -472,9 +332,12 @@ namespace SystemTrayApp
         public float GetControllerButtonBitmaskAsFloat(eControllerSource source)
         {
             PSMController controller = null;
-            if (GetController(source, out controller)) {
-                switch (controller.ControllerType) {
-                    case PSMControllerType.PSMController_Move: {
+            if (GetController(source, out controller))
+            {
+                switch (controller.ControllerType)
+                {
+                    case PSMControllerType.PSMController_Move:
+                        {
                             PSMPSMove moveView = controller.ControllerState.PSMoveState;
                             uint buttonsPressed = 0;
 
@@ -489,7 +352,8 @@ namespace SystemTrayApp
 
                             return (float)buttonsPressed;
                         }
-                    case PSMControllerType.PSMController_Navi: {
+                    case PSMControllerType.PSMController_Navi:
+                        {
                             PSMPSNavi naviView = controller.ControllerState.PSNaviState;
                             uint buttonsPressed = 0;
 
@@ -505,7 +369,8 @@ namespace SystemTrayApp
 
                             return (float)buttonsPressed;
                         }
-                    case PSMControllerType.PSMController_DualShock4: {
+                    case PSMControllerType.PSMController_DualShock4:
+                        {
                             PSMDualShock4 ds4View = controller.ControllerState.PSDS4State;
                             uint buttonsPressed = 0;
 
@@ -528,12 +393,14 @@ namespace SystemTrayApp
 
                             return (float)buttonsPressed;
                         }
-                    case PSMControllerType.PSMController_Virtual: {
+                    case PSMControllerType.PSMController_Virtual:
+                        {
                             PSMVirtualController controllerView = controller.ControllerState.VirtualController;
                             uint buttonsPressed = 0;
 
                             int buttonCount = (controllerView.numButtons < 16) ? controllerView.numButtons : 16;
-                            for (int buttonIndex = 0; buttonIndex < buttonCount; ++buttonIndex) {
+                            for (int buttonIndex = 0; buttonIndex < buttonCount; ++buttonIndex)
+                            {
                                 buttonsPressed |= GetButtonBitmask(controllerView.buttonStates[buttonIndex], 7);
                             }
 
@@ -547,15 +414,18 @@ namespace SystemTrayApp
         public float GetTriggerValue(eControllerSource source)
         {
             PSMController controller = null;
-            if (GetController(source, out controller)) {
-                switch (controller.ControllerType) {
+            if (GetController(source, out controller))
+            {
+                switch (controller.ControllerType)
+                {
                     case PSMControllerType.PSMController_Move:
                         return (float)controller.ControllerState.PSMoveState.TriggerValue / 255.0f;
                     case PSMControllerType.PSMController_Navi:
                         return (float)controller.ControllerState.PSNaviState.TriggerValue / 255.0f;
                     case PSMControllerType.PSMController_DualShock4:
                         return Math.Max(controller.ControllerState.PSDS4State.LeftTriggerValue, controller.ControllerState.PSDS4State.RightTriggerValue);
-                    case PSMControllerType.PSMController_Virtual: {
+                    case PSMControllerType.PSMController_Virtual:
+                        {
                             PSMVirtualController controllerView = controller.ControllerState.VirtualController;
                             int axis_index = FreePIEConfig.Instance.VirtualControllerTriggerAxisIndex;
 
@@ -567,75 +437,6 @@ namespace SystemTrayApp
                 }
             }
             return 0.0f;
-        }
-
-        public bool GetHMD(eHmdSource source, out PSMHeadMountedDisplay hmd)
-        {
-            int hmdIndex = (int)source - 1;
-            if (hmdIndex >= 0 && hmdIndex < _hmds.Length && _hmds[hmdIndex].Hmd != null) {
-                hmd = _hmds[hmdIndex].Hmd;
-                return true;
-            }
-            else {
-                hmd = null;
-                return false;
-            }
-        }
-
-        public PSMVector3f GetHmdPosition(eHmdSource source)
-        {
-            PSMHeadMountedDisplay hmd = null;
-            if (GetHMD(source, out hmd)) {
-                switch (hmd.HmdType) {
-                    case PSMHmdType.PSMHmd_Morpheus:
-                        return hmd.HmdState.MorpheusState.Pose.Position;
-                    case PSMHmdType.PSMHmd_Virtual:
-                        return hmd.HmdState.VirtualHMDState.Pose.Position;
-                }
-            }
-            return PSMoveClient.k_psm_float_vector3_zero;
-        }
-
-        public PSMQuatf GetHmdOrientation(eHmdSource source)
-        {
-            PSMHeadMountedDisplay hmd = null;
-            if (GetHMD(source, out hmd)) {
-                switch (hmd.HmdType) {
-                    case PSMHmdType.PSMHmd_Morpheus:
-                        return hmd.HmdState.MorpheusState.Pose.Orientation;
-                    case PSMHmdType.PSMHmd_Virtual:
-                        return hmd.HmdState.VirtualHMDState.Pose.Orientation;
-                }
-            }
-            return PSMoveClient.k_psm_quaternion_identity;
-        }
-
-        public PSMVector3f GetHmdAccelerometer(eHmdSource source)
-        {
-            PSMHeadMountedDisplay hmd = null;
-            if (GetHMD(source, out hmd)) {
-                switch (hmd.HmdType) {
-                    case PSMHmdType.PSMHmd_Morpheus:
-                        return hmd.HmdState.MorpheusState.CalibratedSensorData.Accelerometer;
-                    case PSMHmdType.PSMHmd_Virtual:
-                        return PSMoveClient.k_psm_float_vector3_zero;
-                }
-            }
-            return PSMoveClient.k_psm_float_vector3_zero;
-        }
-
-        public PSMVector3f GetHmdGyroscope(eHmdSource source)
-        {
-            PSMHeadMountedDisplay hmd = null;
-            if (GetHMD(source, out hmd)) {
-                switch (hmd.HmdType) {
-                    case PSMHmdType.PSMHmd_Morpheus:
-                        return hmd.HmdState.MorpheusState.CalibratedSensorData.Gyroscope;
-                    case PSMHmdType.PSMHmd_Virtual:
-                        return PSMoveClient.k_psm_float_vector3_zero;
-                }
-            }
-            return PSMoveClient.k_psm_float_vector3_zero;
         }
     }
 }

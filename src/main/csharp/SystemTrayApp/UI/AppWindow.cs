@@ -15,25 +15,33 @@ namespace SystemTrayApp
 {
     public partial class AppWindow : MaterialForm
     {
+        private static AppWindow _instance;
+        public static AppWindow Instance
+        {
+            get { return _instance; }
+        }
+
         private TabPage currentTabPage;
 
-        private PSMoveServicePanel psmServicePanel;
-        private ControllerPanel controllerPanel;
-        private FreePIEPanel freePiePanel;
+        private UserControl psmServicePanel;
+        private UserControl steamVRPanel;
+        private UserControl freePiePanel;
 
         private readonly MaterialSkinManager materialSkinManager;
 
         public AppWindow()
         {
+            _instance = this;
+
             InitializeComponent();
 
             // Add user-control panels to each tab
             psmServicePanel = new PSMoveServicePanel();
-            this.tabPage1.Controls.Add(psmServicePanel);
-            controllerPanel = new ControllerPanel();
-            this.tabPage2.Controls.Add(controllerPanel);
+            this.psmoveServiceTabPage.Controls.Add(psmServicePanel);
+            steamVRPanel = new SteamVRPanel();
+            this.steamVRTabPage.Controls.Add(steamVRPanel);
             freePiePanel = new FreePIEPanel();
-            this.tabPage3.Controls.Add(freePiePanel);
+            this.freePIETabPage.Controls.Add(freePiePanel);
 
             // Initialize MaterialSkinManager
             materialSkinManager = MaterialSkinManager.Instance;
@@ -75,7 +83,7 @@ namespace SystemTrayApp
             ConfigManager.Instance.LoadAll();
 
             // Go to the PSMoveService tab first
-            SetCurrentTab(this.tabPage1);
+            SetCurrentTab(this.psmoveServiceTabPage);
         }
 
         protected void SetCurrentTab(TabPage NewTabPage)
@@ -83,40 +91,111 @@ namespace SystemTrayApp
             if (NewTabPage != currentTabPage) 
             {
                 // Exit the previous tab
-                if (currentTabPage == this.tabPage1)
+                if (currentTabPage == this.psmoveServiceTabPage)
                 {
-                    psmServicePanel.OnTabExited();
+                    ((IAppPanel)psmServicePanel).OnPanelExited();
                 }
-                else if (currentTabPage == this.tabPage2)
+                else if (currentTabPage == this.steamVRTabPage)
                 {
-                    controllerPanel.OnTabExited();
+                    ((IAppPanel)steamVRPanel).OnPanelExited();
                 }
-                else if (currentTabPage == this.tabPage3)
+                else if (currentTabPage == this.freePIETabPage)
                 {
-                    freePiePanel.OnTabExited();
+                    ((IAppPanel)freePiePanel).OnPanelExited();
                 }
 
                 // Enter the new tab
-                if (NewTabPage == this.tabPage1) 
+                if (NewTabPage == this.psmoveServiceTabPage) 
                 {
-                    psmServicePanel.OnTabEntered();
+                    ((IAppPanel)psmServicePanel).OnPanelEntered();
                 }
-                else if (NewTabPage == this.tabPage2)
+                else if (NewTabPage == this.steamVRTabPage)
                 {
-                    controllerPanel.OnTabEntered();
+                    ((IAppPanel)steamVRPanel).OnPanelEntered();
                 }
-                else if (NewTabPage == this.tabPage3)
+                else if (NewTabPage == this.freePIETabPage)
                 {
-                    freePiePanel.OnTabEntered();
+                    ((IAppPanel)freePiePanel).OnPanelEntered();
                 }
 
                 currentTabPage = NewTabPage;
             }
         }
 
+        public void SetPSMServicePanel(UserControl newControl)
+        {
+            if (psmServicePanel != null)
+            {
+                if (currentTabPage == this.psmoveServiceTabPage)
+                    ((IAppPanel)psmServicePanel).OnPanelExited();
+
+                this.psmoveServiceTabPage.Controls.Remove(psmServicePanel);
+                psmServicePanel.Dispose();
+                psmServicePanel = null;
+            }
+
+            if (newControl != null)
+            {
+                this.psmoveServiceTabPage.Controls.Add(newControl);
+
+                if (currentTabPage == this.psmoveServiceTabPage)
+                    ((IAppPanel)newControl).OnPanelEntered();
+
+                psmServicePanel = newControl;
+            }
+        }
+
+        public void SetSteamVRPanel(UserControl newControl)
+        {
+            if (steamVRPanel != null)
+            {
+                if (currentTabPage == this.steamVRTabPage)
+                    ((IAppPanel)steamVRPanel).OnPanelExited();
+
+                this.steamVRTabPage.Controls.Remove(steamVRPanel);
+                steamVRPanel.Dispose();
+                steamVRPanel = null;
+            }
+
+            if (newControl != null)
+            {
+                this.steamVRTabPage.Controls.Add(newControl);
+
+                if (currentTabPage == this.steamVRTabPage)
+                    ((IAppPanel)newControl).OnPanelEntered();
+
+                steamVRPanel = newControl;
+            }
+        }
+
+        public void SetFreePiePanel(UserControl newControl)
+        {
+            if (freePiePanel != null)
+            {
+                if (currentTabPage == this.freePIETabPage)
+                    ((IAppPanel)freePiePanel).OnPanelExited();
+
+                this.freePIETabPage.Controls.Remove(freePiePanel);
+                freePiePanel.Dispose();
+                freePiePanel = null;
+            }
+
+            if (newControl != null)
+            {
+                this.freePIETabPage.Controls.Add(newControl);
+
+                if (currentTabPage == this.freePIETabPage)
+                    ((IAppPanel)newControl).OnPanelEntered();
+
+                freePiePanel = newControl;
+            }
+        }
+
         protected override void OnClosing(CancelEventArgs e)
         {
             base.OnClosing(e);
+
+            _instance = null;
         }
 
         private void SystemTrayIconDoubleClick(object sender, MouseEventArgs e)
