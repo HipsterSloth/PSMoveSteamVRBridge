@@ -34,6 +34,9 @@
             this.VideoFrameLabel = new MaterialSkin.Controls.MaterialLabel();
             this.OkButton = new MaterialSkin.Controls.MaterialRaisedButton();
             this.CancelButton = new MaterialSkin.Controls.MaterialRaisedButton();
+            this.TitleLabel = new MaterialSkin.Controls.MaterialLabel();
+            this.materialLabel1 = new MaterialSkin.Controls.MaterialLabel();
+            this.CalibrationMapLink = new System.Windows.Forms.LinkLabel();
             this.SuspendLayout();
             // 
             // VideoFrame
@@ -84,9 +87,9 @@
             this.VideoFrameLabel.Location = new System.Drawing.Point(144, 36);
             this.VideoFrameLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.VideoFrameLabel.Name = "VideoFrameLabel";
-            this.VideoFrameLabel.Size = new System.Drawing.Size(82, 19);
+            this.VideoFrameLabel.Size = new System.Drawing.Size(92, 19);
             this.VideoFrameLabel.TabIndex = 3;
-            this.VideoFrameLabel.Text = "Camera #1";
+            this.VideoFrameLabel.Text = "No Trackers";
             // 
             // OkButton
             // 
@@ -120,10 +123,53 @@
             this.CancelButton.UseVisualStyleBackColor = true;
             this.CancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
+            // TitleLabel
+            // 
+            this.TitleLabel.AutoSize = true;
+            this.TitleLabel.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.TitleLabel.Depth = 0;
+            this.TitleLabel.Font = new System.Drawing.Font("Roboto", 11F);
+            this.TitleLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.TitleLabel.Location = new System.Drawing.Point(474, 96);
+            this.TitleLabel.MouseState = MaterialSkin.MouseState.HOVER;
+            this.TitleLabel.Name = "TitleLabel";
+            this.TitleLabel.Size = new System.Drawing.Size(145, 19);
+            this.TitleLabel.TabIndex = 6;
+            this.TitleLabel.Text = "Verify Tracker Setup";
+            // 
+            // materialLabel1
+            // 
+            this.materialLabel1.AutoSize = true;
+            this.materialLabel1.Depth = 0;
+            this.materialLabel1.Font = new System.Drawing.Font("Roboto", 11F);
+            this.materialLabel1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.materialLabel1.Location = new System.Drawing.Point(415, 142);
+            this.materialLabel1.MaximumSize = new System.Drawing.Size(320, 300);
+            this.materialLabel1.MouseState = MaterialSkin.MouseState.HOVER;
+            this.materialLabel1.Name = "materialLabel1";
+            this.materialLabel1.Size = new System.Drawing.Size(271, 57);
+            this.materialLabel1.TabIndex = 7;
+            this.materialLabel1.Text = "Cycle through your connected trackers.\r\nVerify that each tracker can see the cali" +
+    "bration mat.";
+            // 
+            // CalibrationMapLink
+            // 
+            this.CalibrationMapLink.AutoSize = true;
+            this.CalibrationMapLink.Location = new System.Drawing.Point(416, 211);
+            this.CalibrationMapLink.Name = "CalibrationMapLink";
+            this.CalibrationMapLink.Size = new System.Drawing.Size(101, 13);
+            this.CalibrationMapLink.TabIndex = 8;
+            this.CalibrationMapLink.TabStop = true;
+            this.CalibrationMapLink.Text = "Calibration Mat PDF";
+            this.CalibrationMapLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.CalibrationMapLink_LinkClicked);
+            // 
             // TestVideoFeed
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.CalibrationMapLink);
+            this.Controls.Add(this.materialLabel1);
+            this.Controls.Add(this.TitleLabel);
             this.Controls.Add(this.CancelButton);
             this.Controls.Add(this.OkButton);
             this.Controls.Add(this.VideoFrameLabel);
@@ -145,5 +191,8 @@
         private MaterialSkin.Controls.MaterialLabel VideoFrameLabel;
         private MaterialSkin.Controls.MaterialRaisedButton OkButton;
         private MaterialSkin.Controls.MaterialRaisedButton CancelButton;
+        private MaterialSkin.Controls.MaterialLabel TitleLabel;
+        private MaterialSkin.Controls.MaterialLabel materialLabel1;
+        private System.Windows.Forms.LinkLabel CalibrationMapLink;
     }
 }

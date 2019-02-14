@@ -12,8 +12,6 @@ namespace SystemTrayApp
 {
     public partial class SteamVRPanel : UserControl, IAppPanel
     {
-        private SteamVRWindow steamVRWindow;
-
         public SteamVRPanel()
         {
             InitializeComponent();
@@ -46,14 +44,12 @@ namespace SystemTrayApp
 
         public void OnPanelEntered()
         {
-            if (SteamVRContext.Instance.IsConnected) {
-                SteamVRConnectButton.Visible = false;
-                SteamVRDisconnectButton.Visible = true;
-            }
-            else {
-                SteamVRConnectButton.Visible = true;
-                SteamVRDisconnectButton.Visible = false;
-            }
+            bool bIsSteamVRConnected = SteamVRContext.Instance.IsConnected;
+
+            SteamVRConnectButton.Visible = !bIsSteamVRConnected;
+            SteamVRDisconnectButton.Visible = bIsSteamVRConnected;
+            HMDAlignButton.Visible = bIsSteamVRConnected;
+            TrackingTestToolButton.Visible = bIsSteamVRConnected;
         }
 
         public void OnPanelExited()
@@ -75,11 +71,8 @@ namespace SystemTrayApp
             SteamVRCurrentStatus.Text = "CONNECTED";
             SteamVRConnectButton.Visible = false;
             SteamVRDisconnectButton.Visible = true;
-
-            if (steamVRWindow == null) {
-                steamVRWindow = new SteamVRWindow();
-                steamVRWindow.Show();
-            }
+            HMDAlignButton.Visible = true;
+            TrackingTestToolButton.Visible = true;
         }
 
         private void HandleSteamVRDisconnect()
@@ -87,12 +80,8 @@ namespace SystemTrayApp
             SteamVRCurrentStatus.Text = "DISCONNECTED";
             SteamVRConnectButton.Visible = true;
             SteamVRDisconnectButton.Visible = false;
-
-            if (steamVRWindow != null) {
-                steamVRWindow.Hide();
-                steamVRWindow.Dispose();
-                steamVRWindow = null;
-            }
+            HMDAlignButton.Visible = false;
+            TrackingTestToolButton.Visible = false;
         }
 
         private void HandleTrackedDeviceActivated(SteamVRTrackedDevice device)

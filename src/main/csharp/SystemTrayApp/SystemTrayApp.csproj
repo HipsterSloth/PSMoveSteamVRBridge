@@ -179,6 +179,12 @@
     <Compile Include="UI\PSMoveService\Controllers\PSNaviControllerPanel.Designer.cs">
       <DependentUpon>PSNaviControllerPanel.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\SteamVR\HMDAlignTool\SteamVRHmdAlignTool.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SteamVR\HMDAlignTool\SteamVRHmdAlignTool.Designer.cs">
+      <DependentUpon>SteamVRHmdAlignTool.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\SteamVR\HMDAlignTool\TestVideoFeed.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -190,6 +196,12 @@
     </Compile>
     <Compile Include="UI\SteamVR\SteamVRDeviceEntry.Designer.cs">
       <DependentUpon>SteamVRDeviceEntry.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SteamVR\SteamVROpenGLFrame.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SteamVR\SteamVROpenGLFrame.Designer.cs">
+      <DependentUpon>SteamVROpenGLFrame.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\SteamVR\SteamVRPanel.cs">
       <SubType>UserControl</SubType>
@@ -318,11 +330,17 @@
     <EmbeddedResource Include="UI\PSMoveService\Controllers\PSNaviControllerPanel.resx">
       <DependentUpon>PSNaviControllerPanel.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="UI\SteamVR\HMDAlignTool\SteamVRHmdAlignTool.resx">
+      <DependentUpon>SteamVRHmdAlignTool.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\SteamVR\HMDAlignTool\TestVideoFeed.resx">
       <DependentUpon>TestVideoFeed.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UI\SteamVR\SteamVRDeviceEntry.resx">
       <DependentUpon>SteamVRDeviceEntry.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SteamVR\SteamVROpenGLFrame.resx">
+      <DependentUpon>SteamVROpenGLFrame.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UI\SteamVR\SteamVRPanel.resx">
       <DependentUpon>SteamVRPanel.cs</DependentUpon>

@@ -24,6 +24,14 @@ namespace SystemTrayApp
 
         private Timer _pollTimer;
 
+        public delegate void SelectedTrackerChanged(int trackerId);
+        public event SelectedTrackerChanged SelectedTrackerChangedEvent;
+
+        public int SelectedTrackerIndex
+        {
+            get { return _psmTrackerPool.TrackerSourceToID(_currentTackerSource); }
+        }
+
         public TrackerVideoFrame() : base()
         {
             InitializeComponent();
@@ -125,6 +133,11 @@ namespace SystemTrayApp
             else
             {
                 _pollTimer.Stop();
+            }
+
+            if (SelectedTrackerChangedEvent != null)
+            {
+                SelectedTrackerChangedEvent(_psmTrackerPool.TrackerSourceToID(_currentTackerSource));
             }
         }
 
