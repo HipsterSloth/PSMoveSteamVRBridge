@@ -34,8 +34,6 @@
             this.VelocityMultiplierLabel = new MaterialSkin.Controls.MaterialLabel();
             this.ThumbstickDeadzoneTextField = new MaterialSkin.Controls.MaterialSingleLineTextField();
             this.ThumbsticklDeadzoneLabel = new MaterialSkin.Controls.MaterialLabel();
-            this.UseOrientationInHMDAlignmentCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
-            this.DisableAlignmentGestureCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.ZRotate90CheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.ExtendZTextField = new MaterialSkin.Controls.MaterialSingleLineTextField();
             this.ExtendZLabel = new MaterialSkin.Controls.MaterialLabel();
@@ -45,6 +43,7 @@
             this.RumbleSuppressedCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.TouchpadMappingsLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.AddNewMappingButton = new MaterialSkin.Controls.MaterialRaisedButton();
+            this.DisableControllerCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.SuspendLayout();
             // 
             // TouchpadMappingLabel
@@ -64,7 +63,7 @@
             // 
             this.VelocityExponentTextField.Depth = 0;
             this.VelocityExponentTextField.Hint = "";
-            this.VelocityExponentTextField.Location = new System.Drawing.Point(266, 244);
+            this.VelocityExponentTextField.Location = new System.Drawing.Point(266, 236);
             this.VelocityExponentTextField.MaxLength = 32767;
             this.VelocityExponentTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.VelocityExponentTextField.Name = "VelocityExponentTextField";
@@ -77,7 +76,6 @@
             this.VelocityExponentTextField.TabStop = false;
             this.VelocityExponentTextField.Text = "0";
             this.VelocityExponentTextField.UseSystemPasswordChar = false;
-            this.VelocityExponentTextField.Validated += VelocityExponentTextField_Validated;
             // 
             // VelocityExponentLabel
             // 
@@ -85,7 +83,7 @@
             this.VelocityExponentLabel.Depth = 0;
             this.VelocityExponentLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.VelocityExponentLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.VelocityExponentLabel.Location = new System.Drawing.Point(48, 248);
+            this.VelocityExponentLabel.Location = new System.Drawing.Point(48, 240);
             this.VelocityExponentLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.VelocityExponentLabel.Name = "VelocityExponentLabel";
             this.VelocityExponentLabel.Size = new System.Drawing.Size(130, 19);
@@ -96,7 +94,7 @@
             // 
             this.VelocityMultiplierTextField.Depth = 0;
             this.VelocityMultiplierTextField.Hint = "";
-            this.VelocityMultiplierTextField.Location = new System.Drawing.Point(266, 225);
+            this.VelocityMultiplierTextField.Location = new System.Drawing.Point(266, 217);
             this.VelocityMultiplierTextField.MaxLength = 32767;
             this.VelocityMultiplierTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.VelocityMultiplierTextField.Name = "VelocityMultiplierTextField";
@@ -109,7 +107,6 @@
             this.VelocityMultiplierTextField.TabStop = false;
             this.VelocityMultiplierTextField.Text = "1";
             this.VelocityMultiplierTextField.UseSystemPasswordChar = false;
-            this.VelocityMultiplierTextField.Validated += VelocityMultiplierTextField_Validated;
             // 
             // VelocityMultiplierLabel
             // 
@@ -117,7 +114,7 @@
             this.VelocityMultiplierLabel.Depth = 0;
             this.VelocityMultiplierLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.VelocityMultiplierLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.VelocityMultiplierLabel.Location = new System.Drawing.Point(48, 229);
+            this.VelocityMultiplierLabel.Location = new System.Drawing.Point(48, 221);
             this.VelocityMultiplierLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.VelocityMultiplierLabel.Name = "VelocityMultiplierLabel";
             this.VelocityMultiplierLabel.Size = new System.Drawing.Size(131, 19);
@@ -128,7 +125,7 @@
             // 
             this.ThumbstickDeadzoneTextField.Depth = 0;
             this.ThumbstickDeadzoneTextField.Hint = "";
-            this.ThumbstickDeadzoneTextField.Location = new System.Drawing.Point(266, 206);
+            this.ThumbstickDeadzoneTextField.Location = new System.Drawing.Point(266, 198);
             this.ThumbstickDeadzoneTextField.MaxLength = 32767;
             this.ThumbstickDeadzoneTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.ThumbstickDeadzoneTextField.Name = "ThumbstickDeadzoneTextField";
@@ -141,7 +138,6 @@
             this.ThumbstickDeadzoneTextField.TabStop = false;
             this.ThumbstickDeadzoneTextField.Text = "0";
             this.ThumbstickDeadzoneTextField.UseSystemPasswordChar = false;
-            this.ThumbstickDeadzoneTextField.Validated += ThumbstickDeadzoneTextField_Validated;
             // 
             // ThumbsticklDeadzoneLabel
             // 
@@ -149,53 +145,19 @@
             this.ThumbsticklDeadzoneLabel.Depth = 0;
             this.ThumbsticklDeadzoneLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.ThumbsticklDeadzoneLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.ThumbsticklDeadzoneLabel.Location = new System.Drawing.Point(48, 210);
+            this.ThumbsticklDeadzoneLabel.Location = new System.Drawing.Point(48, 202);
             this.ThumbsticklDeadzoneLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.ThumbsticklDeadzoneLabel.Name = "ThumbsticklDeadzoneLabel";
             this.ThumbsticklDeadzoneLabel.Size = new System.Drawing.Size(158, 19);
             this.ThumbsticklDeadzoneLabel.TabIndex = 43;
             this.ThumbsticklDeadzoneLabel.Text = "Thumbstick Deadzone";
             // 
-            // UseOrientationInHMDAlignmentCheckBox
-            // 
-            this.UseOrientationInHMDAlignmentCheckBox.AutoSize = true;
-            this.UseOrientationInHMDAlignmentCheckBox.Depth = 0;
-            this.UseOrientationInHMDAlignmentCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.UseOrientationInHMDAlignmentCheckBox.Location = new System.Drawing.Point(52, 127);
-            this.UseOrientationInHMDAlignmentCheckBox.Margin = new System.Windows.Forms.Padding(0);
-            this.UseOrientationInHMDAlignmentCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.UseOrientationInHMDAlignmentCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
-            this.UseOrientationInHMDAlignmentCheckBox.Name = "UseOrientationInHMDAlignmentCheckBox";
-            this.UseOrientationInHMDAlignmentCheckBox.Ripple = true;
-            this.UseOrientationInHMDAlignmentCheckBox.Size = new System.Drawing.Size(240, 30);
-            this.UseOrientationInHMDAlignmentCheckBox.TabIndex = 42;
-            this.UseOrientationInHMDAlignmentCheckBox.Text = "Use Orientation in HMD Alignment";
-            this.UseOrientationInHMDAlignmentCheckBox.UseVisualStyleBackColor = true;
-            this.UseOrientationInHMDAlignmentCheckBox.CheckedChanged += new System.EventHandler(this.UseOrientationInHMDAlignmentCheckBox_CheckedChanged);
-            // 
-            // DisableAlignmentGestureCheckBox
-            // 
-            this.DisableAlignmentGestureCheckBox.AutoSize = true;
-            this.DisableAlignmentGestureCheckBox.Depth = 0;
-            this.DisableAlignmentGestureCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.DisableAlignmentGestureCheckBox.Location = new System.Drawing.Point(52, 98);
-            this.DisableAlignmentGestureCheckBox.Margin = new System.Windows.Forms.Padding(0);
-            this.DisableAlignmentGestureCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.DisableAlignmentGestureCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
-            this.DisableAlignmentGestureCheckBox.Name = "DisableAlignmentGestureCheckBox";
-            this.DisableAlignmentGestureCheckBox.Ripple = true;
-            this.DisableAlignmentGestureCheckBox.Size = new System.Drawing.Size(194, 30);
-            this.DisableAlignmentGestureCheckBox.TabIndex = 41;
-            this.DisableAlignmentGestureCheckBox.Text = "Disable Alignment Gesture";
-            this.DisableAlignmentGestureCheckBox.UseVisualStyleBackColor = true;
-            this.DisableAlignmentGestureCheckBox.CheckedChanged += new System.EventHandler(this.DisableAlignmentGestureCheckBox_CheckedChanged);
-            // 
             // ZRotate90CheckBox
             // 
             this.ZRotate90CheckBox.AutoSize = true;
             this.ZRotate90CheckBox.Depth = 0;
             this.ZRotate90CheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.ZRotate90CheckBox.Location = new System.Drawing.Point(52, 73);
+            this.ZRotate90CheckBox.Location = new System.Drawing.Point(52, 95);
             this.ZRotate90CheckBox.Margin = new System.Windows.Forms.Padding(0);
             this.ZRotate90CheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
             this.ZRotate90CheckBox.MouseState = MaterialSkin.MouseState.HOVER;
@@ -211,7 +173,7 @@
             // 
             this.ExtendZTextField.Depth = 0;
             this.ExtendZTextField.Hint = "";
-            this.ExtendZTextField.Location = new System.Drawing.Point(266, 187);
+            this.ExtendZTextField.Location = new System.Drawing.Point(266, 179);
             this.ExtendZTextField.MaxLength = 32767;
             this.ExtendZTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.ExtendZTextField.Name = "ExtendZTextField";
@@ -224,7 +186,6 @@
             this.ExtendZTextField.TabStop = false;
             this.ExtendZTextField.Text = "0";
             this.ExtendZTextField.UseSystemPasswordChar = false;
-            this.ExtendZTextField.Validated += ExtendZTextField_Validated;
             // 
             // ExtendZLabel
             // 
@@ -232,7 +193,7 @@
             this.ExtendZLabel.Depth = 0;
             this.ExtendZLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.ExtendZLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.ExtendZLabel.Location = new System.Drawing.Point(48, 191);
+            this.ExtendZLabel.Location = new System.Drawing.Point(48, 183);
             this.ExtendZLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.ExtendZLabel.Name = "ExtendZLabel";
             this.ExtendZLabel.Size = new System.Drawing.Size(102, 19);
@@ -243,7 +204,7 @@
             // 
             this.ExtendYTextField.Depth = 0;
             this.ExtendYTextField.Hint = "";
-            this.ExtendYTextField.Location = new System.Drawing.Point(266, 168);
+            this.ExtendYTextField.Location = new System.Drawing.Point(266, 160);
             this.ExtendYTextField.MaxLength = 32767;
             this.ExtendYTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.ExtendYTextField.Name = "ExtendYTextField";
@@ -256,7 +217,6 @@
             this.ExtendYTextField.TabStop = false;
             this.ExtendYTextField.Text = "0";
             this.ExtendYTextField.UseSystemPasswordChar = false;
-            this.ExtendYTextField.Validated += ExtendYTextField_Validated;
             // 
             // ExtendYLabel
             // 
@@ -264,7 +224,7 @@
             this.ExtendYLabel.Depth = 0;
             this.ExtendYLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.ExtendYLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.ExtendYLabel.Location = new System.Drawing.Point(48, 172);
+            this.ExtendYLabel.Location = new System.Drawing.Point(48, 164);
             this.ExtendYLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.ExtendYLabel.Name = "ExtendYLabel";
             this.ExtendYLabel.Size = new System.Drawing.Size(102, 19);
@@ -289,7 +249,7 @@
             this.RumbleSuppressedCheckBox.AutoSize = true;
             this.RumbleSuppressedCheckBox.Depth = 0;
             this.RumbleSuppressedCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.RumbleSuppressedCheckBox.Location = new System.Drawing.Point(52, 43);
+            this.RumbleSuppressedCheckBox.Location = new System.Drawing.Point(52, 69);
             this.RumbleSuppressedCheckBox.Margin = new System.Windows.Forms.Padding(0);
             this.RumbleSuppressedCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
             this.RumbleSuppressedCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
@@ -329,10 +289,28 @@
             this.AddNewMappingButton.UseVisualStyleBackColor = true;
             this.AddNewMappingButton.Click += new System.EventHandler(this.AddNewMappingButton_Click);
             // 
+            // DisableControllerCheckBox
+            // 
+            this.DisableControllerCheckBox.AutoSize = true;
+            this.DisableControllerCheckBox.Depth = 0;
+            this.DisableControllerCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
+            this.DisableControllerCheckBox.Location = new System.Drawing.Point(52, 43);
+            this.DisableControllerCheckBox.Margin = new System.Windows.Forms.Padding(0);
+            this.DisableControllerCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
+            this.DisableControllerCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
+            this.DisableControllerCheckBox.Name = "DisableControllerCheckBox";
+            this.DisableControllerCheckBox.Ripple = true;
+            this.DisableControllerCheckBox.Size = new System.Drawing.Size(140, 30);
+            this.DisableControllerCheckBox.TabIndex = 68;
+            this.DisableControllerCheckBox.Text = "Disable Controller";
+            this.DisableControllerCheckBox.UseVisualStyleBackColor = true;
+            this.DisableControllerCheckBox.CheckedChanged += new System.EventHandler(this.DisableControllerCheckBox_CheckedChanged);
+            // 
             // Dualshock4ControllerPanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.DisableControllerCheckBox);
             this.Controls.Add(this.AddNewMappingButton);
             this.Controls.Add(this.TouchpadMappingsLayoutPanel);
             this.Controls.Add(this.TouchpadMappingLabel);
@@ -342,8 +320,6 @@
             this.Controls.Add(this.VelocityMultiplierLabel);
             this.Controls.Add(this.ThumbstickDeadzoneTextField);
             this.Controls.Add(this.ThumbsticklDeadzoneLabel);
-            this.Controls.Add(this.UseOrientationInHMDAlignmentCheckBox);
-            this.Controls.Add(this.DisableAlignmentGestureCheckBox);
             this.Controls.Add(this.ZRotate90CheckBox);
             this.Controls.Add(this.ExtendZTextField);
             this.Controls.Add(this.ExtendZLabel);
@@ -367,8 +343,6 @@
         private MaterialSkin.Controls.MaterialLabel VelocityMultiplierLabel;
         private MaterialSkin.Controls.MaterialSingleLineTextField ThumbstickDeadzoneTextField;
         private MaterialSkin.Controls.MaterialLabel ThumbsticklDeadzoneLabel;
-        private MaterialSkin.Controls.MaterialCheckBox UseOrientationInHMDAlignmentCheckBox;
-        private MaterialSkin.Controls.MaterialCheckBox DisableAlignmentGestureCheckBox;
         private MaterialSkin.Controls.MaterialCheckBox ZRotate90CheckBox;
         private MaterialSkin.Controls.MaterialSingleLineTextField ExtendZTextField;
         private MaterialSkin.Controls.MaterialLabel ExtendZLabel;
@@ -378,5 +352,6 @@
         private MaterialSkin.Controls.MaterialCheckBox RumbleSuppressedCheckBox;
         private System.Windows.Forms.FlowLayoutPanel TouchpadMappingsLayoutPanel;
         private MaterialSkin.Controls.MaterialRaisedButton AddNewMappingButton;
+        private MaterialSkin.Controls.MaterialCheckBox DisableControllerCheckBox;
     }
 }

@@ -59,7 +59,6 @@ namespace SystemTrayApp
                 ButtonTable.Add(buttonString, buttonID);
             }
             InitVirtualButtonComboBox(SystemButtonComboBox);
-            InitVirtualButtonComboBox(HMDAlignButtonComboBox);
 
             controllerConfig = (VirtualControllerConfig)config;
 
@@ -93,9 +92,9 @@ namespace SystemTrayApp
             return combo_box.SelectedIndex - 1;
         }
 
-        private void DisableAlignmentGestureCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void DisableControllerCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            controllerConfig.DisableAlignmentGesture = DisableAlignmentGestureCheckBox.Checked;
+            controllerConfig.ControllerDisabled = DisableControllerCheckBox.Checked;
         }
 
         private void TouchpadPressDelayCheckBox_CheckedChanged(object sender, EventArgs e)
@@ -128,11 +127,6 @@ namespace SystemTrayApp
             controllerConfig.SteamVRTriggerAxisIndex = GetVirtualAxisComboBoxValue(TriggerAxisIndexComboBox);
         }
 
-        private void HMDAlignButtonComboBox_SelectedIndexChanged(object sender, System.EventArgs e)
-        {
-            controllerConfig.HMDAlignButtonID = GetVirtualButtonComboBoxValue(HMDAlignButtonComboBox);
-        }
-
         private void SystemButtonComboBox_SelectedIndexChanged(object sender, System.EventArgs e)
         {
             controllerConfig.SystemButtonID = GetVirtualButtonComboBoxValue(SystemButtonComboBox);
@@ -148,7 +142,6 @@ namespace SystemTrayApp
             ExtendZTextField.Text = string.Format("{0}", controllerConfig.ExtendZMeters * 100.0f);
 
             SetVirtualButtonComboBoxValue(SystemButtonComboBox, controllerConfig.SystemButtonID);
-            SetVirtualButtonComboBoxValue(HMDAlignButtonComboBox, controllerConfig.HMDAlignButtonID);
 
             SetVirtualAxisComboBoxValue(TouchpadXAxisIndexComboBox, controllerConfig.VirtualTouchpadXAxisIndex);
             SetVirtualAxisComboBoxValue(TouchpadYAxisIndexComboBox, controllerConfig.VirtualTouchpadYAxisIndex);

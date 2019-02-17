@@ -52,14 +52,9 @@ namespace SystemTrayApp
             controllerConfig.ZRotate90Degrees = ZRotate90CheckBox.Checked;
         }
 
-        private void DisableAlignmentGestureCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void DisableControllerCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            controllerConfig.DisableAlignmentGesture = DisableAlignmentGestureCheckBox.Checked;
-        }
-
-        private void UseOrientationInHMDAlignmentCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            controllerConfig.UseOrientationInHmdAlignment = UseOrientationInHMDAlignmentCheckBox.Checked;
+            controllerConfig.ControllerDisabled = DisableControllerCheckBox.Checked;
         }
 
         private void AddNewMappingButton_Click(object sender, EventArgs e)
@@ -106,8 +101,7 @@ namespace SystemTrayApp
 
             RumbleSuppressedCheckBox.Checked = controllerConfig.RumbleSuppressed;
             ZRotate90CheckBox.Checked = controllerConfig.ZRotate90Degrees;
-            DisableAlignmentGestureCheckBox.Checked = controllerConfig.DisableAlignmentGesture;
-            UseOrientationInHMDAlignmentCheckBox.Checked = controllerConfig.UseOrientationInHmdAlignment;
+            DisableControllerCheckBox.Checked = controllerConfig.ControllerDisabled;
 
             VelocityExponentTextField.Text = controllerConfig.LinearVelocityExponent.ToString();
             VelocityMultiplierTextField.Text = controllerConfig.LinearVelocityMultiplier.ToString();

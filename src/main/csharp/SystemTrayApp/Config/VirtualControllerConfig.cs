@@ -55,23 +55,6 @@ namespace SystemTrayApp
             set { meters_per_touchpad_axis_units = value; IsDirty = true; }
         }
 
-        // Settings value: used to determine how many meters in front of the HMD the controller
-        // is held when it's being calibrated.
-        float calibration_offset_meters;
-        public float CalibrationOffsetMeters
-        {
-            get { return calibration_offset_meters; }
-            set { calibration_offset_meters = value; IsDirty = true; }
-        }
-
-        // Flag used to completely disable the alignment gesture.
-        bool disable_alignment_gesture;
-        public bool DisableAlignmentGesture
-        {
-            get { return disable_alignment_gesture; }
-            set { disable_alignment_gesture = value; IsDirty = true; }
-        }
-
         // The axis to use for trigger input
         int steamvr_trigger_axis_index;
         public int SteamVRTriggerAxisIndex
@@ -132,15 +115,6 @@ namespace SystemTrayApp
             set { system_button_id = value; IsDirty = true; }
         }
 
-        // The button to use for controller hmd alignment
-        ePSMButtonID hmd_align_button_id;
-        public ePSMButtonID HMDAlignButtonID
-        {
-            get { return hmd_align_button_id; }
-            set { hmd_align_button_id = value; IsDirty = true; }
-        }
-
-
         public override void WriteToJSON(JsonValue pt)
         {
             base.WriteToJSON(pt);
@@ -150,8 +124,6 @@ namespace SystemTrayApp
             pt["z_rotate_90_degrees"] = z_rotate_90_degrees;
             pt["delay_after_touchpad_press"] = delay_after_touchpad_press;
             pt["meters_per_touchpad_axis_units"] = meters_per_touchpad_axis_units;
-            pt["calibration_offset_meters"] = calibration_offset_meters;
-            pt["disable_alignment_gesture"] = disable_alignment_gesture;
             pt["steamvr_trigger_axis_index"] = steamvr_trigger_axis_index;
             pt["virtual_touchpad_XAxis_index"] = virtual_touchpad_XAxis_index;
             pt["virtual_touchpad_YAxis_index"] = virtual_touchpad_YAxis_index;
@@ -162,9 +134,6 @@ namespace SystemTrayApp
 
             // System button mapping
             pt["system_button"] = Constants.PSMButtonNames[(int)system_button_id];
-
-            // HMD align button mapping
-            pt["hmd_align_button"] = Constants.PSMButtonNames[(int)hmd_align_button_id];
 
             //PSMove controller button -> fake touchpad mappings
             for (int button_index = 0; button_index < PSMoveClient.PSM_MAX_VIRTUAL_CONTROLLER_BUTTONS; ++button_index) {
@@ -189,12 +158,6 @@ namespace SystemTrayApp
                 }
                 if (pt.ContainsKey("meters_per_touchpad_axis_units")) {
                     meters_per_touchpad_axis_units = pt["meters_per_touchpad_axis_units"];
-                }
-                if (pt.ContainsKey("calibration_offset_meters")) {
-                    calibration_offset_meters = pt["calibration_offset_meters"];
-                }
-                if (pt.ContainsKey("disable_alignment_gesture")) {
-                    disable_alignment_gesture = pt["disable_alignment_gesture"];
                 }
                 if (pt.ContainsKey("steamvr_trigger_axis_index")) {
                     steamvr_trigger_axis_index = pt["steamvr_trigger_axis_index"];
@@ -235,22 +198,6 @@ namespace SystemTrayApp
                             system_button_id = (ePSMButtonID)button_index;
                         } else {
                             Trace.TraceWarning(string.Format("Invalid virtual controller system button: {0}", systemButtonString));
-                        }
-                    }
-                }
-
-                // HMD align button mapping
-                if (pt.ContainsKey("hmd_align_button"))
-                {
-                    string alignButtonString = pt["hmd_align_button"];
-
-                    if (alignButtonString.Length > 0) {
-                        int button_index = Array.FindIndex(Constants.PSMButtonNames, 0, x => x == alignButtonString);
-
-                        if (button_index != -1) {
-                            hmd_align_button_id = (ePSMButtonID)button_index;
-                        } else {
-                            Trace.TraceWarning(string.Format("Invalid virtual controller hmd align button: {0}"));
                         }
                     }
                 }

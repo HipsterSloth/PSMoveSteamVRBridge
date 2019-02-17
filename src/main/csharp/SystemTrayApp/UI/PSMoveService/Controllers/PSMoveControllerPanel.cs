@@ -64,6 +64,11 @@ namespace SystemTrayApp
             }
         }
 
+        private void DisableControllerCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            controllerConfig.ControllerDisabled = DisableControllerCheckBox.Checked;
+        }
+
         private void RumbleSuppressedCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             controllerConfig.RumbleSuppressed = RumbleSuppressedCheckBox.Checked;
@@ -77,16 +82,6 @@ namespace SystemTrayApp
         private void TouchpadPressDelayCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             controllerConfig.DelayAfterTouchpadPress = TouchpadPressDelayCheckBox.Checked;
-        }
-
-        private void DisableAlignmentGestureCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            controllerConfig.DisableAlignmentGesture = DisableAlignmentGestureCheckBox.Checked;
-        }
-
-        private void UseOrientationInHMDAlignmentCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            controllerConfig.UseOrientationInHmdAlignment = UseOrientationInHMDAlignmentCheckBox.Checked;
         }
 
         private void VelocityExponentTextField_Validated(object sender, System.EventArgs e)
@@ -167,8 +162,6 @@ namespace SystemTrayApp
             RumbleSuppressedCheckBox.Checked = controllerConfig.RumbleSuppressed;
             ZRotate90CheckBox.Checked = controllerConfig.ZRotate90Degrees;
             TouchpadPressDelayCheckBox.Checked = controllerConfig.DelayAfterTouchpadPress;
-            DisableAlignmentGestureCheckBox.Checked = controllerConfig.DisableAlignmentGesture;
-            UseOrientationInHMDAlignmentCheckBox.Checked = controllerConfig.UseOrientationInHmdAlignment;
 
             VelocityExponentTextField.Text = controllerConfig.LinearVelocityExponent.ToString();
             VelocityMultiplierTextField.Text = controllerConfig.LinearVelocityMultiplier.ToString();

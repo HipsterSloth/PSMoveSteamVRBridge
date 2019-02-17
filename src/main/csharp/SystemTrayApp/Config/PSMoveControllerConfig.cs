@@ -61,31 +61,6 @@ namespace SystemTrayApp
             set { meters_per_touchpad_axis_units = value; IsDirty = true; }
         }
 
-        // Settings value: used to determine how many meters in front of the HMD the controller
-        // is held when it's being calibrated.
-        float calibration_offset_meters;
-        public float CalibrationOffsetMeters
-        {
-            get { return calibration_offset_meters; }
-            set { calibration_offset_meters= value; IsDirty = true; }
-        }
-
-        // Flag used to completely disable the alignment gesture.
-        bool disable_alignment_gesture;
-        public bool DisableAlignmentGesture
-        {
-            get { return disable_alignment_gesture; }
-            set { disable_alignment_gesture = value; IsDirty = true; }
-        }
-
-        // Flag to tell if we should use the controller orientation as part of the controller alignment.
-        bool use_orientation_in_hmd_alignment;
-        public bool UseOrientationInHmdAlignment
-        {
-            get { return use_orientation_in_hmd_alignment; }
-            set { use_orientation_in_hmd_alignment = value; IsDirty = true; }
-        }
-
         // Settings values. Used to adjust throwing power using linear velocity and acceleration.
         float linear_velocity_multiplier;
         float linear_velocity_exponent;
@@ -109,9 +84,6 @@ namespace SystemTrayApp
             pt["z_rotate_90_degrees"] = z_rotate_90_degrees;
             pt["delay_after_touchpad_press"] = delay_after_touchpad_press;
             pt["meters_per_touchpad_axis_units"] = meters_per_touchpad_axis_units;
-            pt["calibration_offset_meters"] = calibration_offset_meters;
-            pt["disable_alignment_gesture"] = disable_alignment_gesture;
-            pt["use_orientation_in_hmd_alignment"] = use_orientation_in_hmd_alignment;
             pt["linear_velocity_multiplier"] = linear_velocity_multiplier;
             pt["linear_velocity_exponent"] = linear_velocity_exponent;
 
@@ -146,15 +118,6 @@ namespace SystemTrayApp
                 }
                 if (pt.ContainsKey("meters_per_touchpad_axis_units")) {
                     meters_per_touchpad_axis_units = pt["meters_per_touchpad_axis_units"];
-                }
-                if (pt.ContainsKey("calibration_offset_meters")) {
-                    calibration_offset_meters = pt["calibration_offset_meters"];
-                }
-                if (pt.ContainsKey("disable_alignment_gesture")) {
-                    disable_alignment_gesture = pt["disable_alignment_gesture"];
-                }
-                if (pt.ContainsKey("use_orientation_in_hmd_alignment")) {
-                    use_orientation_in_hmd_alignment = pt["use_orientation_in_hmd_alignment"];
                 }
                 if (pt.ContainsKey("linear_velocity_multiplier")) {
                     linear_velocity_multiplier = pt["linear_velocity_multiplier"];

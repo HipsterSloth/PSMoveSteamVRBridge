@@ -49,6 +49,7 @@
             this.ShoulderButtonLabel = new MaterialSkin.Controls.MaterialLabel();
             this.ShoulderButtonComboBox = new System.Windows.Forms.ComboBox();
             this.PSMoveControllerLabel = new MaterialSkin.Controls.MaterialLabel();
+            this.DisableControllerCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.SuspendLayout();
             // 
             // ThumbstickDeadzoneLabel
@@ -57,7 +58,7 @@
             this.ThumbstickDeadzoneLabel.Depth = 0;
             this.ThumbstickDeadzoneLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.ThumbstickDeadzoneLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.ThumbstickDeadzoneLabel.Location = new System.Drawing.Point(16, 42);
+            this.ThumbstickDeadzoneLabel.Location = new System.Drawing.Point(16, 89);
             this.ThumbstickDeadzoneLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.ThumbstickDeadzoneLabel.Name = "ThumbstickDeadzoneLabel";
             this.ThumbstickDeadzoneLabel.Size = new System.Drawing.Size(158, 19);
@@ -68,7 +69,7 @@
             // 
             this.ThumbstickDeadzoneTextField.Depth = 0;
             this.ThumbstickDeadzoneTextField.Hint = "";
-            this.ThumbstickDeadzoneTextField.Location = new System.Drawing.Point(180, 42);
+            this.ThumbstickDeadzoneTextField.Location = new System.Drawing.Point(180, 89);
             this.ThumbstickDeadzoneTextField.MaxLength = 32767;
             this.ThumbstickDeadzoneTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.ThumbstickDeadzoneTextField.Name = "ThumbstickDeadzoneTextField";
@@ -86,12 +87,12 @@
             // 
             this.TouchpadMappingLabel.AutoSize = true;
             this.TouchpadMappingLabel.Depth = 0;
-            this.TouchpadMappingLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold);
+            this.TouchpadMappingLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.TouchpadMappingLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.TouchpadMappingLabel.Location = new System.Drawing.Point(397, 32);
             this.TouchpadMappingLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.TouchpadMappingLabel.Name = "TouchpadMappingLabel";
-            this.TouchpadMappingLabel.Size = new System.Drawing.Size(285, 18);
+            this.TouchpadMappingLabel.Size = new System.Drawing.Size(258, 19);
             this.TouchpadMappingLabel.TabIndex = 32;
             this.TouchpadMappingLabel.Text = "Button to Virtual Touchpad Mappings";
             // 
@@ -288,19 +289,37 @@
             // 
             this.PSMoveControllerLabel.AutoSize = true;
             this.PSMoveControllerLabel.Depth = 0;
-            this.PSMoveControllerLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold);
+            this.PSMoveControllerLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.PSMoveControllerLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.PSMoveControllerLabel.Location = new System.Drawing.Point(16, 13);
             this.PSMoveControllerLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.PSMoveControllerLabel.Name = "PSMoveControllerLabel";
-            this.PSMoveControllerLabel.Size = new System.Drawing.Size(217, 18);
+            this.PSMoveControllerLabel.Size = new System.Drawing.Size(187, 19);
             this.PSMoveControllerLabel.TabIndex = 34;
-            this.PSMoveControllerLabel.Text = "PSMove Controller Settings";
+            this.PSMoveControllerLabel.Text = "PSNavi Controller Settings";
+            // 
+            // DisableControllerCheckBox
+            // 
+            this.DisableControllerCheckBox.AutoSize = true;
+            this.DisableControllerCheckBox.Depth = 0;
+            this.DisableControllerCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
+            this.DisableControllerCheckBox.Location = new System.Drawing.Point(20, 44);
+            this.DisableControllerCheckBox.Margin = new System.Windows.Forms.Padding(0);
+            this.DisableControllerCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
+            this.DisableControllerCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
+            this.DisableControllerCheckBox.Name = "DisableControllerCheckBox";
+            this.DisableControllerCheckBox.Ripple = true;
+            this.DisableControllerCheckBox.Size = new System.Drawing.Size(140, 30);
+            this.DisableControllerCheckBox.TabIndex = 69;
+            this.DisableControllerCheckBox.Text = "Disable Controller";
+            this.DisableControllerCheckBox.UseVisualStyleBackColor = true;
+            this.DisableControllerCheckBox.CheckedChanged += new System.EventHandler(this.DisableControllerCheckBox_CheckedChanged);
             // 
             // PSNaviControllerPanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.DisableControllerCheckBox);
             this.Controls.Add(this.PSMoveControllerLabel);
             this.Controls.Add(this.ThumbstickDeadzoneLabel);
             this.Controls.Add(this.ThumbstickDeadzoneTextField);
@@ -354,5 +373,6 @@
         private MaterialSkin.Controls.MaterialLabel ShoulderButtonLabel;
         private System.Windows.Forms.ComboBox ShoulderButtonComboBox;
         private MaterialSkin.Controls.MaterialLabel PSMoveControllerLabel;
+        private MaterialSkin.Controls.MaterialCheckBox DisableControllerCheckBox;
     }
 }

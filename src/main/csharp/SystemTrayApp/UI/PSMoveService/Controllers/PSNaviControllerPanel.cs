@@ -73,6 +73,11 @@ namespace SystemTrayApp
             }
         }
 
+        private void DisableControllerCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            controllerConfig.ControllerDisabled = DisableControllerCheckBox.Checked;
+        }
+
         private void ShoulderButtonComboBox_SelectedValueChanged(object sender, System.EventArgs e)
         {
             controllerConfig.setTrackpadActionForButton(ePSMButtonID.Shoulder, GetTouchpadComboBoxValue(ShoulderButtonComboBox));

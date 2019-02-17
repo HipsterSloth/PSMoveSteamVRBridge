@@ -11,6 +11,9 @@ namespace SystemTrayApp
     {
         public ControllerConfig(string fnamebase) : base(fnamebase)
         {
+            override_model = "";
+            controller_disabled = false;
+
             ps_button_id_to_emulated_touchpad_action = new eEmulatedTrackpadAction[(int)ePSMButtonID.Count];
             for (int buttonId = 0; buttonId < (int)ePSMButtonID.Count; ++buttonId) {
                 ps_button_id_to_emulated_touchpad_action[buttonId] = eEmulatedTrackpadAction.None;
@@ -30,6 +33,13 @@ namespace SystemTrayApp
         public string ControllerName
         {
             get { return ConfigFileBase; }
+        }
+
+        private bool controller_disabled;
+        public bool ControllerDisabled
+        {
+            get { return controller_disabled; }
+            set { controller_disabled = value; IsDirty = true; }
         }
 
         private string override_model = "";
@@ -96,6 +106,7 @@ namespace SystemTrayApp
         {
             base.WriteToJSON(pt);
             pt["override_model"] = override_model;
+            pt["controller_disabled"] = controller_disabled;
         }
 
         public override bool ReadFromJSON(JsonValue pt)
@@ -103,6 +114,10 @@ namespace SystemTrayApp
             if (base.ReadFromJSON(pt)) {
                 if (pt.ContainsKey("override_model")) {
                     override_model = pt["override_model"];
+                }
+                if (pt.ContainsKey("controller_disabled"))
+                {
+                    controller_disabled = pt["controller_disabled"];
                 }
 
                 return true;

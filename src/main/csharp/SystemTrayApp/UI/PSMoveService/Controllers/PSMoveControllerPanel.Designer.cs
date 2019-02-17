@@ -35,8 +35,6 @@
             this.ExtendZLabel = new MaterialSkin.Controls.MaterialLabel();
             this.ZRotate90CheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.TouchpadPressDelayCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
-            this.DisableAlignmentGestureCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
-            this.UseOrientationInHMDAlignmentCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.VirtualTumbstickScaleTextField = new MaterialSkin.Controls.MaterialSingleLineTextField();
             this.VirtualThumbstickScaleLabel = new MaterialSkin.Controls.MaterialLabel();
             this.VelocityMultiplierTextField = new MaterialSkin.Controls.MaterialSingleLineTextField();
@@ -60,6 +58,7 @@
             this.StartButtonComboBox = new System.Windows.Forms.ComboBox();
             this.StartButtonLabel = new MaterialSkin.Controls.MaterialLabel();
             this.TouchpadMappingLabel = new MaterialSkin.Controls.MaterialLabel();
+            this.DisableControllerCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.SuspendLayout();
             // 
             // RumbleSuppressedCheckBox
@@ -67,7 +66,7 @@
             this.RumbleSuppressedCheckBox.AutoSize = true;
             this.RumbleSuppressedCheckBox.Depth = 0;
             this.RumbleSuppressedCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.RumbleSuppressedCheckBox.Location = new System.Drawing.Point(20, 32);
+            this.RumbleSuppressedCheckBox.Location = new System.Drawing.Point(20, 62);
             this.RumbleSuppressedCheckBox.Margin = new System.Windows.Forms.Padding(0);
             this.RumbleSuppressedCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
             this.RumbleSuppressedCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
@@ -83,12 +82,12 @@
             // 
             this.PSMoveControllerLabel.AutoSize = true;
             this.PSMoveControllerLabel.Depth = 0;
-            this.PSMoveControllerLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold);
+            this.PSMoveControllerLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.PSMoveControllerLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.PSMoveControllerLabel.Location = new System.Drawing.Point(16, 13);
             this.PSMoveControllerLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.PSMoveControllerLabel.Name = "PSMoveControllerLabel";
-            this.PSMoveControllerLabel.Size = new System.Drawing.Size(217, 18);
+            this.PSMoveControllerLabel.Size = new System.Drawing.Size(194, 19);
             this.PSMoveControllerLabel.TabIndex = 1;
             this.PSMoveControllerLabel.Text = "PSMove Controller Settings";
             // 
@@ -98,7 +97,7 @@
             this.ExtendYLabel.Depth = 0;
             this.ExtendYLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.ExtendYLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.ExtendYLabel.Location = new System.Drawing.Point(16, 191);
+            this.ExtendYLabel.Location = new System.Drawing.Point(16, 156);
             this.ExtendYLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.ExtendYLabel.Name = "ExtendYLabel";
             this.ExtendYLabel.Size = new System.Drawing.Size(102, 19);
@@ -109,7 +108,7 @@
             // 
             this.ExtendYTextField.Depth = 0;
             this.ExtendYTextField.Hint = "";
-            this.ExtendYTextField.Location = new System.Drawing.Point(234, 187);
+            this.ExtendYTextField.Location = new System.Drawing.Point(234, 152);
             this.ExtendYTextField.MaxLength = 32767;
             this.ExtendYTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.ExtendYTextField.Name = "ExtendYTextField";
@@ -127,7 +126,7 @@
             // 
             this.ExtendZTextField.Depth = 0;
             this.ExtendZTextField.Hint = "";
-            this.ExtendZTextField.Location = new System.Drawing.Point(234, 206);
+            this.ExtendZTextField.Location = new System.Drawing.Point(234, 171);
             this.ExtendZTextField.MaxLength = 32767;
             this.ExtendZTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.ExtendZTextField.Name = "ExtendZTextField";
@@ -147,7 +146,7 @@
             this.ExtendZLabel.Depth = 0;
             this.ExtendZLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.ExtendZLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.ExtendZLabel.Location = new System.Drawing.Point(16, 210);
+            this.ExtendZLabel.Location = new System.Drawing.Point(16, 175);
             this.ExtendZLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.ExtendZLabel.Name = "ExtendZLabel";
             this.ExtendZLabel.Size = new System.Drawing.Size(102, 19);
@@ -159,7 +158,7 @@
             this.ZRotate90CheckBox.AutoSize = true;
             this.ZRotate90CheckBox.Depth = 0;
             this.ZRotate90CheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.ZRotate90CheckBox.Location = new System.Drawing.Point(20, 62);
+            this.ZRotate90CheckBox.Location = new System.Drawing.Point(20, 88);
             this.ZRotate90CheckBox.Margin = new System.Windows.Forms.Padding(0);
             this.ZRotate90CheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
             this.ZRotate90CheckBox.MouseState = MaterialSkin.MouseState.HOVER;
@@ -176,7 +175,7 @@
             this.TouchpadPressDelayCheckBox.AutoSize = true;
             this.TouchpadPressDelayCheckBox.Depth = 0;
             this.TouchpadPressDelayCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.TouchpadPressDelayCheckBox.Location = new System.Drawing.Point(20, 92);
+            this.TouchpadPressDelayCheckBox.Location = new System.Drawing.Point(20, 114);
             this.TouchpadPressDelayCheckBox.Margin = new System.Windows.Forms.Padding(0);
             this.TouchpadPressDelayCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
             this.TouchpadPressDelayCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
@@ -188,45 +187,11 @@
             this.TouchpadPressDelayCheckBox.UseVisualStyleBackColor = true;
             this.TouchpadPressDelayCheckBox.CheckedChanged += new System.EventHandler(this.TouchpadPressDelayCheckBox_CheckedChanged);
             // 
-            // DisableAlignmentGestureCheckBox
-            // 
-            this.DisableAlignmentGestureCheckBox.AutoSize = true;
-            this.DisableAlignmentGestureCheckBox.Depth = 0;
-            this.DisableAlignmentGestureCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.DisableAlignmentGestureCheckBox.Location = new System.Drawing.Point(20, 122);
-            this.DisableAlignmentGestureCheckBox.Margin = new System.Windows.Forms.Padding(0);
-            this.DisableAlignmentGestureCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.DisableAlignmentGestureCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
-            this.DisableAlignmentGestureCheckBox.Name = "DisableAlignmentGestureCheckBox";
-            this.DisableAlignmentGestureCheckBox.Ripple = true;
-            this.DisableAlignmentGestureCheckBox.Size = new System.Drawing.Size(194, 30);
-            this.DisableAlignmentGestureCheckBox.TabIndex = 8;
-            this.DisableAlignmentGestureCheckBox.Text = "Disable Alignment Gesture";
-            this.DisableAlignmentGestureCheckBox.UseVisualStyleBackColor = true;
-            this.DisableAlignmentGestureCheckBox.CheckedChanged += new System.EventHandler(this.DisableAlignmentGestureCheckBox_CheckedChanged);
-            // 
-            // UseOrientationInHMDAlignmentCheckBox
-            // 
-            this.UseOrientationInHMDAlignmentCheckBox.AutoSize = true;
-            this.UseOrientationInHMDAlignmentCheckBox.Depth = 0;
-            this.UseOrientationInHMDAlignmentCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
-            this.UseOrientationInHMDAlignmentCheckBox.Location = new System.Drawing.Point(20, 152);
-            this.UseOrientationInHMDAlignmentCheckBox.Margin = new System.Windows.Forms.Padding(0);
-            this.UseOrientationInHMDAlignmentCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.UseOrientationInHMDAlignmentCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
-            this.UseOrientationInHMDAlignmentCheckBox.Name = "UseOrientationInHMDAlignmentCheckBox";
-            this.UseOrientationInHMDAlignmentCheckBox.Ripple = true;
-            this.UseOrientationInHMDAlignmentCheckBox.Size = new System.Drawing.Size(240, 30);
-            this.UseOrientationInHMDAlignmentCheckBox.TabIndex = 9;
-            this.UseOrientationInHMDAlignmentCheckBox.Text = "Use Orientation in HMD Alignment";
-            this.UseOrientationInHMDAlignmentCheckBox.UseVisualStyleBackColor = true;
-            this.UseOrientationInHMDAlignmentCheckBox.CheckedChanged += new System.EventHandler(this.UseOrientationInHMDAlignmentCheckBox_CheckedChanged);
-            // 
             // VirtualTumbstickScaleTextField
             // 
             this.VirtualTumbstickScaleTextField.Depth = 0;
             this.VirtualTumbstickScaleTextField.Hint = "";
-            this.VirtualTumbstickScaleTextField.Location = new System.Drawing.Point(234, 225);
+            this.VirtualTumbstickScaleTextField.Location = new System.Drawing.Point(234, 190);
             this.VirtualTumbstickScaleTextField.MaxLength = 32767;
             this.VirtualTumbstickScaleTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.VirtualTumbstickScaleTextField.Name = "VirtualTumbstickScaleTextField";
@@ -246,7 +211,7 @@
             this.VirtualThumbstickScaleLabel.Depth = 0;
             this.VirtualThumbstickScaleLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.VirtualThumbstickScaleLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.VirtualThumbstickScaleLabel.Location = new System.Drawing.Point(16, 229);
+            this.VirtualThumbstickScaleLabel.Location = new System.Drawing.Point(16, 194);
             this.VirtualThumbstickScaleLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.VirtualThumbstickScaleLabel.Name = "VirtualThumbstickScaleLabel";
             this.VirtualThumbstickScaleLabel.Size = new System.Drawing.Size(212, 19);
@@ -257,7 +222,7 @@
             // 
             this.VelocityMultiplierTextField.Depth = 0;
             this.VelocityMultiplierTextField.Hint = "";
-            this.VelocityMultiplierTextField.Location = new System.Drawing.Point(234, 244);
+            this.VelocityMultiplierTextField.Location = new System.Drawing.Point(234, 209);
             this.VelocityMultiplierTextField.MaxLength = 32767;
             this.VelocityMultiplierTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.VelocityMultiplierTextField.Name = "VelocityMultiplierTextField";
@@ -277,7 +242,7 @@
             this.VelocityMultiplierLabel.Depth = 0;
             this.VelocityMultiplierLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.VelocityMultiplierLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.VelocityMultiplierLabel.Location = new System.Drawing.Point(16, 248);
+            this.VelocityMultiplierLabel.Location = new System.Drawing.Point(16, 213);
             this.VelocityMultiplierLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.VelocityMultiplierLabel.Name = "VelocityMultiplierLabel";
             this.VelocityMultiplierLabel.Size = new System.Drawing.Size(131, 19);
@@ -288,7 +253,7 @@
             // 
             this.VelocityExponentTextField.Depth = 0;
             this.VelocityExponentTextField.Hint = "";
-            this.VelocityExponentTextField.Location = new System.Drawing.Point(234, 263);
+            this.VelocityExponentTextField.Location = new System.Drawing.Point(234, 228);
             this.VelocityExponentTextField.MaxLength = 32767;
             this.VelocityExponentTextField.MouseState = MaterialSkin.MouseState.HOVER;
             this.VelocityExponentTextField.Name = "VelocityExponentTextField";
@@ -308,7 +273,7 @@
             this.VelocityExponentLabel.Depth = 0;
             this.VelocityExponentLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.VelocityExponentLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.VelocityExponentLabel.Location = new System.Drawing.Point(16, 267);
+            this.VelocityExponentLabel.Location = new System.Drawing.Point(16, 232);
             this.VelocityExponentLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.VelocityExponentLabel.Name = "VelocityExponentLabel";
             this.VelocityExponentLabel.Size = new System.Drawing.Size(130, 19);
@@ -487,19 +452,37 @@
             // 
             this.TouchpadMappingLabel.AutoSize = true;
             this.TouchpadMappingLabel.Depth = 0;
-            this.TouchpadMappingLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold);
+            this.TouchpadMappingLabel.Font = new System.Drawing.Font("Roboto", 11F);
             this.TouchpadMappingLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.TouchpadMappingLabel.Location = new System.Drawing.Point(391, 13);
             this.TouchpadMappingLabel.MouseState = MaterialSkin.MouseState.HOVER;
             this.TouchpadMappingLabel.Name = "TouchpadMappingLabel";
-            this.TouchpadMappingLabel.Size = new System.Drawing.Size(285, 18);
+            this.TouchpadMappingLabel.Size = new System.Drawing.Size(258, 19);
             this.TouchpadMappingLabel.TabIndex = 32;
             this.TouchpadMappingLabel.Text = "Button to Virtual Touchpad Mappings";
+            // 
+            // DisableControllerCheckBox
+            // 
+            this.DisableControllerCheckBox.AutoSize = true;
+            this.DisableControllerCheckBox.Depth = 0;
+            this.DisableControllerCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
+            this.DisableControllerCheckBox.Location = new System.Drawing.Point(20, 36);
+            this.DisableControllerCheckBox.Margin = new System.Windows.Forms.Padding(0);
+            this.DisableControllerCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
+            this.DisableControllerCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
+            this.DisableControllerCheckBox.Name = "DisableControllerCheckBox";
+            this.DisableControllerCheckBox.Ripple = true;
+            this.DisableControllerCheckBox.Size = new System.Drawing.Size(140, 30);
+            this.DisableControllerCheckBox.TabIndex = 69;
+            this.DisableControllerCheckBox.Text = "Disable Controller";
+            this.DisableControllerCheckBox.UseVisualStyleBackColor = true;
+            this.DisableControllerCheckBox.CheckedChanged += new System.EventHandler(this.DisableControllerCheckBox_CheckedChanged);
             // 
             // PSMoveControllerPanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.DisableControllerCheckBox);
             this.Controls.Add(this.TouchpadMappingLabel);
             this.Controls.Add(this.StartButtonComboBox);
             this.Controls.Add(this.StartButtonLabel);
@@ -523,8 +506,6 @@
             this.Controls.Add(this.VelocityMultiplierLabel);
             this.Controls.Add(this.VirtualTumbstickScaleTextField);
             this.Controls.Add(this.VirtualThumbstickScaleLabel);
-            this.Controls.Add(this.UseOrientationInHMDAlignmentCheckBox);
-            this.Controls.Add(this.DisableAlignmentGestureCheckBox);
             this.Controls.Add(this.TouchpadPressDelayCheckBox);
             this.Controls.Add(this.ZRotate90CheckBox);
             this.Controls.Add(this.ExtendZTextField);
@@ -550,8 +531,6 @@
         private MaterialSkin.Controls.MaterialLabel ExtendZLabel;
         private MaterialSkin.Controls.MaterialCheckBox ZRotate90CheckBox;
         private MaterialSkin.Controls.MaterialCheckBox TouchpadPressDelayCheckBox;
-        private MaterialSkin.Controls.MaterialCheckBox DisableAlignmentGestureCheckBox;
-        private MaterialSkin.Controls.MaterialCheckBox UseOrientationInHMDAlignmentCheckBox;
         private MaterialSkin.Controls.MaterialSingleLineTextField VirtualTumbstickScaleTextField;
         private MaterialSkin.Controls.MaterialLabel VirtualThumbstickScaleLabel;
         private MaterialSkin.Controls.MaterialSingleLineTextField VelocityMultiplierTextField;
@@ -575,5 +554,6 @@
         private System.Windows.Forms.ComboBox StartButtonComboBox;
         private MaterialSkin.Controls.MaterialLabel StartButtonLabel;
         private MaterialSkin.Controls.MaterialLabel TouchpadMappingLabel;
+        private MaterialSkin.Controls.MaterialCheckBox DisableControllerCheckBox;
     }
 }
