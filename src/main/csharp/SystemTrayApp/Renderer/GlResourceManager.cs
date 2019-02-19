@@ -73,10 +73,10 @@ namespace SystemTrayApp
 
         public GlModelInstance AllocateGlModel(string name, SteamVRRenderModelComponent renderModel, GlProgramCode code)
         {
-            GlMaterial material = FetchMaterial(renderModel, code);
+            GlMaterialInstance materialInstance = new GlMaterialInstance(FetchMaterial(renderModel, code));
             GlTriangulatedMesh mesh= FetchTriangulatedMeshResource(renderModel);
 
-            return new GlModelInstance(name, mesh, material);
+            return new GlModelInstance(name, mesh, materialInstance);
         }
 
 

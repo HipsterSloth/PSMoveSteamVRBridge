@@ -56,6 +56,12 @@ namespace SystemTrayApp
             get { return _modelNumber; }
         }
 
+        private string _serialNumber = "";
+        public string SerialNumber
+        {
+            get { return _serialNumber; }
+        }
+
         private string _resourcesPath = "";
         public string ResourcesPath
         {
@@ -100,6 +106,7 @@ namespace SystemTrayApp
             _trackingSystem = FetchStringProperty(SteamVRSystem, ETrackedDeviceProperty.Prop_TrackingSystemName_String, "");
             _modelLabel = FetchStringProperty(SteamVRSystem, ETrackedDeviceProperty.Prop_ModeLabel_String, "");
             _modelNumber = FetchStringProperty(SteamVRSystem, ETrackedDeviceProperty.Prop_ModelNumber_String, "");
+            _serialNumber = FetchStringProperty(SteamVRSystem, ETrackedDeviceProperty.Prop_SerialNumber_String, "");
 
             UpdateResourcesPath(SteamVRSystem);
 

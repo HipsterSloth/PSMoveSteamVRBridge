@@ -36,6 +36,7 @@ namespace SystemTrayApp
         private GlProgramCode _code;
         private uint _programID = 0;
         private int _modelViewProjectionMatrixId = -1;
+        private int _modelColorId = -1;
 
         public GlProgram(GlProgramCode code)
         {
@@ -77,6 +78,17 @@ namespace SystemTrayApp
         {
             if (_modelViewProjectionMatrixId != -1) {
                 Gl.UniformMatrix4(_modelViewProjectionMatrixId, false, ModelViewProjection.ToArray());
+                return true;
+            }
+            return false;
+        }
+
+        public bool SetModelColor(ColorRGBA rgba)
+        {
+            if (_modelColorId != -1)
+            {
+                Vertex4f colorUniform = new Vertex4f(rgba.Red, rgba.Green, rgba.Blue, rgba.Alpha);
+                Gl.Uniform4f(_modelColorId, 1, ref colorUniform);
                 return true;
             }
             return false;
@@ -149,6 +161,12 @@ namespace SystemTrayApp
                 _modelViewProjectionMatrixId = Gl.GetUniformLocation(_programID, "matrix");
                 if (_modelViewProjectionMatrixId == -1) {
                     Trace.TraceWarning(string.Format("{0} - Unable to find matrix uniform!", _code.shaderName));
+                }
+
+                _modelColorId = Gl.GetUniformLocation(_programID, "modelColor");
+                if (_modelColorId == -1)
+                {
+                    Trace.TraceWarning(string.Format("{0} - Unable to find modelColor uniform!", _code.shaderName));
                 }
 
                 return true;

@@ -92,6 +92,7 @@
     <Compile Include="PSMoveService\PSMTrackerPool.cs" />
     <Compile Include="Renderer\GlCamera.cs" />
     <Compile Include="Renderer\GlMaterial.cs" />
+    <Compile Include="Renderer\GlMaterialInstance.cs" />
     <Compile Include="Renderer\GlModelInstance.cs" />
     <Compile Include="Renderer\GlProgram.cs" />
     <Compile Include="Renderer\GlResourceManager.cs" />

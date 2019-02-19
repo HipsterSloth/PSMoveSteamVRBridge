@@ -29,10 +29,10 @@ namespace SystemTrayApp
             set { _modelMatrix = value; }
         }
 
-        private GlMaterial _material;
-        public GlMaterial Material
+        private GlMaterialInstance _materialInstance;
+        public GlMaterialInstance MaterialInstance
         {
-            get { return _material; }
+            get { return _materialInstance; }
         }
 
         private GlTriangulatedMesh _mesh;
@@ -41,12 +41,12 @@ namespace SystemTrayApp
             get { return _mesh; }
         }
 
-        public GlModelInstance(string name, GlTriangulatedMesh mesh, GlMaterial material)
+        public GlModelInstance(string name, GlTriangulatedMesh mesh, GlMaterialInstance materialInstance)
         {
             _name = name;
             _visible = true;
             _mesh = mesh;
-            _material = material;
+            _materialInstance = materialInstance;
         }
 
         public void Render(DeviceContext GlContext)

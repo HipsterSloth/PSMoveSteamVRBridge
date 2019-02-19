@@ -134,7 +134,12 @@ namespace SystemTrayApp
 
         public static float asinf(float x)
         {
-            return (float)Math.Asin((float)x);
+            return (float)Math.Asin((double)x);
+        }
+
+        public static float sqrtf(float x)
+        {
+            return (float)Math.Sqrt((double)x);
         }
 
         public static float wrap_range(float value, float range_min, float range_max)
@@ -183,6 +188,57 @@ namespace SystemTrayApp
         public static float ExtractRoll(PSMQuatf q)
         {
             return asinf(2 * q.x * q.y + 2 * q.z * q.w);
+        }
+
+        public static float LengthSquared(OpenGL.Vertex3f v)
+        {
+            return v.x*v.x + v.y*v.y + v.z*v.z;
+        }
+
+        public static float Length(OpenGL.Vertex3f v)
+        {
+            return sqrtf(LengthSquared(v));
+        }
+
+        public static float DistanceSquared(OpenGL.Vertex3f p1, OpenGL.Vertex3f p2)
+        {
+            OpenGL.Vertex3f d = p1 - p2;
+
+            return d.x*d.x + d.y*d.y + d.z*d.z;
+        }
+
+        public static float Distance(OpenGL.Vertex3f p1, OpenGL.Vertex3f p2)
+        {
+            return sqrtf(DistanceSquared(p1, p2));
+        }
+
+        public static OpenGL.Vertex3f ProjectUnitVectorXZ(OpenGL.Vertex3f v)
+        {
+            OpenGL.Vertex3f v2D = new OpenGL.Vertex3f(v.x, 0.0f, v.z);
+
+            return v2D.Normalized;
+        }
+
+        public static float DotProduct(OpenGL.Vertex3f a, OpenGL.Vertex3f b)
+        {
+            return a.x*b.x + a.y*b.y + a.z*b.z;
+        }
+
+        public static OpenGL.Vertex3f CrossProduct(OpenGL.Vertex3f a, OpenGL.Vertex3f b)
+        {
+            return new OpenGL.Vertex3f(a.y*b.z - b.y*a.z, a.x*b.z - b.x*a.z, a.x*b.y - b.x*a.y);
+        }
+
+        // https://stackoverflow.com/questions/1171849/finding-quaternion-representing-the-rotation-from-one-vector-to-another
+        public static OpenGL.Quaternion ShortestRotationBetween(OpenGL.Vertex3f a, OpenGL.Vertex3f b)
+        {
+            OpenGL.Vertex3f v = CrossProduct(a, b);
+            float w = sqrtf(LengthSquared(a) * LengthSquared(b)) + DotProduct(a, b);
+
+            OpenGL.Quaternion q = new OpenGL.Quaternion(v.x, v.y, v.z, w);
+            q.Normalize();
+
+            return q;
         }
     }
 }

@@ -23,7 +23,6 @@ namespace SystemTrayApp
 
         private Timer PollTimer;
 
-        private CVRSystem SteamVRSystem;
         private TrackedDevicePose_t[] DevicePoses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
 
         private Dictionary<uint, SteamVRTrackedDevice> DeviceTable = new Dictionary<uint, SteamVRTrackedDevice>();
@@ -32,6 +31,12 @@ namespace SystemTrayApp
         {
             PollTimer = new System.Timers.Timer();
             bIsConnected = false;
+        }
+
+        private CVRSystem _steamVRSystem;
+        public CVRSystem SteamVRSystem
+        {
+            get { return _steamVRSystem; }
         }
 
         private bool bIsConnected;
@@ -85,14 +90,14 @@ namespace SystemTrayApp
                 // Start as "background" application.  This prevents vrserver from being started on our behalf, 
                 // and prevents us from keeping vrserver alive when everything else exits.
                 EVRInitError eVRInitError= EVRInitError.None;
-                SteamVRSystem= OpenVR.Init(ref eVRInitError, EVRApplicationType.VRApplication_Overlay);
-                if (SteamVRSystem == null || eVRInitError != EVRInitError.None)
+                _steamVRSystem= OpenVR.Init(ref eVRInitError, EVRApplicationType.VRApplication_Overlay);
+                if (_steamVRSystem == null || eVRInitError != EVRInitError.None)
                 {
                     return false;
                 }
 
                 // Fetch the initial set of connected tracked devices
-                SteamVRSystem.GetDeviceToAbsoluteTrackingPose(
+                _steamVRSystem.GetDeviceToAbsoluteTrackingPose(
                     ETrackingUniverseOrigin.TrackingUniverseRawAndUncalibrated, 
                     0.0f, 
                     DevicePoses);
@@ -139,7 +144,7 @@ namespace SystemTrayApp
                 PollTimer.Stop();
 
                 // Shutdown SteamVR connection
-                SteamVRSystem = null;
+                _steamVRSystem = null;
                 OpenVR.Shutdown();
                 bIsConnected = false;
             }
@@ -148,7 +153,7 @@ namespace SystemTrayApp
         private void RunFrame(object sender, ElapsedEventArgs e)
         {
             VREvent_t Event = new VREvent_t();
-            while (SteamVRSystem.PollNextEvent(ref Event, VREventSize))
+            while (_steamVRSystem.PollNextEvent(ref Event, VREventSize))
             {
                 switch((EVREventType)Event.eventType)
                 {
@@ -185,7 +190,7 @@ namespace SystemTrayApp
                 {
                     Dictionary<uint, OpenGL.ModelMatrix> UpdatePosesTable = new Dictionary<uint, OpenGL.ModelMatrix>();
 
-                    SteamVRSystem.GetDeviceToAbsoluteTrackingPose(
+                    _steamVRSystem.GetDeviceToAbsoluteTrackingPose(
                         ETrackingUniverseOrigin.TrackingUniverseRawAndUncalibrated, 0.0f, DevicePoses);
 
                     for (uint DeviceIndex = 0; DeviceIndex < OpenVR.k_unMaxTrackedDeviceCount; ++DeviceIndex)
@@ -217,11 +222,61 @@ namespace SystemTrayApp
             return new List<SteamVRTrackedDevice>(DeviceTable.Values);
         }
 
+        public SteamVRHeadMountedDisplay FetchFirstHMD()
+        {
+            SteamVRHeadMountedDisplay hmd = null;
+            foreach (SteamVRTrackedDevice device in DeviceTable.Values)
+            {
+                if (device is SteamVRHeadMountedDisplay)
+                {
+                    hmd = device as SteamVRHeadMountedDisplay;
+                    break;
+                }
+            }
+
+            return hmd;
+        }
+
+        public SteamVRController FetchFirstControllerOfType(string controllerType)
+        {
+            SteamVRController controller = null;
+            foreach (SteamVRTrackedDevice device in DeviceTable.Values)
+            {
+                if (device is SteamVRController)
+                {
+                    SteamVRController testController = device as SteamVRController;
+
+                    if (testController.ControllerType == controllerType)
+                    {
+                        controller = testController;
+                        break;
+                    }
+                }
+            }
+
+            return controller;
+        }
+
+        public void TriggerHapticPulse(uint DeviceId, float intensityFraction)
+        {
+            if (DeviceTable.ContainsKey(DeviceId))
+            {
+                SteamVRTrackedDevice device = DeviceTable[DeviceId];
+
+                if (device is SteamVRController)
+                {
+                    SteamVRController Controller = device as SteamVRController;
+
+                    Controller.TriggerHapticPulse(intensityFraction);
+                }
+            }
+        }
+
         private void HandleTrackedDeviceActivated(uint trackedDeviceIndex)
         {
             SteamVRTrackedDevice device = null;
 
-            switch (SteamVRSystem.GetTrackedDeviceClass(trackedDeviceIndex))
+            switch (_steamVRSystem.GetTrackedDeviceClass(trackedDeviceIndex))
             {
                 case ETrackedDeviceClass.HMD:
                     if (!DeviceTable.ContainsKey(trackedDeviceIndex))
@@ -246,7 +301,7 @@ namespace SystemTrayApp
             if (device != null)
             {
                 // Fetch all relevant device properties from SteamVR
-                device.UpdateProperties(SteamVRSystem);
+                device.UpdateProperties(_steamVRSystem);
 
                 // Add the device to the pending-load set
                 DeviceTable.Add(trackedDeviceIndex, device);
@@ -260,7 +315,7 @@ namespace SystemTrayApp
                 SteamVRTrackedDevice device= DeviceTable[trackedDeviceIndex];
 
                 // Refresh all the properties on the device
-                device.UpdateProperties(SteamVRSystem);
+                device.UpdateProperties(_steamVRSystem);
 
                 if (TrackedDeviceActivatedEvent != null) {
                     TrackedDeviceActivatedEvent(device);

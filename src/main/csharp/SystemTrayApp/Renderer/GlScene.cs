@@ -48,25 +48,25 @@ namespace SystemTrayApp
 
         public void AddInstance(GlModelInstance instance)
         {
-            if (!_drawCalls.ContainsKey(instance.Material))
+            if (!_drawCalls.ContainsKey(instance.MaterialInstance.Material))
             {
-                _drawCalls.Add(instance.Material, new GlDrawCall());
+                _drawCalls.Add(instance.MaterialInstance.Material, new GlDrawCall());
             }
 
-            _drawCalls[instance.Material].instances.Add(instance);
+            _drawCalls[instance.MaterialInstance.Material].instances.Add(instance);
         }
 
         public void RemoveInstance(GlModelInstance instance)
         {
-            if (_drawCalls.ContainsKey(instance.Material)) 
+            if (_drawCalls.ContainsKey(instance.MaterialInstance.Material)) 
             {
-                GlDrawCall drawCall = _drawCalls[instance.Material];
+                GlDrawCall drawCall = _drawCalls[instance.MaterialInstance.Material];
 
                 drawCall.instances.Remove(instance);
 
                 if (drawCall.instances.Count == 0)
                 {
-                    _drawCalls.Remove(instance.Material);
+                    _drawCalls.Remove(instance.MaterialInstance.Material);
                 }
             }
         }
@@ -103,23 +103,28 @@ namespace SystemTrayApp
             Gl.Viewport(0, 0, WindowWidth, WindowHeight);
             Gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            foreach (var element in _drawCalls) 
+            foreach (var drawCallKeyValuePair in _drawCalls) 
             {
-                if (element.Key.BindMaterial(GlContext))
+                GlMaterial material= drawCallKeyValuePair.Key;
+                GlDrawCall drawCall = drawCallKeyValuePair.Value;
+
+                if (material.BindMaterial(GlContext))
                 {
-                    foreach (var instance in element.Value.instances)
+                    foreach (var modelInstance in drawCall.instances)
                     {
-                        if (instance.Visible)
+                        if (modelInstance.Visible)
                         {
                             // Set the ModelViewProjection matrix transform on the shader program
-                            GlMaterial material= element.Key;
-                            Matrix4x4 MVPMatrix = VPMatrix * instance.ModelMatrix;
+                            Matrix4x4 MVPMatrix = VPMatrix * modelInstance.ModelMatrix;
                             material.Program.SetModelViewProjectionMatrix(MVPMatrix);
 
-                            instance.Render(GlContext);
+                            // Apply other material instance parameters (color, etc)
+                            modelInstance.MaterialInstance.ApplyMaterialInstanceParameters();
+
+                            modelInstance.Render(GlContext);
                         }
                     }
-                    element.Key.UnbindMaterial(GlContext);
+                    drawCallKeyValuePair.Key.UnbindMaterial(GlContext);
                 }
             }
         }

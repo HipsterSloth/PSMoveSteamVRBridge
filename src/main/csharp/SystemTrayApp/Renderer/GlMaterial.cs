@@ -27,6 +27,12 @@ namespace SystemTrayApp
             get { return _program; }
         }
 
+        private ColorRGBA _diffuseColor = null;
+        public ColorRGBA DiffuseColor
+        {
+            get { return _diffuseColor; }
+        }
+
         public GlMaterial(string name, GlProgram program, GlTexture texture)
         {
             _name = name;

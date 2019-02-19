@@ -15,25 +15,26 @@ namespace SystemTrayApp
                 "render model",
                 // vertex shader
                 @"#version 410
-		        uniform mat4 matrix;
-		        layout(location = 0) in vec4 position;
-		        layout(location = 1) in vec3 v3NormalIn;
-		        layout(location = 2) in vec2 v2TexCoordsIn;
-		        out vec2 v2TexCoord;
-		        void main()
-		        {
-		        	v2TexCoord = v2TexCoordsIn;
-		        	gl_Position = matrix * vec4(position.xyz, 1);
-		        }",
+                uniform mat4 matrix;
+                layout(location = 0) in vec4 position;
+                layout(location = 1) in vec3 v3NormalIn;
+                layout(location = 2) in vec2 v2TexCoordsIn;
+                out vec2 v2TexCoord;
+                void main()
+                {
+                	v2TexCoord = v2TexCoordsIn;
+                	gl_Position = matrix * vec4(position.xyz, 1);s
+                }",
                 //fragment shader
                 @"#version 410 core
-		        uniform sampler2D diffuse;
-		        in vec2 v2TexCoord;
-		        out vec4 outputColor;
-		        void main()
-		        {
-		           outputColor = texture( diffuse, v2TexCoord);
-		        }");
+                uniform sampler2D diffuse;
+                uniform vec4 modelColor;
+                in vec2 v2TexCoord;
+                out vec4 outputColor;
+                void main()
+                {
+                   outputColor = texture( diffuse, v2TexCoord) * modelColor;
+                }");
         
         private struct ChildComponent
         {
@@ -131,6 +132,17 @@ namespace SystemTrayApp
                 else
                 {
                     component.glComponentInstance.ModelMatrix.Set(_modelMatrix);
+                }
+            }
+        }
+
+        public void SetDiffuseColor(ColorRGBA diffuseColor)
+        {
+            foreach (ChildComponent childComponent in _componentStateList)
+            {
+                if (childComponent.glComponentInstance != null)
+                {
+                    childComponent.glComponentInstance.MaterialInstance.DiffuseColor = diffuseColor;
                 }
             }
         }
