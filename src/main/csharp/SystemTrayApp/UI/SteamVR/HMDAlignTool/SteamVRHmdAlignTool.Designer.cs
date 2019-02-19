@@ -32,15 +32,9 @@
             this.InstructionsHeaderLabel = new MaterialSkin.Controls.MaterialLabel();
             this.CancelButton = new MaterialSkin.Controls.MaterialRaisedButton();
             this.OkButton = new MaterialSkin.Controls.MaterialRaisedButton();
-            this.SteamVRFrame = new SteamVROpenGLFrame();
+            this.SamplingProgressBar = new System.Windows.Forms.ProgressBar();
+            this.IdentifyControllerButton = new MaterialSkin.Controls.MaterialRaisedButton();
             this.SuspendLayout();
-            // 
-            // SteamVRFrame
-            // 
-            this.SteamVRFrame.Location = new System.Drawing.Point(7, 7);
-            this.SteamVRFrame.Name = "SteamVRFrame";
-            this.SteamVRFrame.Size = new System.Drawing.Size(400, 400);
-            this.SteamVRFrame.TabIndex = 0;
             // 
             // InstructionsBodyLabel
             // 
@@ -76,7 +70,7 @@
             this.CancelButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.CancelButton.Depth = 0;
             this.CancelButton.Icon = null;
-            this.CancelButton.Location = new System.Drawing.Point(616, 367);
+            this.CancelButton.Location = new System.Drawing.Point(470, 360);
             this.CancelButton.MouseState = MaterialSkin.MouseState.HOVER;
             this.CancelButton.Name = "CancelButton";
             this.CancelButton.Primary = true;
@@ -92,7 +86,7 @@
             this.OkButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.OkButton.Depth = 0;
             this.OkButton.Icon = null;
-            this.OkButton.Location = new System.Drawing.Point(695, 367);
+            this.OkButton.Location = new System.Drawing.Point(600, 360);
             this.OkButton.MouseState = MaterialSkin.MouseState.HOVER;
             this.OkButton.Name = "OkButton";
             this.OkButton.Primary = true;
@@ -102,11 +96,36 @@
             this.OkButton.UseVisualStyleBackColor = true;
             this.OkButton.Click += new System.EventHandler(this.OkButton_Click);
             // 
+            // SamplingProgressBar
+            // 
+            this.SamplingProgressBar.Location = new System.Drawing.Point(422, 58);
+            this.SamplingProgressBar.Name = "SamplingProgressBar";
+            this.SamplingProgressBar.Size = new System.Drawing.Size(267, 23);
+            this.SamplingProgressBar.TabIndex = 12;
+            this.SamplingProgressBar.Visible = false;
+            // 
+            // IdentifyControllerButton
+            // 
+            this.IdentifyControllerButton.AutoSize = true;
+            this.IdentifyControllerButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.IdentifyControllerButton.Depth = 0;
+            this.IdentifyControllerButton.Icon = null;
+            this.IdentifyControllerButton.Location = new System.Drawing.Point(470, 256);
+            this.IdentifyControllerButton.MouseState = MaterialSkin.MouseState.HOVER;
+            this.IdentifyControllerButton.Name = "IdentifyControllerButton";
+            this.IdentifyControllerButton.Primary = true;
+            this.IdentifyControllerButton.Size = new System.Drawing.Size(169, 36);
+            this.IdentifyControllerButton.TabIndex = 13;
+            this.IdentifyControllerButton.Text = "Identify Controller";
+            this.IdentifyControllerButton.UseVisualStyleBackColor = true;
+            this.IdentifyControllerButton.Click += new System.EventHandler(this.IdentifyControllerButton_Click);
+            // 
             // SteamVRHmdAlignTool
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.SteamVRFrame);
+            this.Controls.Add(this.IdentifyControllerButton);
+            this.Controls.Add(this.SamplingProgressBar);
             this.Controls.Add(this.InstructionsBodyLabel);
             this.Controls.Add(this.InstructionsHeaderLabel);
             this.Controls.Add(this.CancelButton);
@@ -125,5 +144,7 @@
         private MaterialSkin.Controls.MaterialLabel InstructionsHeaderLabel;
         private MaterialSkin.Controls.MaterialRaisedButton CancelButton;
         private MaterialSkin.Controls.MaterialRaisedButton OkButton;
+        private System.Windows.Forms.ProgressBar SamplingProgressBar;
+        private MaterialSkin.Controls.MaterialRaisedButton IdentifyControllerButton;
     }
 }

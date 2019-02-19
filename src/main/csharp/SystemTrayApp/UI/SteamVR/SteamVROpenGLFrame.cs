@@ -38,6 +38,16 @@ namespace SystemTrayApp
             _updateTimer.Start();
         }
 
+        public SteamVRDeviceInstance FetchSteamVRModelInstance(uint steamVRDeviceId)
+        {
+            if (_trackedDevices.ContainsKey(steamVRDeviceId))
+            {
+                return _trackedDevices[steamVRDeviceId];
+            }
+
+            return null;
+        }
+
         private void OnTick(object sender, EventArgs e)
         {
             this.Refresh();
