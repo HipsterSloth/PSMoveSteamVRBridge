@@ -45,11 +45,20 @@ namespace SystemTrayApp
 
         public static ControllerInfo[] MakeArray(PSMClientControllerInfo[] controllers)
         {
-            ControllerInfo[] array = new ControllerInfo[controllers.Length];
-
-            for (int index= 0; index < array.Length; ++index)
+            ControllerInfo[] array;
+            
+            if (controllers != null)
             {
-                array[index] = ControllerInfo.MakeInstance(controllers[index]);
+                array = new ControllerInfo[controllers.Length];
+
+                for (int index = 0; index < array.Length; ++index)
+                {
+                    array[index] = ControllerInfo.MakeInstance(controllers[index]);
+                }
+            }
+            else
+            {
+                array= new ControllerInfo[0];
             }
 
             return array;
@@ -100,11 +109,20 @@ namespace SystemTrayApp
 
         public static HMDInfo[] MakeArray(PSMClientHMDInfo[] hmds)
         {
-            HMDInfo[] array = new HMDInfo[hmds.Length];
+            HMDInfo[] array;
 
-            for (int index = 0; index < array.Length; ++index)
+            if (hmds != null)
             {
-                array[index] = HMDInfo.MakeInstance(hmds[index]);
+                array = new HMDInfo[hmds.Length];
+
+                for (int index = 0; index < array.Length; ++index)
+                {
+                    array[index] = HMDInfo.MakeInstance(hmds[index]);
+                }
+            }
+            else
+            {
+                array = new HMDInfo[0];
             }
 
             return array;
