@@ -12,6 +12,7 @@ namespace steamvrbridge {
 		, m_bWasConnected(false)
 		, m_bExitSignaled({ false })
 		, m_pWatchdogThread(nullptr)
+        , m_config(nullptr)
 	{
 	}
 

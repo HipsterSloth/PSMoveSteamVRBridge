@@ -24,7 +24,6 @@ namespace steamvrbridge {
 
 		// TrackedDevice Interface
 		virtual vr::ETrackedDeviceClass GetTrackedDeviceClass() const;
-		virtual vr::ETrackedControllerRole GetTrackedDeviceRole() const;
 		virtual bool IsActivated() const;
 		virtual void Update();
 		virtual void RefreshWorldFromDriverPose();
@@ -39,9 +38,6 @@ namespace steamvrbridge {
 
 		// Tracked device identification
 		std::string m_strSteamVRSerialNo;
-
-		// Tracked device role
-		vr::ETrackedControllerRole m_TrackedControllerRole;
 
 		// Assigned by vrserver upon Activate().  The same ID visible to clients
 		vr::TrackedDeviceIndex_t m_unSteamVRTrackedDeviceId;

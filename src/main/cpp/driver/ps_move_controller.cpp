@@ -19,38 +19,36 @@
 namespace steamvrbridge {
 
 	// -- PSMoveControllerConfig -----
-	configuru::Config PSMoveControllerConfig::WriteToJSON() {
-		configuru::Config &pt= ControllerConfig::WriteToJSON();
-
-		// Touch pad settings
-		pt["delay_after_touchpad_press"] = delay_after_touchpad_press;
-		pt["cm_per_touchpad_units"] = meters_per_touchpad_axis_units * 100.f;
-
-		// Throwing power settings
-		pt["linear_velocity_multiplier"] = linear_velocity_multiplier;
-		pt["linear_velocity_exponent"] = linear_velocity_exponent;
-
-		// General Settings
-		pt["rumble_suppressed"] = rumble_suppressed;
-		pt["extend_y_cm"] = extend_Y_meters * 100.f;
-		pt["extend_z_cm"] = extend_Z_meters * 100.f;
-		pt["rotate_z_90"] = z_rotate_90_degrees;
-		pt["calibration_offset_cm"] = calibration_offset_meters * 100.f;
-		pt["disable_alignment_gesture"] = disable_alignment_gesture;
-		pt["use_orientation_in_hmd_alignment"] = use_orientation_in_hmd_alignment;
-
-		//PSMove controller button -> fake touchpad mappings
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_PS);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Move);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Triangle);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Square);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Circle);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Cross);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Select);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Start);
-
-		return pt;
+	PSMoveControllerConfig::PSMoveControllerConfig(PSMoveController *ownerController, const std::string &fnamebase)
+		: ControllerConfig(ownerController, fnamebase)
+		, rumble_suppressed(false)
+		, extend_Y_meters(0.f)
+		, extend_Z_meters(0.f)
+		, z_rotate_90_degrees(false)
+		, delay_after_touchpad_press(false)
+		, meters_per_touchpad_axis_units(7.5f/100.f)
+		, linear_velocity_multiplier(1.f)
+		, linear_velocity_exponent(0.f)
+	{
+		ps_button_id_to_emulated_touchpad_action[k_PSMButtonID_Move]= eEmulatedTrackpadAction::k_EmulatedTrackpadAction_Press;
 	}
+
+    void PSMoveControllerConfig::OnConfigChanged(Config *newConfig)
+    {
+        PSMoveControllerConfig *newPSMoveConfig = static_cast<PSMoveControllerConfig *>(newConfig);
+
+		// Settings that can simply be copied and require no update callback
+		this->rumble_suppressed= newPSMoveConfig->rumble_suppressed;
+		this->extend_Y_meters= newPSMoveConfig->extend_Y_meters;
+		this->extend_Z_meters= newPSMoveConfig->extend_Z_meters;
+		this->z_rotate_90_degrees= newPSMoveConfig->z_rotate_90_degrees;
+		this->linear_velocity_multiplier= newPSMoveConfig->linear_velocity_multiplier;
+		this->linear_velocity_exponent= newPSMoveConfig->linear_velocity_exponent;
+		this->delay_after_touchpad_press= newPSMoveConfig->delay_after_touchpad_press;
+		this->meters_per_touchpad_axis_units= newPSMoveConfig->meters_per_touchpad_axis_units;
+
+        ControllerConfig::OnConfigChanged(newConfig);
+    }
 
 	bool PSMoveControllerConfig::ReadFromJSON(const configuru::Config &pt) {
 
@@ -70,9 +68,6 @@ namespace steamvrbridge {
 		extend_Y_meters = pt.get_or<float>("extend_y_cm",  0.f) / 100.f;
 		extend_Z_meters = pt.get_or<float>("extend_z_cm",  -7.5f) / 100.f;
 		z_rotate_90_degrees = pt.get_or<bool>("rotate_z_90", z_rotate_90_degrees);
-		calibration_offset_meters = pt.get_or<float>("calibration_offset_cm",  6.f) / 100.f;
-		disable_alignment_gesture = pt.get_or<bool>("disable_alignment_gesture", disable_alignment_gesture);
-		use_orientation_in_hmd_alignment = pt.get_or<bool>("use_orientation_in_hmd_alignment", use_orientation_in_hmd_alignment);
 
 		//PSMove controller button -> fake touchpad mappings
 		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_PS);
@@ -90,9 +85,9 @@ namespace steamvrbridge {
 	// -- PSMoveController -----
 	PSMoveController::PSMoveController(
 		PSMControllerID psmControllerId,
-		vr::ETrackedControllerRole trackedControllerRole,
+		PSMControllerHand psmControllerHand,
 		const char *psmSerialNo)
-		: Controller()
+		: Controller(psmControllerHand)
 		, m_nPSMControllerId(psmControllerId)
 		, m_PSMServiceController(nullptr)
 		, m_nPoseSequenceNumber(0)
@@ -119,8 +114,6 @@ namespace steamvrbridge {
 		PSM_AllocateControllerListener(psmControllerId);
 		m_PSMServiceController = PSM_GetController(psmControllerId);
 
-		m_TrackedControllerRole = trackedControllerRole;
-
 		m_trackingStatus = vr::TrackingResult_Uninitialized;
 	}
 
@@ -129,20 +122,27 @@ namespace steamvrbridge {
 		m_PSMServiceController = nullptr;
 	}
 
+    void PSMoveController::OnControllerModelChanged()
+    {
+        vr::CVRPropertyHelpers *properties = vr::VRProperties();
+
+		// The {psmove} syntax lets us refer to rendermodels that are installed
+		// in the driver's own resources/rendermodels directory.  The driver can
+		// still refer to SteamVR models like "generic_hmd".
+		if (getConfig()->override_model.length() > 0) {
+			properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, getConfig()->override_model.c_str());
+		} else {
+			properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
+		}
+    }
+
 	vr::EVRInitError PSMoveController::Activate(vr::TrackedDeviceIndex_t unObjectId) {
 		vr::EVRInitError result = Controller::Activate(unObjectId);
 
 		if (result == vr::VRInitError_None) {
 			Logger::Info("CPSMoveControllerLatest::Activate - Controller %d Activated\n", unObjectId);
 
-			// If we aren't doing the alignment gesture then just pretend we have tracking
-			// This will suppress the alignment gesture dialog in the monitor
-			if (getConfig()->disable_alignment_gesture || 
-				CServerDriver_PSMoveService::getInstance()->IsHMDTrackingSpaceCalibrated()) { 
-				m_trackingStatus = vr::TrackingResult_Running_OK;
-			} else {
-				CServerDriver_PSMoveService::getInstance()->LaunchPSMoveMonitor();
-			}
+			m_trackingStatus = vr::TrackingResult_Running_OK;
 
 			PSMRequestID requestId;
 			if (PSM_StartControllerDataStreamAsync(
@@ -171,24 +171,15 @@ namespace steamvrbridge {
 
 				properties->SetInt32Property(m_ulPropertyContainer, vr::Prop_DeviceClass_Int32, vr::TrackedDeviceClass_Controller);
 
-				// The {psmove} syntax lets us refer to rendermodels that are installed
-				// in the driver's own resources/rendermodels directory.  The driver can
-				// still refer to SteamVR models like "generic_hmd".
-				if (getConfig()->override_model.length() > 0) {
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, getConfig()->override_model.c_str());
-				} else {
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}psmove_controller");
-				}
-
-				// Set device properties
 				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ControllerType_String, "playstation_move");
 				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_LegacyInputProfile_String, "playstation_move");
-				properties->SetInt32Property(m_ulPropertyContainer, vr::Prop_ControllerRoleHint_Int32, m_TrackedControllerRole);
 				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "Sony");
 				properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, 1313);
 				properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, 1315);
 				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "PS Move");
 				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_strPSMControllerSerialNo.c_str());
+
+                OnControllerModelChanged();
 			}
 		}
 
@@ -253,7 +244,7 @@ namespace steamvrbridge {
 		bool bRecenterRequestTriggered = false;
 		{
 			PSMButtonState resetPoseButtonState;
-			switch (m_TrackedControllerRole) {
+			switch (m_trackedControllerRole) {
 				case vr::TrackedControllerRole_LeftHand:
 					resetPoseButtonState = clientView.SelectButton;
 					break;
@@ -290,43 +281,7 @@ namespace steamvrbridge {
 
 		}
 
-		// If START was just pressed while and SELECT was held or vice versa,
-		// recenter the controller orientation pose and start the realignment of the controller to HMD tracking space.
-		if (bStartRealignHMDTriggered && !getConfig()->disable_alignment_gesture) {
-			PSMVector3f controllerBallPointedUpEuler = { (float)M_PI_2, 0.0f, 0.0f };
-			PSMQuatf controllerBallPointedUpQuat = PSM_QuatfCreateFromAngles(&controllerBallPointedUpEuler);
-
-			Logger::Info("PSMoveController::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
-
-			PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, &controllerBallPointedUpQuat, nullptr);
-			m_bResetPoseRequestSent = true;
-
-			// We have the transform of the HMD in world space. 
-			// However the HMD and the controller aren't quite aligned depending on the controller type:
-			PSMQuatf controllerOrientationInHmdSpaceQuat = *k_psm_quaternion_identity;
-			PSMVector3f controllerLocalOffsetFromHmdPosition = *k_psm_float_vector3_zero;
-			// Rotation) The controller's local -Z axis (from the center to the glowing ball) is currently pointed 
-			//    in the direction of the HMD's local +Y axis, 
-			// Translation) The controller's position is a few inches ahead of the HMD's on the HMD's local -Z axis. 
-			PSMVector3f eulerPitch = { (float)M_PI_2, 0.0f, 0.0f };
-			controllerOrientationInHmdSpaceQuat = PSM_QuatfCreateFromAngles(&eulerPitch);
-			controllerLocalOffsetFromHmdPosition = { 0.0f, 0.0f, -1.0f * getConfig()->calibration_offset_meters };
-
-			try {
-				PSMPosef hmdPose = Utils::GetHMDPoseInMeters();
-				PSMPosef realignedPose = Utils::RealignHMDTrackingSpace(controllerOrientationInHmdSpaceQuat,
-																		controllerLocalOffsetFromHmdPosition,
-																		m_PSMServiceController->ControllerID,
-																		hmdPose,
-																		getConfig()->use_orientation_in_hmd_alignment);
-				CServerDriver_PSMoveService::getInstance()->SetHMDTrackingSpace(realignedPose);
-			} catch (std::exception & e) {
-				// Log an error message and safely carry on
-				Logger::Error(e.what());
-			}
-
-			m_bResetAlignRequestSent = true;
-		} else if (bRecenterRequestTriggered) {
+		if (bRecenterRequestTriggered) {
 			Logger::Info("PSMoveController::UpdateControllerState(): Calling ClientPSMoveAPI::reset_orientation() in response to controller button press.\n");
 
 			PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, k_psm_quaternion_identity, nullptr);
@@ -356,46 +311,6 @@ namespace steamvrbridge {
 			UpdateBatteryChargeState(m_PSMServiceController->ControllerState.PSMoveState.BatteryValue);
 		}
 	}
-
-	/* TODO - Add informative ui overlay in monitor.cpp to show the user how this works.
-
-	In a nutshell, upon the move button being pressed the initial pose is captured and rotated relative to the
-	controller's position. After a buttonheld threshold it's considered held and the next controller pose is captured
-	and again rotated. The initial and current are subtracted to get the distance in meters between the two. The rotation
-	is important since it must be relative to the controller not the world. After the rotation a repeatable calculation of
-	distance between the two on the z and x axis can be determined. This is then scaled and applied to the x and y axis
-	of the trackpad. When the ps move button is no longer pressed the trackpad axis is reset to 0,0 and past state is
-	cleared.
-
-	```
-	Initial origin pose:
-
-		z   _
-		|  (_)
-		|  {0} <- Move button pressed and held facing forward on the y axis
-		|  |*|
-		|  {_}
-		|_________ x
-	   /
-	  /
-	 /
-	y
-
-
-	Future pose update:
-
-		z                 _
-		|       7.5cm    (_)
-		|     ------->   {0} <- Move button still held facing forward on the x axis
-		|      moved     |*|
-		|      right     {_}
-		|_________ x
-	   /
-	  /
-	 /
-	y
-	```
-	*/
 
 	// Updates the state of the controllers touchpad axis relative to its position over time and active state.
 	void PSMoveController::UpdateEmulatedTrackpad() {

@@ -1,3 +1,4 @@
+#include "config_manager.h"
 #include "config.h"
 #include "utils.h"
 #include "logger.h"
@@ -21,33 +22,26 @@ namespace steamvrbridge {
 	: ConfigFileBase(fnamebase) {
 	}
 
-	const std::string
-	Config::getConfigPath()
-	{
-		std::string home_dir= Utils::Path_GetHomeDirectory();
-		std::string config_path = home_dir + "/PSMoveSteamVRBridge";
-    
-		if (!Utils::Path_CreateDirectory(config_path))
-		{
-			Logger::Error("Config::getConfigPath() - Failed to create config directory: %s", config_path.c_str());
-		}
+    const std::string 
+    Config::getConfigName() const
+    {
+        return ConfigFileBase + ".json";
+    }
 
-		std::string config_filepath = config_path + "/" + ConfigFileBase + ".json";
+	const std::string
+	Config::getConfigPath() const
+	{
+		std::string config_dir= ConfigManager::GetInstance()->GetConfigDirPath();
+		std::string config_filepath = config_dir + "/" + getConfigName();
 
 		return config_filepath;
 	}
 
-	void
-	Config::save()
-	{
-		save(getConfigPath());
-	}
-
-	void 
-	Config::save(const std::string &path)
-	{
-		configuru::dump_file(path, WriteToJSON(), configuru::JSON);
-	}
+    void 
+    Config::init()
+    {
+        ConfigManager::GetInstance()->RegisterConfig(this);
+    }
 
 	bool
 	Config::load()
@@ -69,4 +63,10 @@ namespace steamvrbridge {
 
 		return bLoadedOk;
 	}
+
+    void 
+    Config::OnConfigChanged(Config *newConfig)
+    {
+        // Nothing to do
+    }
 }

@@ -16,8 +16,9 @@ namespace steamvrbridge {
 	CServerDriver_PSMoveService * CServerDriver_PSMoveService::m_instance = nullptr;
 
 	CServerDriver_PSMoveService::CServerDriver_PSMoveService()
-		: m_bLaunchedPSMoveMonitor(false)
-		, m_bLaunchedPSMoveService(false)
+		: m_configManager()
+        , m_config(this)
+        , m_bLaunchedPSMoveService(false)
 		, m_bInitialized(false) {
 	}
 
@@ -41,25 +42,28 @@ namespace steamvrbridge {
 		if (!m_bInitialized) {
 			Logger::Info("CServerDriver_PSMoveService::Init - Initializing.\n");
 
-			// Load the config file, if it exists
-			m_config.load();
+            if (m_configManager.Init())
+            {
+			    // Load the config file, if it exists
+			    m_config.load();
 
-			// Save the config back out in case the config didn't exist or was upgraded
-			m_config.save();
+			    // Launch PSMoveService automatically if it's not already running
+			    LaunchPSMoveService();
 
-			// Launch PSMoveService automatically if it's not already running
-			LaunchPSMoveService();
-
-			// Note that reconnection is a non-blocking async request.
-			// Returning true means we we're able to start trying to connect,
-			// not that we are successfully connected yet.
-			Logger::Info("CServerDriver_PSMoveService::Init - Using Default Server Address: %s.\n", m_config.server_address.c_str());
-			Logger::Info("CServerDriver_PSMoveService::Init - Using Default Server Port: %s.\n", m_config.server_port.c_str());
-			if (!ReconnectToPSMoveService()) {
-				initError = vr::VRInitError_Driver_Failed;
-			}
-
-			m_bInitialized = true;
+			    // Note that reconnection is a non-blocking async request.
+			    // Returning true means we we're able to start trying to connect,
+			    // not that we are successfully connected yet.
+			    Logger::Info("CServerDriver_PSMoveService::Init - Using Default Server Address: %s.\n", m_config.server_address.c_str());
+			    Logger::Info("CServerDriver_PSMoveService::Init - Using Default Server Port: %s.\n", m_config.server_port.c_str());
+			    if (ReconnectToPSMoveService()) {
+                    m_bInitialized = true;
+                } else {
+				    initError = vr::VRInitError_Driver_Failed;
+			    }
+            } else {
+                Logger::Info("CServerDriver_PSMoveService::Init - Failed to initialize config manager.\n");
+                initError = vr::VRInitError_Driver_Failed;
+            }
 		} else {
 			Logger::Info("CServerDriver_PSMoveService::Init - Already Initialized. Ignoring.\n");
 		}
@@ -94,6 +98,8 @@ namespace steamvrbridge {
 		if (m_bInitialized) {
 			Logger::Info("CServerDriver_PSMoveService::Cleanup - Shutting down connection...\n");
 			PSM_Shutdown();
+            Logger::Info("CServerDriver_PSMoveService::Cleanup - Shutting down config manager...\n");
+            m_configManager.Dispose();
 			Logger::Info("CServerDriver_PSMoveService::Cleanup - Shutdown complete\n");
 
 			m_bInitialized = false;
@@ -117,12 +123,15 @@ namespace steamvrbridge {
 
 	void CServerDriver_PSMoveService::RunFrame() {
 
+        // Apply any configuration changes
+        m_configManager.PollConfigChanges();
+
 		// Update any controllers that are currently listening
 		PSM_UpdateNoPollMessages();
 
 		// Poll events queued up by the call to PSM_UpdateNoPollMessages()
 		PSMMessage mesg;
-		while (PSM_PollNextMessage(&mesg, sizeof(PSMMessage)) == PSMResult_Success) {
+		while (PSM_PollNextMessage(&mesg) == PSMResult_Success) {
 			switch (mesg.payload_type) {
 				case PSMMessageType::_messagePayloadType_Response:
 					HandleClientPSMoveResponse(&mesg);
@@ -410,9 +419,7 @@ namespace steamvrbridge {
 		const PSMPosef &origin_pose) {
 		Logger::Info("Begin CServerDriver_PSMoveService::SetHMDTrackingSpace()\n");
 
-		m_config.has_calibrated_world_from_driver_pose= true;
 		m_config.world_from_driver_pose = origin_pose;
-		m_config.save();
 
 		// Tell all the devices that the relationship between the psmove and the OpenVR
 		// tracking spaces changed
@@ -425,27 +432,36 @@ namespace steamvrbridge {
 
 	vr::ETrackedControllerRole CServerDriver_PSMoveService::AllocateControllerRole(PSMControllerHand psmControllerHand)
 	{
-		vr::ETrackedControllerRole trackedControllerRole;
+		vr::ETrackedControllerRole desiredControllerRole;
+
 		switch (psmControllerHand)
 		{
 		case PSMControllerHand_Left:
-			trackedControllerRole= vr::TrackedControllerRole_LeftHand;
+			desiredControllerRole= vr::TrackedControllerRole_LeftHand;
 			break;
 		case PSMControllerHand_Right:
-			trackedControllerRole= vr::TrackedControllerRole_RightHand;
+			desiredControllerRole= vr::TrackedControllerRole_RightHand;
 			break;
 		default:
-			trackedControllerRole= vr::TrackedControllerRole_LeftHand;
+			desiredControllerRole= vr::TrackedControllerRole_Invalid;
 		}
 
-		// if we already have another controller then set this new controller's role to the right hand
-		for (auto it = m_vecTrackedDevices.begin(); it != m_vecTrackedDevices.end(); ++it) {
-			TrackableDevice *pDevice = *it;
-			if (pDevice->GetTrackedDeviceRole() == vr::TrackedControllerRole_LeftHand)
-				trackedControllerRole = vr::TrackedControllerRole_RightHand;
-		}
+		if (desiredControllerRole= vr::TrackedControllerRole_Invalid) {
+		    for (auto it = m_vecTrackedDevices.begin(); it != m_vecTrackedDevices.end(); ++it) {
+			    TrackableDevice *trackedDevice = *it;
 
-		return trackedControllerRole;
+                if (trackedDevice->GetTrackedDeviceClass() == vr::TrackedDeviceClass_Controller) {
+                    Controller *controller = static_cast<Controller *>(trackedDevice);
+
+                    if (controller->GetTrackedDeviceRole() == desiredControllerRole) {
+				        desiredControllerRole= vr::TrackedControllerRole_Invalid;
+                        break;
+                    }
+                }
+		    }
+        }
+
+		return desiredControllerRole;
 	}
 
 	void CServerDriver_PSMoveService::AllocateUniquePSMoveController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial) {
@@ -456,20 +472,18 @@ namespace steamvrbridge {
 			std::string psmSerialNo = psmControllerSerial;
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
-			if (0 != m_config.filter_virtual_hmd_serial.compare(psmSerialNo)) {
+			PSMoveController *TrackedDevice = new PSMoveController(psmControllerID, psmControllerHand, psmSerialNo.c_str());
+            TrackedDevice->InitConfig();
+			m_vecTrackedDevices.push_back(TrackedDevice);
+
+			if (!TrackedDevice->GetIsControllerDisabled()) {
 				Logger::Info("added new psmove controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
-
-				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
-				PSMoveController *TrackedDevice =
-					new PSMoveController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
-
-				m_vecTrackedDevices.push_back(TrackedDevice);
 
 				if (vr::VRServerDriverHost()) {
 					vr::VRServerDriverHost()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
 				}
 			} else {
-				Logger::Info("skipped new psmove controller as configured for HMD tracking, serial: %s\n", psmSerialNo.c_str());
+				Logger::Info("skipped new psmove controller (marked disabled), serial: %s\n", psmSerialNo.c_str());
 			}
 		}
 	}
@@ -482,20 +496,19 @@ namespace steamvrbridge {
 			std::string psmSerialNo = psmControllerSerial;
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
-			if (0 != m_config.filter_virtual_hmd_serial.compare(psmSerialNo)) {
+			VirtualController *TrackedDevice = new VirtualController(psmControllerID, psmControllerHand, psmSerialNo.c_str());
+            TrackedDevice->InitConfig();
+			m_vecTrackedDevices.push_back(TrackedDevice);
+
+			if (!TrackedDevice->GetIsControllerDisabled()) {
 				Logger::Info("added new virtual controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
 
-				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
-				VirtualController *TrackedDevice =
-					new VirtualController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
-
-				m_vecTrackedDevices.push_back(TrackedDevice);
 
 				if (vr::VRServerDriverHost()) {
 					vr::VRServerDriverHost()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
 				}
 			} else {
-				Logger::Info("skipped new virtual controller as configured for HMD tracking, serial: %s\n", psmSerialNo.c_str());
+				Logger::Info("skipped new virtual controller (marked disabled),, serial: %s\n", psmSerialNo.c_str());
 			}
 		}
 	}
@@ -508,20 +521,18 @@ namespace steamvrbridge {
 			std::string psmSerialNo = psmControllerSerial;
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
-			if (0 != m_config.filter_virtual_hmd_serial.compare(psmSerialNo)) {
+			PSDualshock4Controller *TrackedDevice = new PSDualshock4Controller(psmControllerID, psmControllerHand, psmSerialNo.c_str());
+            TrackedDevice->InitConfig();
+			m_vecTrackedDevices.push_back(TrackedDevice);
+
+			if (!TrackedDevice->GetIsControllerDisabled()) {
 				Logger::Info("added new dualshock4 controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
-
-				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
-				PSDualshock4Controller *TrackedDevice =
-					new PSDualshock4Controller(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
-
-				m_vecTrackedDevices.push_back(TrackedDevice);
 
 				if (vr::VRServerDriverHost()) {
 					vr::VRServerDriverHost()->TrackedDeviceAdded(TrackedDevice->GetSteamVRIdentifier(), vr::TrackedDeviceClass_Controller, TrackedDevice);
 				}
 			} else {
-				Logger::Info("skipped new dualshock4 controller as configured for HMD tracking, serial: %s\n", psmSerialNo.c_str());
+				Logger::Info("skipped new dualshock4 controller (marked disabled),, serial: %s\n", psmSerialNo.c_str());
 			}
 		}
 	}
@@ -569,14 +580,12 @@ namespace steamvrbridge {
 			std::string psmSerialNo = psmControllerSerial;
 			std::transform(psmSerialNo.begin(), psmSerialNo.end(), psmSerialNo.begin(), ::toupper);
 
-			if (0 != m_config.filter_virtual_hmd_serial.compare(psmSerialNo)) {
+			PSNaviController *naviController = new PSNaviController(psmControllerID, psmControllerHand, psmSerialNo.c_str());
+            naviController->InitConfig();
+			m_vecTrackedDevices.push_back(naviController);
+
+			if (!naviController->GetIsControllerDisabled()) {
 				Logger::Info("added new psnavi controller id: %d, serial: %s\n", psmControllerID, psmSerialNo.c_str());
-
-				vr::ETrackedControllerRole trackedControllerRole= AllocateControllerRole(psmControllerHand);
-				PSNaviController *naviController =
-					new PSNaviController(psmControllerID, trackedControllerRole, psmSerialNo.c_str());
-
-				m_vecTrackedDevices.push_back(naviController);
 
 				if (parent_controller != nullptr)
 				{
@@ -645,39 +654,6 @@ namespace steamvrbridge {
 			}
 		} else {
 			Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveService() - Skipping auto-launch of PSMoveService: auto_launch_psmove_service set to 'false'.\n");
-		}
-	}
-
-	/** Launch monitor_psmove if needed (requested by devices as they activate) */
-	void CServerDriver_PSMoveService::LaunchPSMoveMonitor() {
-		if (m_bLaunchedPSMoveMonitor) {
-			return;
-		}
-
-		Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - Attempting to launch monitor_psmove\n");
-		m_bLaunchedPSMoveMonitor = true;
-
-		std::string driverBinDir = Utils::Path_GetPSMoveSteamVRBridgeDriverBinPath(&m_config);
-		std::string driverResourcesDir = Utils::Path_GetPSMoveSteamVRBridgeDriverResourcesPath(&m_config);
-		if (driverBinDir.length() > 0 && driverResourcesDir.length() > 0) {
-			Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - driver bin directory: %s\n", driverBinDir.c_str());
-			Logger::Info("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - driver resources directory: %s\n", driverResourcesDir.c_str());
-
-			#if defined( _WIN32 ) || defined( _WIN64 )
-			std::string process_name("monitor_psmove.exe");
-			#else 
-			std::string process_name("monitor_psmove");
-			#endif
-
-			std::vector<std::string> args;
-			args.push_back(driverResourcesDir);
-
-			// The monitor_psmove is a companion program which can display overlay prompts for us
-			// and tell us the pose of the HMD at the moment we want to calibrate.
-			Utils::LaunchProcess(driverBinDir, process_name, args);
-
-		} else {
-			Logger::Error("CServerDriver_PSMoveService::LaunchPSMoveMonitor() - Failed to fetch PSMoveSteamVRBridge paths\n");
 		}
 	}
 }

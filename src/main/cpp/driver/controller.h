@@ -14,23 +14,23 @@ namespace steamvrbridge {
 	class ControllerConfig : public Config
 	{
 	public:
-		static const int CONFIG_VERSION;
+		ControllerConfig(class Controller *ownerController, const std::string &fnamebase = "ControllerConfig");
 
-		ControllerConfig(const std::string &fnamebase = "ControllerConfig");
+        virtual Config *Clone() { return new ControllerConfig(*this); }
+        virtual void OnConfigChanged(Config *newConfig);
 
-		virtual configuru::Config WriteToJSON();
 		virtual bool ReadFromJSON(const configuru::Config &pt);
 
 		void ReadEmulatedTouchpadAction(const configuru::Config &pt, const ePSMButtonID psButtonID);
-		void WriteEmulatedTouchpadAction(configuru::Config &pt, const ePSMButtonID psButtonID);
 
-	    bool is_valid;
-	    long version;
-
+	    bool controller_disabled;
 		std::string override_model;
 
 		// Used to map buttons to the emulated touchpad
 		eEmulatedTrackpadAction ps_button_id_to_emulated_touchpad_action[k_PSMButtonID_Count];
+
+    private:
+        class Controller *m_ownerController;
 	};
 
 	/*
@@ -61,8 +61,11 @@ namespace steamvrbridge {
 	public:
 
 		/** Controller Interface */
-		Controller();
+		Controller(PSMControllerHand desiredControllerHand);
 		virtual ~Controller();
+
+        void InitConfig();
+        void DisposeConfig();
 		
 		bool CreateButtonComponent(ePSMButtonID button_id);
 		bool CreateAxisComponent(ePSMAxisID axis_id);
@@ -80,6 +83,9 @@ namespace steamvrbridge {
 		bool GetAxisState(ePSMAxisID axis_id, float &out_axis_value) const;
 		HapticState * GetHapticState(ePSMHapicID haptic_id);
 
+        vr::ETrackedControllerRole GetTrackedDeviceRole() const;
+        bool GetIsControllerDisabled() const;
+
 		// Returns the controller name used to look-up the input profile.
 		virtual const char *GetControllerSettingsPrefix() const = 0;
 
@@ -95,12 +101,21 @@ namespace steamvrbridge {
 		// Returns the PSM controller type.
 		virtual PSMControllerType GetPSMControllerType() const = 0;
 
+        /** Config Events */
+        virtual void OnControllerModelChanged() = 0;
+
 		/** TrackableDevice Interface */
 		vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
 		void Deactivate() override;
 
 	protected:
-		virtual ControllerConfig *AllocateControllerConfig() { return new ControllerConfig(); }
+		virtual ControllerConfig *AllocateControllerConfig() { return new ControllerConfig(this); }
+
+        // The designer controller role
+        PSMControllerHand m_desiredControllerHand;
+
+        // The currently assigned controller role
+        vr::ETrackedControllerRole m_trackedControllerRole;
 
 	private:
 		struct ButtonState

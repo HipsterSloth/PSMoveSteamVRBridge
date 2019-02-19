@@ -43,10 +43,7 @@ namespace steamvrbridge {
 		//properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, m_hardware_revision);
 		//properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, m_firmware_revision);
 
-		if (CServerDriver_PSMoveService::getInstance()->IsHMDTrackingSpaceCalibrated())
-		{
-			RefreshWorldFromDriverPose();
-		}
+		RefreshWorldFromDriverPose();
 
 		return vr::VRInitError_None;
 	}
@@ -78,11 +75,6 @@ namespace steamvrbridge {
 	vr::ETrackedDeviceClass TrackableDevice::GetTrackedDeviceClass() const {
 		// TODO implement this properly
 		return vr::TrackedDeviceClass_Invalid;
-	}
-
-	// Returns the tracked device's role. e.g. TrackedControllerRole_LeftHand
-	vr::ETrackedControllerRole TrackableDevice::GetTrackedDeviceRole() const {
-		return m_TrackedControllerRole;
 	}
 
 	// Will return true based on whether a TrackedDeviceIndex was assigned during Activate()

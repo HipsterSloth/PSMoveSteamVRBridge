@@ -9,31 +9,10 @@ namespace steamvrbridge {
 	class VirtualControllerConfig : public ControllerConfig
 	{
 	public:
-		static const int CONFIG_VERSION;
+		VirtualControllerConfig(class VirtualController *ownerController, const std::string &fnamebase = "VirtualControllerConfig");
 
-		VirtualControllerConfig(const std::string &fnamebase = "VirtualControllerConfig")
-			: ControllerConfig(fnamebase)
-			, extend_Y_meters(0.f)
-			, extend_Z_meters(0.f)
-			, z_rotate_90_degrees(false)
-			, delay_after_touchpad_press(false)
-			, meters_per_touchpad_axis_units()
-			, calibration_offset_meters(0.f)
-			, disable_alignment_gesture(false)
-			, use_orientation_in_hmd_alignment(true)
-			, steamvr_trigger_axis_index(1)
-			, virtual_touchpad_XAxis_index(-1)
-			, virtual_touchpad_YAxis_index(-1)
-			, thumbstick_deadzone(k_defaultThumbstickDeadZoneRadius)
-			, thumbstick_touch_as_press(true)
-			, linear_velocity_multiplier(1.f)
-			, linear_velocity_exponent(0.f)
-			, system_button_id(k_PSMButtonID_Virtual_4) // "Start" button on a xbox 360 controller
-			, hmd_align_button_id(k_PSMButtonID_Virtual_5) // "Back" button on a xbox 360 controller
-		{
-		};
-
-		configuru::Config WriteToJSON() override;
+        Config *Clone() override { return new VirtualControllerConfig(*this); }
+        void OnConfigChanged(Config *newConfig) override;
 		bool ReadFromJSON(const configuru::Config &pt) override;
 
 		// Virtual extend controller in meters.
@@ -49,16 +28,6 @@ namespace steamvrbridge {
 		// Settings values. Used to determine whether we'll map controller movement after touchpad
 		// presses to touchpad axis values.
 		float meters_per_touchpad_axis_units;
-
-		// Settings value: used to determine how many meters in front of the HMD the controller
-		// is held when it's being calibrated.
-		float calibration_offset_meters;
-
-		// Flag used to completely disable the alignment gesture.
-		bool disable_alignment_gesture;
-
-		// Flag to tell if we should use the controller orientation as part of the controller alignment.
-		bool use_orientation_in_hmd_alignment;
 
 		// The axis to use for trigger input
 		int steamvr_trigger_axis_index;
@@ -79,9 +48,6 @@ namespace steamvrbridge {
 
 		// The button to use as the system button
 		ePSMButtonID system_button_id;
-
-		// The button to use for controller hmd alignment
-		ePSMButtonID hmd_align_button_id;
 	};
 
 	/* A trackable Virtual controller (tracking bulb + game pad).
@@ -90,7 +56,7 @@ namespace steamvrbridge {
 
 	public:
 		// Constructor/Destructor
-		VirtualController(PSMControllerID psmControllerID, vr::ETrackedControllerRole trackedControllerRole, const char *psmSerialNo);
+		VirtualController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const char *psmSerialNo);
 		virtual ~VirtualController();
 
 		// Overridden Implementation of vr::ITrackedDeviceServerDriver
@@ -103,6 +69,7 @@ namespace steamvrbridge {
 		void RefreshWorldFromDriverPose() override;
 
 		// IController interface implementation
+        void OnControllerModelChanged() override;
 		const char *GetControllerSettingsPrefix() const override { return "virtual_controller"; }
 		bool HasPSMControllerId(int ControllerID) const override { return ControllerID == m_nPSMControllerId; }
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
@@ -113,7 +80,7 @@ namespace steamvrbridge {
 		const VirtualControllerConfig *getConfig() const { return static_cast<const VirtualControllerConfig *>(m_config); }
 		ControllerConfig *AllocateControllerConfig() override { 
 			std::string fnamebase= std::string("virtual_controller_") + m_strPSMControllerSerialNo;
-			return new VirtualControllerConfig(fnamebase); 
+			return new VirtualControllerConfig(this, fnamebase); 
 		}
 
 	private:

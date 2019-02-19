@@ -1,6 +1,7 @@
 #pragma once
 #include "PSMoveClient_CAPI.h"
 #include <openvr_driver.h>
+#include "config_manager.h"
 #include "config.h"
 #include "trackable_device.h"
 #include "tracker.h"
@@ -46,15 +47,13 @@ namespace steamvrbridge {
 		virtual void LeaveStandby() override;
 
 		void LaunchPSMoveService();
-		void LaunchPSMoveMonitor();
 
-		bool IsHMDTrackingSpaceCalibrated() const { return m_config.has_calibrated_world_from_driver_pose; }
+		vr::ETrackedControllerRole AllocateControllerRole(PSMControllerHand psmControllerHand);
 		void SetHMDTrackingSpace(const PSMPosef &origin_pose);
 		inline PSMPosef GetWorldFromDriverPose() const { return m_config.world_from_driver_pose; }
 
 	private:
 		vr::ITrackedDeviceServerDriver * FindTrackedDeviceDriver(const char * pchId);
-		vr::ETrackedControllerRole AllocateControllerRole(PSMControllerHand psmControllerHand);
 		void AllocateUniquePSMoveController(PSMControllerID ControllerID, PSMControllerHand psmControllerHand, const std::string &ControllerSerial);
 		void AllocateUniqueVirtualController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial);
 		void AllocateUniquePSNaviController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const std::string &psmControllerSerial, const std::string &psmParentControllerSerial);
@@ -76,9 +75,9 @@ namespace steamvrbridge {
 		void HandleControllerListReponse(const PSMControllerList *controller_list, const PSMResponseHandle response_handle);
 		void HandleTrackerListReponse(const PSMTrackerList *tracker_list);
 
+        ConfigManager m_configManager;
 		ServerDriverConfig m_config;
 
-		bool m_bLaunchedPSMoveMonitor;
 		bool m_bLaunchedPSMoveService;
 		bool m_bInitialized;
 

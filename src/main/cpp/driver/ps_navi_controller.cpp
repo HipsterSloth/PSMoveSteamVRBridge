@@ -19,25 +19,21 @@
 namespace steamvrbridge {
 
 	// -- PSNaviControllerConfig -----
-	configuru::Config PSNaviControllerConfig::WriteToJSON() {
-		configuru::Config &pt= ControllerConfig::WriteToJSON();
-
-		// General Settings
-		pt["thumbstick_deadzone"] = thumbstick_deadzone;
-
-		//PSMove controller button -> fake touchpad mappings
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_PS);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Left);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Up);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Right);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Down);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Circle);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Cross);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Joystick);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Shoulder);
-
-		return pt;
+	PSNaviControllerConfig::PSNaviControllerConfig(PSNaviController *ownerController, const std::string &fnamebase)
+		: ControllerConfig(ownerController, fnamebase)
+		, thumbstick_deadzone(k_defaultThumbstickDeadZoneRadius)
+	{
 	}
+
+    void PSNaviControllerConfig::OnConfigChanged(Config *newConfig)
+    {
+        PSNaviControllerConfig *newPSNaviConfig = static_cast<PSNaviControllerConfig *>(newConfig);
+
+		// Settings that can simply be copied and require no update callback
+		this->thumbstick_deadzone= newPSNaviConfig->thumbstick_deadzone;
+
+        ControllerConfig::OnConfigChanged(newConfig);
+    }
 
 	bool PSNaviControllerConfig::ReadFromJSON(const configuru::Config &pt) {
 
@@ -64,9 +60,9 @@ namespace steamvrbridge {
 	// -- PSNaviController -----
 	PSNaviController::PSNaviController(
 		PSMControllerID psmControllerId,
-		vr::ETrackedControllerRole trackedControllerRole,
+		PSMControllerHand psmControllerHand,
 		const char *psmSerialNo)
-		: Controller()
+		: Controller(psmControllerHand)
 		, m_parentController(nullptr)
 		, m_nPSMControllerId(psmControllerId)
 		, m_PSMServiceController(nullptr)
@@ -91,8 +87,6 @@ namespace steamvrbridge {
 		// Tell PSM Client API that we are listening to this controller id
 		PSM_AllocateControllerListener(psmControllerId);
 		m_PSMServiceController = PSM_GetController(psmControllerId);
-
-		m_TrackedControllerRole = trackedControllerRole;
 
 		m_trackingStatus = vr::TrackingResult_Running_OK;
 	}
@@ -124,6 +118,20 @@ namespace steamvrbridge {
 				m_strPSMControllerSerialNo.c_str());
 		}
 	}
+
+    void PSNaviController::OnControllerModelChanged()
+    {
+        vr::CVRPropertyHelpers *properties = vr::VRProperties();
+
+		// The {psmove} syntax lets us refer to rendermodels that are installed
+		// in the driver's own resources/rendermodels directory.  The driver can
+		// still refer to SteamVR models like "generic_hmd".
+		if (getConfig()->override_model.length() > 0) {
+			properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, getConfig()->override_model.c_str());
+		} else {
+			properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}navi_controller");
+		}
+    }
 
 	vr::EVRInitError PSNaviController::Activate(vr::TrackedDeviceIndex_t unObjectId) {
 		vr::EVRInitError result = Controller::Activate(unObjectId);
@@ -177,12 +185,14 @@ namespace steamvrbridge {
 				}
 
 				// Set device properties
-				vr::VRProperties()->SetInt32Property(m_ulPropertyContainer, vr::Prop_ControllerRoleHint_Int32, m_TrackedControllerRole);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "Sony");
-				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, 1313);
-				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, 1315);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "PS Navi");
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_strPSMControllerSerialNo.c_str());
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ControllerType_String, "playstation_navi");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "Sony");
+				properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, 1313);
+				properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, 1315);
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "PS Navi");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_strPSMControllerSerialNo.c_str());
+
+                OnControllerModelChanged();
 			}
 		}
 

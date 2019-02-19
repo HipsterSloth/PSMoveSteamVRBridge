@@ -10,24 +10,10 @@ namespace steamvrbridge {
 	class PSDualshock4ControllerConfig : public ControllerConfig
 	{
 	public:
-		static const int CONFIG_VERSION;
+		PSDualshock4ControllerConfig(class PSDualshock4Controller *ownerController, const std::string &fnamebase = "PSDualshock4ControllerConfig");
 
-		PSDualshock4ControllerConfig(const std::string &fnamebase = "PSDualshock4ControllerConfig")
-			: ControllerConfig(fnamebase)
-			, rumble_suppressed(false)
-			, extend_Y_meters(0.f)
-			, extend_Z_meters(0.f)
-			, z_rotate_90_degrees(false)
-			, calibration_offset_meters(0.f)
-			, disable_alignment_gesture(false)
-			, use_orientation_in_hmd_alignment(true)
-			, thumbstick_deadzone(k_defaultThumbstickDeadZoneRadius)
-			, linear_velocity_multiplier(1.f)
-			, linear_velocity_exponent(0.f)
-		{
-		};
-
-		configuru::Config WriteToJSON() override;
+        Config *Clone() override { return new PSDualshock4ControllerConfig(*this); }
+        void OnConfigChanged(Config *newConfig) override;
 		bool ReadFromJSON(const configuru::Config &pt) override;
 
 		// Rumble state
@@ -39,16 +25,6 @@ namespace steamvrbridge {
 
 		// Rotate controllers orientation 90 degrees about the z-axis (for gun style games).
 		bool z_rotate_90_degrees;
-
-		// Settings value: used to determine how many meters in front of the HMD the controller
-		// is held when it's being calibrated.
-		float calibration_offset_meters;
-
-		// Flag used to completely disable the alignment gesture.
-		bool disable_alignment_gesture;
-
-		// Flag to tell if we should use the controller orientation as part of the controller alignment.
-		bool use_orientation_in_hmd_alignment;
 
 		// The inner deadzone of the thumbsticks
 		float thumbstick_deadzone;
@@ -64,7 +40,7 @@ namespace steamvrbridge {
 
 	public:
 		// Constructor/Destructor
-		PSDualshock4Controller(PSMControllerID psmControllerID, vr::ETrackedControllerRole trackedControllerRole, const char *psmSerialNo);
+		PSDualshock4Controller(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const char *psmSerialNo);
 		virtual ~PSDualshock4Controller();
 
 		// Overridden Implementation of vr::ITrackedDeviceServerDriver
@@ -77,6 +53,7 @@ namespace steamvrbridge {
 		void RefreshWorldFromDriverPose() override;
 
 		// IController interface implementation
+        void OnControllerModelChanged() override;
 		const char *GetControllerSettingsPrefix() const override { return "playstation_dualshock4"; }
 		bool HasPSMControllerId(int ControllerID) const override { return ControllerID == m_nPSMControllerId; }
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
@@ -87,7 +64,7 @@ namespace steamvrbridge {
 		const PSDualshock4ControllerConfig *getConfig() const { return static_cast<const PSDualshock4ControllerConfig *>(m_config); }
 		ControllerConfig *AllocateControllerConfig() override { 
 			std::string fnamebase= std::string("ds4_") + m_strPSMControllerSerialNo;
-			return new PSDualshock4ControllerConfig(fnamebase); 
+			return new PSDualshock4ControllerConfig(this, fnamebase); 
 		}
 
 	private:

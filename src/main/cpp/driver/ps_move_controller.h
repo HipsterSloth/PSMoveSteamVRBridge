@@ -11,25 +11,10 @@ namespace steamvrbridge {
 	class PSMoveControllerConfig : public ControllerConfig
 	{
 	public:
+		PSMoveControllerConfig(class PSMoveController *ownerController, const std::string &fnamebase = "PSMoveControllerConfig");
 
-		PSMoveControllerConfig(const std::string &fnamebase = "PSMoveControllerConfig")
-			: ControllerConfig(fnamebase)
-			, rumble_suppressed(false)
-			, extend_Y_meters(0.f)
-			, extend_Z_meters(0.f)
-			, z_rotate_90_degrees(false)
-			, delay_after_touchpad_press(false)
-			, meters_per_touchpad_axis_units(7.5f/100.f)
-			, calibration_offset_meters(0.f)
-			, disable_alignment_gesture(false)
-			, use_orientation_in_hmd_alignment(true)
-			, linear_velocity_multiplier(1.f)
-			, linear_velocity_exponent(0.f)
-		{
-			ps_button_id_to_emulated_touchpad_action[k_PSMButtonID_Move]= eEmulatedTrackpadAction::k_EmulatedTrackpadAction_Press;
-		};
-
-		configuru::Config WriteToJSON() override;
+        Config *Clone() override { return new PSMoveControllerConfig(*this); }
+        void OnConfigChanged(Config *newConfig) override;
 		bool ReadFromJSON(const configuru::Config &pt) override;
 
 		// Rumble state
@@ -49,16 +34,6 @@ namespace steamvrbridge {
 		// presses to touchpad axis values.
 		float meters_per_touchpad_axis_units;
 
-		// Settings value: used to determine how many meters in front of the HMD the controller
-		// is held when it's being calibrated.
-		float calibration_offset_meters;
-
-		// Flag used to completely disable the alignment gesture.
-		bool disable_alignment_gesture;
-
-		// Flag to tell if we should use the controller orientation as part of the controller alignment.
-		bool use_orientation_in_hmd_alignment;
-
 		// Settings values. Used to adjust throwing power using linear velocity and acceleration.
 		float linear_velocity_multiplier;
 		float linear_velocity_exponent;
@@ -71,7 +46,7 @@ namespace steamvrbridge {
 	public:
 
 		// Constructor/Destructor
-		PSMoveController(PSMControllerID psmControllerID, vr::ETrackedControllerRole trackedControllerRole, const char *psmSerialNo);
+		PSMoveController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const char *psmSerialNo);
 		virtual ~PSMoveController();
 
 		// Overridden Implementation of vr::ITrackedDeviceServerDriver
@@ -84,6 +59,7 @@ namespace steamvrbridge {
 		void RefreshWorldFromDriverPose() override;
 
 		// IController interface implementation
+        void OnControllerModelChanged() override;
 		const char *GetControllerSettingsPrefix() const override { return "playstation_move"; }
 		bool HasPSMControllerId(int ControllerID) const override { return ControllerID == m_nPSMControllerId; }
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
@@ -94,7 +70,7 @@ namespace steamvrbridge {
 		const PSMoveControllerConfig *getConfig() const { return static_cast<const PSMoveControllerConfig *>(m_config); }
 		ControllerConfig *AllocateControllerConfig() override { 
 			std::string fnamebase= std::string("psmove_") + m_strPSMControllerSerialNo;
-			return new PSMoveControllerConfig(fnamebase); 
+			return new PSMoveControllerConfig(this, fnamebase); 
 		}
 
 	private:

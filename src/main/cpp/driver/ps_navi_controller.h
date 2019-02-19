@@ -10,15 +10,10 @@ namespace steamvrbridge {
 	class PSNaviControllerConfig : public ControllerConfig
 	{
 	public:
-		static const int CONFIG_VERSION;
+		PSNaviControllerConfig(class PSNaviController *ownerController, const std::string &fnamebase = "NaviControllerConfig");
 
-		PSNaviControllerConfig(const std::string &fnamebase = "NaviControllerConfig")
-			: ControllerConfig(fnamebase)
-			, thumbstick_deadzone(k_defaultThumbstickDeadZoneRadius)
-		{
-		};
-
-		configuru::Config WriteToJSON() override;
+        Config *Clone() override { return new PSNaviControllerConfig(*this); }
+        void OnConfigChanged(Config *newConfig) override;
 		bool ReadFromJSON(const configuru::Config &pt) override;
 
 		// The inner deadzone of the thumbsticks
@@ -31,7 +26,7 @@ namespace steamvrbridge {
 
 	public:
 		// Constructor/Destructor
-		PSNaviController(PSMControllerID psmControllerID, vr::ETrackedControllerRole trackedControllerRole, const char *psmSerialNo);
+		PSNaviController(PSMControllerID psmControllerID, PSMControllerHand psmControllerHand, const char *psmSerialNo);
 		virtual ~PSNaviController();
 
 		// Sends button data to a parent controller
@@ -48,6 +43,7 @@ namespace steamvrbridge {
 		void RefreshWorldFromDriverPose() override;
 
 		// IController interface implementation
+        void OnControllerModelChanged() override;
 		const char *GetControllerSettingsPrefix() const override { return "playstation_navi"; }
 		bool HasPSMControllerId(int ControllerID) const override { return ControllerID == m_nPSMControllerId; }
 		const PSMController * GetPSMControllerView() const override { return m_PSMServiceController; }
@@ -58,7 +54,7 @@ namespace steamvrbridge {
 		const PSNaviControllerConfig *getConfig() const { return static_cast<const PSNaviControllerConfig *>(m_config); }
 		ControllerConfig *AllocateControllerConfig() override { 
 			std::string fnamebase= std::string("psnavi_") + m_strPSMControllerSerialNo;
-			return new PSNaviControllerConfig(fnamebase); 
+			return new PSNaviControllerConfig(this, fnamebase); 
 		}
 
 	private:

@@ -8,24 +8,21 @@ namespace steamvrbridge {
 	class ServerDriverConfig : public Config
 	{
 	public:
-		static const int CONFIG_VERSION;
+		ServerDriverConfig(class CServerDriver_PSMoveService *serverDriver, const std::string &fnamebase = "PSMoveSteamVRBridgeConfig");
 
-		ServerDriverConfig(const std::string &fnamebase = "PSMoveSteamVRBridgeConfig");
+        Config *Clone() override { return new ServerDriverConfig(*this); }
+        void OnConfigChanged(Config *newConfig) override;
+		bool ReadFromJSON(const configuru::Config &pt) override;
 
-		virtual configuru::Config WriteToJSON();
-		virtual bool ReadFromJSON(const configuru::Config &pt);
-
-	    bool is_valid;
-	    long version;
-
-		std::string filter_virtual_hmd_serial;
 		std::string server_address;
 		std::string server_port;
 		bool auto_launch_psmove_service;
 		bool use_installation_path;
 
 		// HMD Tracking Space
-		bool has_calibrated_world_from_driver_pose;
 		PSMPosef world_from_driver_pose;
+
+    private:
+        CServerDriver_PSMoveService *m_serverDriver;
 	};
 }

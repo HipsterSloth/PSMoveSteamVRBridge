@@ -13,43 +13,33 @@
 namespace steamvrbridge {
 
 	// -- PSDualshock4ControllerConfig -----
-	configuru::Config PSDualshock4ControllerConfig::WriteToJSON() {
-		configuru::Config &pt= ControllerConfig::WriteToJSON();
-
-		// Throwing power settings
-		pt["linear_velocity_multiplier"] = linear_velocity_multiplier;
-		pt["linear_velocity_exponent"] = linear_velocity_exponent;
-
-		// General Settings
-		pt["rumble_suppressed"] = rumble_suppressed;
-		pt["extend_y_cm"] = extend_Y_meters * 100.f;
-		pt["extend_x_cm"] = extend_Z_meters * 100.f;
-		pt["rotate_z_90"] = z_rotate_90_degrees;
-		pt["calibration_offset_cm"] = calibration_offset_meters * 100.f;
-		pt["thumbstick_deadzone"] = thumbstick_deadzone;
-		pt["disable_alignment_gesture"] = disable_alignment_gesture;
-		pt["use_orientation_in_hmd_alignment"] = use_orientation_in_hmd_alignment;
-
-		//PSMove controller button -> fake touchpad mappings
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_PS);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Triangle);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Circle);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Cross);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Square);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Left);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Up);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Right);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_DPad_Down);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Options);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Share);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_Touchpad);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_LeftJoystick);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_RightJoystick);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_LeftShoulder);
-		WriteEmulatedTouchpadAction(pt, k_PSMButtonID_RightShoulder);
-
-		return pt;
+	PSDualshock4ControllerConfig::PSDualshock4ControllerConfig(PSDualshock4Controller *ownerController, const std::string &fnamebase)
+		: ControllerConfig(ownerController, fnamebase)
+		, rumble_suppressed(false)
+		, extend_Y_meters(0.f)
+		, extend_Z_meters(0.f)
+		, z_rotate_90_degrees(false)
+		, thumbstick_deadzone(k_defaultThumbstickDeadZoneRadius)
+		, linear_velocity_multiplier(1.f)
+		, linear_velocity_exponent(0.f)
+	{
 	}
+
+    void PSDualshock4ControllerConfig::OnConfigChanged(Config *newConfig)
+    {
+        PSDualshock4ControllerConfig *newDS4Config = static_cast<PSDualshock4ControllerConfig *>(newConfig);
+
+		// Settings that can simply be copied and require no update callback
+		this->rumble_suppressed= newDS4Config->rumble_suppressed;
+		this->extend_Y_meters= newDS4Config->extend_Y_meters;
+		this->extend_Z_meters= newDS4Config->extend_Z_meters;
+		this->z_rotate_90_degrees= newDS4Config->z_rotate_90_degrees;
+		this->thumbstick_deadzone= newDS4Config->thumbstick_deadzone;
+		this->linear_velocity_multiplier= newDS4Config->linear_velocity_multiplier;
+		this->linear_velocity_exponent= newDS4Config->linear_velocity_exponent;
+
+        ControllerConfig::OnConfigChanged(newConfig);
+    }
 
 	bool PSDualshock4ControllerConfig::ReadFromJSON(const configuru::Config &pt) {
 
@@ -65,10 +55,7 @@ namespace steamvrbridge {
 		extend_Y_meters = pt.get_or<float>("extend_y_cm",  0.f) / 100.f;
 		extend_Z_meters = pt.get_or<float>("extend_x_cm",  0.f) / 100.f;
 		z_rotate_90_degrees = pt.get_or<bool>("rotate_z_90", z_rotate_90_degrees);
-		calibration_offset_meters = pt.get_or<float>("calibration_offset_cm",  6.f) / 100.f;
 		thumbstick_deadzone = pt.get_or<float>("thumbstick_deadzone", thumbstick_deadzone);
-		disable_alignment_gesture = pt.get_or<bool>("disable_alignment_gesture", disable_alignment_gesture);
-		use_orientation_in_hmd_alignment = pt.get_or<bool>("use_orientation_in_hmd_alignment", use_orientation_in_hmd_alignment);
 
 		// DS4 controller button -> fake touchpad mappings
 		ReadEmulatedTouchpadAction(pt, k_PSMButtonID_PS);
@@ -94,9 +81,9 @@ namespace steamvrbridge {
 	// -- PSDualshock4Controller -----
 	PSDualshock4Controller::PSDualshock4Controller(
 		PSMControllerID psmControllerId,
-		vr::ETrackedControllerRole trackedControllerRole,
+		PSMControllerHand psmControllerHand,
 		const char *psmSerialNo)
-		: Controller()
+		: Controller(psmControllerHand)
 		, m_parentController(nullptr)
 		, m_nPSMControllerId(psmControllerId)
 		, m_PSMServiceController(nullptr)
@@ -125,8 +112,6 @@ namespace steamvrbridge {
 		PSM_AllocateControllerListener(psmControllerId);
 		m_PSMServiceController = PSM_GetController(psmControllerId);
 
-		m_TrackedControllerRole = trackedControllerRole;
-
 		m_trackingStatus = vr::TrackingResult_Uninitialized;
 	}
 
@@ -135,20 +120,27 @@ namespace steamvrbridge {
 		m_PSMServiceController = nullptr;
 	}
 
+    void PSDualshock4Controller::OnControllerModelChanged()
+    {
+        vr::CVRPropertyHelpers *properties = vr::VRProperties();
+
+		// The {psmove} syntax lets us refer to rendermodels that are installed
+		// in the driver's own resources/rendermodels directory.  The driver can
+		// still refer to SteamVR models like "generic_hmd".
+		if (getConfig()->override_model.length() > 0) {
+			properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, getConfig()->override_model.c_str());
+		} else {
+			properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}dualshock4_controller");
+		}
+    }
+
 	vr::EVRInitError PSDualshock4Controller::Activate(vr::TrackedDeviceIndex_t unObjectId) {
 		vr::EVRInitError result = Controller::Activate(unObjectId);
 
 		if (result == vr::VRInitError_None) {
 			Logger::Info("PSDualshock4Controller::Activate - Controller %d Activated\n", unObjectId);
 
-			// If we aren't doing the alignment gesture then just pretend we have tracking
-			// This will suppress the alignment gesture dialog in the monitor
-			if (getConfig()->disable_alignment_gesture || 
-				CServerDriver_PSMoveService::getInstance()->IsHMDTrackingSpaceCalibrated()) { 
-				m_trackingStatus = vr::TrackingResult_Running_OK;
-			} else {
-				CServerDriver_PSMoveService::getInstance()->LaunchPSMoveMonitor();
-			}
+			m_trackingStatus = vr::TrackingResult_Running_OK;
 
 			PSMRequestID requestId;
 			if (PSM_StartControllerDataStreamAsync(
@@ -177,25 +169,14 @@ namespace steamvrbridge {
 
 				properties->SetInt32Property(m_ulPropertyContainer, vr::Prop_DeviceClass_Int32, vr::TrackedDeviceClass_Controller);
 
-				// The {psmove} syntax lets us refer to rendermodels that are installed
-				// in the driver's own resources/rendermodels directory.  The driver can
-				// still refer to SteamVR models like "generic_hmd".
-				if (getConfig()->override_model.length() > 0)
-				{
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, getConfig()->override_model.c_str());
-				}
-				else
-				{
-					properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{psmove}dualshock4_controller");
-				}
+                properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ControllerType_String, "playstation_ds4");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "Sony");
+				properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, 1313);
+				properties->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, 1315);
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "Dualshock4");
+				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_strPSMControllerSerialNo.c_str());
 
-				// Set device properties
-				vr::VRProperties()->SetInt32Property(m_ulPropertyContainer, vr::Prop_ControllerRoleHint_Int32, m_TrackedControllerRole);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ManufacturerName_String, "Sony");
-				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_HardwareRevision_Uint64, 1313);
-				vr::VRProperties()->SetUint64Property(m_ulPropertyContainer, vr::Prop_FirmwareVersion_Uint64, 1315);
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, "Dualshock4");
-				vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_strPSMControllerSerialNo.c_str());
+                OnControllerModelChanged();
 			}
 		}
 
@@ -265,11 +246,6 @@ namespace steamvrbridge {
 
         const PSMDualShock4 &clientView = m_PSMServiceController->ControllerState.PSDS4State;
 
-		const bool bStartRealignHMDTriggered =
-			(clientView.ShareButton == PSMButtonState_PRESSED && clientView.OptionsButton == PSMButtonState_PRESSED) ||
-			(clientView.ShareButton == PSMButtonState_PRESSED && clientView.OptionsButton == PSMButtonState_DOWN) ||
-			(clientView.ShareButton == PSMButtonState_DOWN && clientView.OptionsButton == PSMButtonState_PRESSED);
-
 		// See if the recenter button has been held for the requisite amount of time
 		bool bRecenterRequestTriggered = false;
 		{
@@ -302,36 +278,7 @@ namespace steamvrbridge {
 			}
 		}
 
-		// If SHARE was just pressed while and OPTIONS was held or vice versa,
-		// recenter the controller orientation pose and start the realignment of the controller to HMD tracking space.
-		if (bStartRealignHMDTriggered && !getConfig()->disable_alignment_gesture)
-		{
-			Logger::Info("PSDualshock4Controller::UpdateControllerState(): Calling StartRealignHMDTrackingSpace() in response to controller chord.\n");
-
-			PSM_ResetControllerOrientationAsync(m_PSMServiceController->ControllerID, k_psm_quaternion_identity, nullptr);
-			m_bResetPoseRequestSent = true;
-
-			// We have the transform of the HMD in world space. 
-			// The controller's position is a few inches ahead of the HMD's on the HMD's local -Z axis. 
-			PSMVector3f controllerLocalOffsetFromHmdPosition = *k_psm_float_vector3_zero;
-			controllerLocalOffsetFromHmdPosition = { 0.0f, 0.0f, -1.0f * getConfig()->calibration_offset_meters };
-
-			try {
-				PSMPosef hmdPose = Utils::GetHMDPoseInMeters();
-				PSMPosef realignedPose = Utils::RealignHMDTrackingSpace(*k_psm_quaternion_identity,
-																		controllerLocalOffsetFromHmdPosition,
-																		m_PSMServiceController->ControllerID,
-																		hmdPose,
-																		getConfig()->use_orientation_in_hmd_alignment);
-				CServerDriver_PSMoveService::getInstance()->SetHMDTrackingSpace(realignedPose);
-			} catch (std::exception & e) {
-				// Log an error message and safely carry on
-				Logger::Error(e.what());
-			}
-
-			m_bResetAlignRequestSent = true;
-		}
-		else if (bRecenterRequestTriggered)
+		if (bRecenterRequestTriggered)
 		{
 			Logger::Info("PSDualshock4Controller::UpdateControllerState(): Calling ClientPSMoveAPI::reset_orientation() in response to controller button press.\n");
 

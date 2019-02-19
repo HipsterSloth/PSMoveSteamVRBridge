@@ -27,17 +27,19 @@ namespace steamvrbridge {
 	class Config {
 	public:
 		Config(const std::string &fnamebase = std::string("Config"));
-		void save();
-		void save(const std::string &path);
+        void init();
 		bool load();
 		bool load(const std::string &path);
     
-		std::string ConfigFileBase;
+        const std::string getConfigName() const;
+		const std::string getConfigPath() const;
 
-		virtual configuru::Config WriteToJSON() = 0;  // Implement by each device class' own Config
-		virtual bool ReadFromJSON(const configuru::Config &pt) = 0;  // Implement by each device class' own Config
-    
-	private:
-		const std::string getConfigPath();
+		virtual bool ReadFromJSON(const configuru::Config &pt) = 0;  // Implemented by each device class' own Config
+
+        virtual Config *Clone() = 0;
+        virtual void OnConfigChanged(Config *newConfig);  // Implemented by each device class' own Config
+
+    private:
+		std::string ConfigFileBase;
 	};
 }

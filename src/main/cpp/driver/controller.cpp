@@ -8,37 +8,43 @@
 namespace steamvrbridge {
 
 	//-- ControllerConfig -----
-	const int ControllerConfig::CONFIG_VERSION = 1;
-
-	ControllerConfig::ControllerConfig(const std::string &fnamebase)
+	ControllerConfig::ControllerConfig(Controller *ownerController, const std::string &fnamebase)
 		: Config(fnamebase)
-		, is_valid(true)
-		, version(CONFIG_VERSION)
-		, override_model("") {
-
+        , m_ownerController(ownerController)
+		, controller_disabled(false)
+		, override_model("")
+    {
 		// Initially no button maps to any enumulated touchpad action
 		memset(ps_button_id_to_emulated_touchpad_action, k_EmulatedTrackpadAction_None, k_PSMButtonID_Count * sizeof(vr::EVRButtonId));
 	};
 
-	configuru::Config ControllerConfig::WriteToJSON() {
-		configuru::Config pt{
-			{"is_valid", is_valid},
-			{"version", version},
-			{"override_model", override_model}
-		};
-
-		return pt;
-	}
-
 	bool ControllerConfig::ReadFromJSON(const configuru::Config &pt) {
-		if (pt.get_or<bool>("is_valid", false) == true &&
-			pt.get_or<int>("version", -1) == CONFIG_VERSION) {
-			override_model= pt.get_or<std::string>("override_model", "");
-			return true;
-		}
-
-		return false;
+        controller_disabled= pt.get_or<bool>("controller_disabled", false);
+		override_model= pt.get_or<std::string>("override_model", "");
+		return true;
 	}
+
+    void ControllerConfig::OnConfigChanged(Config *newConfig)
+    {
+        ControllerConfig *newControllerConfig= static_cast<ControllerConfig *>(newConfig);
+
+        // These values can just be copied
+		memcpy(this->ps_button_id_to_emulated_touchpad_action, newControllerConfig->ps_button_id_to_emulated_touchpad_action, sizeof(ps_button_id_to_emulated_touchpad_action));
+
+        // override model change 
+        if (this->override_model != newControllerConfig->override_model)
+        {
+            this->override_model = newControllerConfig->override_model;
+            m_ownerController->OnControllerModelChanged();
+        }
+        
+        // disable state change
+        // NOTE: Ideally we could notify the SteamVR if the controller became disabled,
+        // however the SteamVR Driver API will only allow you to add new devices, not remove them.
+        this->controller_disabled= newControllerConfig->controller_disabled;
+
+        Config::OnConfigChanged(newConfig); 
+    }
 
 	void ControllerConfig::ReadEmulatedTouchpadAction(
 		const configuru::Config &pt,
@@ -67,35 +73,40 @@ namespace steamvrbridge {
 		ps_button_id_to_emulated_touchpad_action[psButtonID] = vrTouchpadDirection;
 	}
 
-	void ControllerConfig::WriteEmulatedTouchpadAction(
-		configuru::Config &pt, 
-		const ePSMButtonID psButtonID) {
-		configuru::Config trackpad_pt;
-
-		const char *szPSButtonName = k_PSMButtonNames[psButtonID];
-		const char *szTouchpadAction= k_VRTouchpadActionNames[ps_button_id_to_emulated_touchpad_action[psButtonID]];
-
-		if (pt.has_key("trackpad_mappings")) {
-			trackpad_pt= pt["trackpad_mappings"];
-			trackpad_pt[szPSButtonName]= std::string(szTouchpadAction);
-		} else {
-			trackpad_pt= configuru::Config::object();
-			trackpad_pt[szPSButtonName]= std::string(szTouchpadAction);
-			pt["trackpad_mappings"]= trackpad_pt;
-		}
-	}
-
 	//-- Controller -----
-	Controller::Controller() 
+	Controller::Controller(PSMControllerHand desiredControllerHand) 
 	: TrackableDevice()
-	, m_config(nullptr) {
+	, m_config(nullptr) 
+    , m_desiredControllerHand(desiredControllerHand)
+    , m_trackedControllerRole(vr::ETrackedControllerRole::TrackedControllerRole_Invalid)
+    {
 	}
 
 	Controller::~Controller() {
-		if (m_config != nullptr) {
-			delete m_config;
-		}
+        DisposeConfig();
 	}
+
+    void Controller::InitConfig()
+    {
+		// Create the specific configuration class instance
+        // This call has to happen outside of the constructor
+        // because virtual functions aren't safe to call in a constructor
+		m_config= this->AllocateControllerConfig();
+
+        // Register with ConfigManager for config changes
+        m_config->init(); 
+
+        // Create and load the controller config
+		m_config->load();
+    }
+
+    void Controller::DisposeConfig()
+    {
+        if (m_config != nullptr) {
+			delete m_config;
+            m_config= nullptr;
+		}
+    }
 
 	// Shared Implementation of vr::ITrackedDeviceServerDriver
 	vr::EVRInitError Controller::Activate(vr::TrackedDeviceIndex_t unObjectId) {
@@ -103,35 +114,38 @@ namespace steamvrbridge {
 		vr::EVRInitError result_code= TrackableDevice::Activate(unObjectId);
 
 		if (result_code == vr::EVRInitError::VRInitError_None) {
-			// Create and load the controller config
-			m_config= AllocateControllerConfig();
-			m_config->load();
-
-			// Save the config back out in case the config didn't exist or was upgraded
-			m_config->save();
-
-			// Set the controller profile this controller is using
-			{
-				vr::CVRPropertyHelpers *properties = vr::VRProperties();
+			vr::CVRPropertyHelpers *properties = vr::VRProperties();
 		
-				// Configure JSON controller configuration input profile
-				char szProfilePath[128];
-				snprintf(szProfilePath, sizeof(szProfilePath), "{psmove}/input/%s_profile.json", GetControllerSettingsPrefix());
-				properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_InputProfilePath_String, szProfilePath);
-			}
+			// Configure JSON controller configuration input profile
+			char szProfilePath[128];
+			snprintf(szProfilePath, sizeof(szProfilePath), "{psmove}/input/%s_profile.json", GetControllerSettingsPrefix());
+			properties->SetStringProperty(m_ulPropertyContainer, vr::Prop_InputProfilePath_String, szProfilePath);
+
+            // Attempt to reserve a controller role based on the desired hand
+            m_trackedControllerRole= CServerDriver_PSMoveService::getInstance()->AllocateControllerRole(m_desiredControllerHand);
+            if (m_trackedControllerRole != vr::TrackedControllerRole_Invalid)
+            {
+                properties->SetInt32Property(m_ulPropertyContainer, vr::Prop_ControllerRoleHint_Int32, m_trackedControllerRole);
+            }
 		}
 
 		return result_code;
 	}
 
 	void Controller::Deactivate() {
-		if (m_config != nullptr) {
-			m_config->save();
-
-			delete m_config;
-			m_config= nullptr;
-		}
+        // Relinquish our claim to this controller role
+        m_trackedControllerRole= vr::TrackedControllerRole_Invalid;
 	}
+
+    // Returns the tracked device's role. e.g. TrackedControllerRole_LeftHand
+	vr::ETrackedControllerRole Controller::GetTrackedDeviceRole() const {
+		return m_trackedControllerRole;
+	}
+
+    bool Controller::GetIsControllerDisabled() const
+    {
+        return m_config->controller_disabled;
+    }
 
 	bool Controller::CreateButtonComponent(ePSMButtonID button_id)
 	{
