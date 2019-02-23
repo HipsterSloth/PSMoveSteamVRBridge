@@ -18,8 +18,16 @@ namespace SystemTrayApp
 
         private Dictionary<uint, SteamVRDeviceInstance> _trackedDevices = new Dictionary<uint, SteamVRDeviceInstance>();
         private GlScene _glScene = new GlScene();
-
         private Timer _updateTimer;
+
+        public GlCamera Camera
+        {
+            get { return _glScene.Camera; }
+        }
+
+        public bool EnableKeyboardPan = true;
+        public bool EnabledMousePan = true;
+        public bool EnabledMouseZoom = true;
 
         public SteamVROpenGLFrame()
         {
@@ -57,33 +65,18 @@ namespace SystemTrayApp
         {
             base.OnHandleCreated(e);
 
-            SteamVRContext.Instance.TrackedDeviceActivatedEvent += OnTrackedDeviceActivated;
-            SteamVRContext.Instance.TrackedDeviceDeactivatedEvent += OnTrackedDeviceDeactivated;
-            SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent += OnTrackedDevicesPoseUpdate;
+            SteamVRContext.Instance.TrackedDeviceActivatedEvent += HandleTrackedDeviceActivated;
+            SteamVRContext.Instance.TrackedDeviceDeactivatedEvent += HandleTrackedDeviceDeactivated;
+            SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent += HandleTrackedDevicesPoseUpdate;
         }
 
         protected override void OnHandleDestroyed(EventArgs e)
         {
             base.OnHandleDestroyed(e);
 
-            SteamVRContext.Instance.TrackedDeviceActivatedEvent -= OnTrackedDeviceActivated;
-            SteamVRContext.Instance.TrackedDeviceDeactivatedEvent -= OnTrackedDeviceDeactivated;
-            SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent -= OnTrackedDevicesPoseUpdate;
-        }
-
-        public void OnTrackedDeviceActivated(SteamVRTrackedDevice device)
-        {
-            SynchronizedInvoke.Invoke(this, () => HandleTrackedDeviceActivated(device));
-        }
-
-        public void OnTrackedDeviceDeactivated(SteamVRTrackedDevice device)
-        {
-            SynchronizedInvoke.Invoke(this, () => HandleTrackedDeviceDeactivated(device));
-        }
-
-        public void OnTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
-        {
-            SynchronizedInvoke.Invoke(this, () => HandleTrackedDevicesPoseUpdate(poses));
+            SteamVRContext.Instance.TrackedDeviceActivatedEvent -= HandleTrackedDeviceActivated;
+            SteamVRContext.Instance.TrackedDeviceDeactivatedEvent -= HandleTrackedDeviceDeactivated;
+            SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent -= HandleTrackedDevicesPoseUpdate;
         }
 
         private void HandleTrackedDeviceActivated(SteamVRTrackedDevice device)
@@ -146,22 +139,25 @@ namespace SystemTrayApp
                 KVPair.Value.PollComponentState();
             }
 
-            foreach (Keys pressedKey in _PressedKeys)
+            if (EnableKeyboardPan)
             {
-                switch (pressedKey)
+                foreach (Keys pressedKey in _PressedKeys)
                 {
-                    case Keys.A:
-                        _glScene.Camera.ZOffset -= 0.1f;
-                        break;
-                    case Keys.D:
-                        _glScene.Camera.ZOffset += 0.1f;
-                        break;
-                    case Keys.W:
-                        _glScene.Camera.YOffset += 0.1f;
-                        break;
-                    case Keys.S:
-                        _glScene.Camera.YOffset -= 0.1f;
-                        break;
+                    switch (pressedKey)
+                    {
+                        case Keys.A:
+                            _glScene.Camera.ZOffset -= 0.1f;
+                            break;
+                        case Keys.D:
+                            _glScene.Camera.ZOffset += 0.1f;
+                            break;
+                        case Keys.W:
+                            _glScene.Camera.YOffset += 0.1f;
+                            break;
+                        case Keys.S:
+                            _glScene.Camera.YOffset -= 0.1f;
+                            break;
+                    }
                 }
             }
         }
@@ -173,20 +169,26 @@ namespace SystemTrayApp
 
         private void glControl_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
+            if (EnabledMousePan)
             {
-                _Mouse = e.Location;
-                _glScene.Camera.onMouseButtonDown();
+                if (e.Button == MouseButtons.Left)
+                {
+                    _Mouse = e.Location;
+                    _glScene.Camera.onMouseButtonDown();
+                }
             }
         }
 
         private void glControl_MouseMove(object sender, MouseEventArgs e)
         {
-            if (_Mouse.HasValue)
+            if (EnabledMousePan)
             {
-                System.Drawing.Point delta = _Mouse.Value - (System.Drawing.Size)e.Location;
-                _Mouse = e.Location;
-                _glScene.Camera.onMouseMotion(delta.X, delta.Y);
+                if (_Mouse.HasValue)
+                {
+                    System.Drawing.Point delta = _Mouse.Value - (System.Drawing.Size)e.Location;
+                    _Mouse = e.Location;
+                    _glScene.Camera.onMouseMotion(delta.X, delta.Y);
+                }
             }
         }
 
@@ -197,7 +199,10 @@ namespace SystemTrayApp
 
         private void glControl_MouseWheel(object sender, MouseEventArgs e)
         {
-            _glScene.Camera.onMouseWheel(e.Delta);
+            if (EnabledMouseZoom)
+            {
+                _glScene.Camera.onMouseWheel(e.Delta);
+            }
         }
 
         private void glControl_KeyDown(object sender, KeyEventArgs e)

@@ -23,7 +23,7 @@ namespace SystemTrayApp
                 void main()
                 {
                 	v2TexCoord = v2TexCoordsIn;
-                	gl_Position = matrix * vec4(position.xyz, 1);s
+                	gl_Position = matrix * vec4(position.xyz, 1);
                 }",
                 //fragment shader
                 @"#version 410 core

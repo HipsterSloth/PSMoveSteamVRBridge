@@ -89,20 +89,16 @@ namespace SystemTrayApp
         {
             TrackerInfo[] trackerInfoList = PSMoveServiceContext.Instance.TrackerInfoList;
 
-            SynchronizedInvoke.Invoke(this, () => HandleTrackerListUpdatedEvent(trackerInfoList));
-        }
-
-        private void HandleTrackerListUpdatedEvent(TrackerInfo[] trackerInfoList)
-        {
             _psmTrackerPool.RefreshTrackerList(trackerInfoList);
 
-            eTrackerSource oldTrackerSource= _currentTackerSource;
+            eTrackerSource oldTrackerSource = _currentTackerSource;
             _currentTackerSource = _psmTrackerPool.GetFirstValidTrackerSource(oldTrackerSource);
 
             if (oldTrackerSource != _currentTackerSource)
             {
                 HandleTrackerChanged();
             }
+
         }
 
         public void GotoNextTracker()

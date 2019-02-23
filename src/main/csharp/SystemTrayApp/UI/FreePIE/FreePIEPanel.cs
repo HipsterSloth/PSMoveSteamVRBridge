@@ -32,21 +32,6 @@ namespace SystemTrayApp
 
         private void OnConnectedToFreePIEEvent()
         {
-            SynchronizedInvoke.Invoke(this, () => HandleConnectedToFreePIEEvent());
-        }
-
-        private void OnDisconnectedFromFreePIEEvent()
-        {
-            SynchronizedInvoke.Invoke(this, () => HandleDisconnectedFromFreePIEEvent());
-        }
-
-        private void OnFreePIEConnectionFailureEvent(string Reason)
-        {
-            SynchronizedInvoke.Invoke(this, () => HandleFreePIEConnectionFailureEvent(Reason));
-        }
-
-        private void HandleConnectedToFreePIEEvent()
-        {
             SetFreePieUIEnabled(false);
             FreePIECurrentStatus.Text = "CONNECTED";
             FreePIEConnectBtn.Visible = false;
@@ -55,20 +40,7 @@ namespace SystemTrayApp
             AddHMDBindingButton.Visible = false;
         }
 
-        private void HandleFreePIEConnectionFailureEvent(string Reason)
-        {
-            SetFreePieUIEnabled(true);
-            FreePIECurrentStatus.Text = "FAILED: "+ Reason;
-            FreePIEConnectBtn.Visible = true;
-            FreePIEDisconnectBtn.Visible = false;
-
-            if (BindingsLayoutPanel.Controls.Count < FreePIEContext.Instance.FreePIEMaxSlotCount) {
-                AddControllerBindingButton.Visible = false;
-                AddHMDBindingButton.Visible = false;
-            }
-        }
-
-        private void HandleDisconnectedFromFreePIEEvent()
+        private void OnDisconnectedFromFreePIEEvent()
         {
             SetFreePieUIEnabled(true);
             FreePIECurrentStatus.Text = "DISCONNECTED";
@@ -79,6 +51,20 @@ namespace SystemTrayApp
             {
                 AddControllerBindingButton.Visible = true;
                 AddHMDBindingButton.Visible = true;
+            }
+        }
+
+        private void OnFreePIEConnectionFailureEvent(string Reason)
+        {
+            SetFreePieUIEnabled(true);
+            FreePIECurrentStatus.Text = "FAILED: " + Reason;
+            FreePIEConnectBtn.Visible = true;
+            FreePIEDisconnectBtn.Visible = false;
+
+            if (BindingsLayoutPanel.Controls.Count < FreePIEContext.Instance.FreePIEMaxSlotCount)
+            {
+                AddControllerBindingButton.Visible = false;
+                AddHMDBindingButton.Visible = false;
             }
         }
 
@@ -238,12 +224,12 @@ namespace SystemTrayApp
             FreePIECurrentStatus.Text = "CONNECTING";
             FreePIEConnectBtn.Visible = false;
             FreePIEDisconnectBtn.Visible = false;
-            SynchronizedInvoke.Invoke(FreePIEContext.Instance, () => FreePIEContext.Instance.ConnectToFreePIE(slotDefinitions));
+            FreePIEContext.Instance.ConnectToFreePIE(slotDefinitions);
         }
 
         private void FreePIEDisconnectBtn_Click(object sender, EventArgs e)
         {
-            SynchronizedInvoke.Invoke(FreePIEContext.Instance, () => FreePIEContext.Instance.DisconnectFromFreePIE());
+            FreePIEContext.Instance.DisconnectFromFreePIE();
         }
 
         private void materialLabel1_Click(object sender, EventArgs e)

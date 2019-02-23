@@ -30,7 +30,7 @@ namespace SystemTrayApp
             List<SteamVRTrackedDevice> TrackedDevicesList = SteamVRContext.Instance.FetchLoadedTrackedDeviceList();
             foreach (var device in TrackedDevicesList)
             {
-                HandleTrackedDeviceActivated(device);
+                OnTrackedDeviceActivated(device);
             }
 
             SteamVRContext.Instance.TrackedDeviceActivatedEvent += OnTrackedDeviceActivated;
@@ -39,21 +39,6 @@ namespace SystemTrayApp
         }
 
         public void OnTrackedDeviceActivated(SteamVRTrackedDevice device)
-        {
-            SynchronizedInvoke.Invoke(this, () => HandleTrackedDeviceActivated(device));
-        }
-
-        public void OnTrackedDeviceDeactivated(SteamVRTrackedDevice device)
-        {
-            SynchronizedInvoke.Invoke(this, () => HandleTrackedDeviceDeactivated(device));
-        }
-
-        public void OnTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
-        {
-            SynchronizedInvoke.Invoke(this, () => HandleTrackedDevicesPoseUpdate(poses));
-        }
-
-        private void HandleTrackedDeviceActivated(SteamVRTrackedDevice device)
         {
             if (device.RenderModel != null)
             {
@@ -64,7 +49,7 @@ namespace SystemTrayApp
             }
         }
 
-        private void HandleTrackedDeviceDeactivated(SteamVRTrackedDevice device)
+        public void OnTrackedDeviceDeactivated(SteamVRTrackedDevice device)
         {
             if (_trackedDevices.ContainsKey(device.DeviceID))
             {
@@ -73,7 +58,7 @@ namespace SystemTrayApp
             }
         }
 
-        private void HandleTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
+        public void OnTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
         {
             foreach (var KVPair in poses)
             {
@@ -81,7 +66,7 @@ namespace SystemTrayApp
 
                 if (_trackedDevices.ContainsKey(deviceID))
                 {
-                    OpenGL.ModelMatrix newPose= KVPair.Value;
+                    OpenGL.ModelMatrix newPose = KVPair.Value;
                     SteamVRDeviceInstance model = _trackedDevices[deviceID];
 
                     model.ModelMatrix.Set(newPose);

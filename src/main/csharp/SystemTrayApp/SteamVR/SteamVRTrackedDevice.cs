@@ -80,7 +80,7 @@ namespace SystemTrayApp
             get { return _readyIcon; }
         }
 
-        private string _renderModelName = "";
+        protected string _renderModelName = "";
         public string RenderModelName
         {
             get { return _renderModelName; }
@@ -189,7 +189,7 @@ namespace SystemTrayApp
             return false;
         }
 
-        private void UpdateRenderModel()
+        protected void UpdateRenderModel()
         {
             if (_renderModelName.Length > 0) {
                 _renderModel = SteamVRResourceManager.Instance.FetchRenderModelResource(_renderModelName);

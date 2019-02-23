@@ -108,7 +108,6 @@
     <Compile Include="SteamVR\SteamVRResourceManager.cs" />
     <Compile Include="SteamVR\SteamVRTrackedDevice.cs" />
     <Compile Include="SteamVR\SteamVRTracker.cs" />
-    <Compile Include="SynchronizedContext.cs" />
     <Compile Include="UI\Common\TrackerVideoFrame.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -228,6 +227,7 @@
     </Compile>
     <Compile Include="Utility\MathUtility.cs" />
     <Compile Include="Utility\SteamVRUtility.cs" />
+    <Compile Include="Utility\UserInterfaceUtility.cs" />
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Resources\Default.ico" />

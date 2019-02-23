@@ -129,7 +129,7 @@ namespace SystemTrayApp
         public void setCameraOrbitLocation(float yawDegrees, float pitchDegrees, float radius)
         {
             _cameraOrbitYawDegrees = MathUtility.wrap_degrees(yawDegrees);
-            _cameraOrbitPitchDegrees = MathUtility.clampf(pitchDegrees, 0.0f, 60.0f);
+            _cameraOrbitPitchDegrees = MathUtility.clampf(pitchDegrees, 0.0f, 90.0f);
             _cameraOrbitRadius = Math.Max(radius, k_camera_min_zoom);
 
             float yawRadians = MathUtility.degrees_to_radians(_cameraOrbitYawDegrees);
@@ -140,10 +140,20 @@ namespace SystemTrayApp
                 _cameraYOffset + _cameraOrbitRadius*MathUtility.sinf(pitchRadians),
                 _cameraZOffset + xzRadiusAtPitch * MathUtility.cosf(yawRadians));
 
-            _cameraViewMatrix.LookAtTarget(
-                _cameraPosition, 
-                Vertex3.Zero, // Look at tracking origin
-                Vertex3.UnitY); // // Up is up.
+            if (Math.Abs(pitchDegrees) < 85.0f)
+            {
+                _cameraViewMatrix.LookAtTarget(
+                    _cameraPosition,
+                    Vertex3.Zero, // Look at tracking origin
+                    Vertex3.UnitY); // +Y is up.
+            }
+            else
+            {
+                _cameraViewMatrix.LookAtTarget(
+                    _cameraPosition,
+                    Vertex3.Zero, // Look at tracking origin
+                    new Vertex3(MathUtility.sinf(yawRadians), 0.0f, -MathUtility.cosf(yawRadians))); 
+            }
         }
 
         public void setCameraOrbitYaw(float yawDegrees)

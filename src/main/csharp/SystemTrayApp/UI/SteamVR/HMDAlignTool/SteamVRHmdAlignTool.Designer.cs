@@ -139,7 +139,6 @@
 
         #endregion
 
-        private SteamVROpenGLFrame SteamVRFrame;
         private MaterialSkin.Controls.MaterialLabel InstructionsBodyLabel;
         private MaterialSkin.Controls.MaterialLabel InstructionsHeaderLabel;
         private MaterialSkin.Controls.MaterialRaisedButton CancelButton;

@@ -3,7 +3,7 @@ using PSMoveService;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.IO;
-using System.Timers;
+using System.Windows.Forms;
 using System.Collections.Generic;
 using System.ComponentModel;
 
@@ -261,12 +261,12 @@ namespace SystemTrayApp
         }
     }
 
-    public class PSMoveServiceContext : SynchronizedContext
+    public class PSMoveServiceContext
     {
         private static string PSMOVESTEAMVRBRIDE_REGKEY_PATH = @"SOFTWARE\WOW6432Node\PSMoveSteamVRBridge\PSMoveSteamVRBridge";
         private static string PSMOVESERVICE_PROCESS_NAME = "PSMoveService";
-        private static double POLL_INTERVAL_5FPS = 1.0 / 5.0; // ms
-        private static double POLL_INTERVAL_60FPS = 1.0 / 60.0; // ms
+        private static int POLL_INTERVAL_5FPS = 1000 / 5; // ms
+        private static int POLL_INTERVAL_60FPS = 1000 / 60; // ms
 
         private static readonly Lazy<PSMoveServiceContext> _lazyInstance = 
             new Lazy<PSMoveServiceContext>(() => new PSMoveServiceContext());
@@ -342,7 +342,7 @@ namespace SystemTrayApp
             _controllerInfoList = new ControllerInfo[0];
             _hmdInfoList = new HMDInfo[0];
             _trackerInfoList = new TrackerInfo[0];
-            _pollTimer = new System.Timers.Timer();
+            _pollTimer = new System.Windows.Forms.Timer();
             _bInitialized = false;
             _connectionState = PSMConnectionState.disconnected;
             _pendingControllerRequestId = -1;
@@ -355,8 +355,7 @@ namespace SystemTrayApp
             if (!_bInitialized)
             {
                 // Create a timer to poll PSMoveService state with
-                _pollTimer.Elapsed += RunFrame;
-                _pollTimer.AutoReset = false; // NO AUTO RESET! Restart in RunFrame().
+                _pollTimer.Tick += RunFrame;
                 _pollTimer.Enabled = true;
                 _pollTimer.Interval = POLL_INTERVAL_5FPS;
                 _pollTimer.Start();
@@ -372,7 +371,7 @@ namespace SystemTrayApp
             if (_bInitialized)
             {
                 // Disconnected the timer callback
-                _pollTimer.Elapsed -= RunFrame;
+                _pollTimer.Tick -= RunFrame;
 
                 // Shutdown PSMove Client API
                 PSMoveClient.PSM_Shutdown();
@@ -389,7 +388,7 @@ namespace SystemTrayApp
             }
         }
 
-        private void RunFrame(object sender, ElapsedEventArgs e)
+        private void RunFrame(object sender, EventArgs e)
         {
             if (_connectionState == PSMConnectionState.connected ||
                 _connectionState == PSMConnectionState.waitingForConnectionResponse)
@@ -423,11 +422,6 @@ namespace SystemTrayApp
             _pollTimer.Interval =
                 (PSMControllerPool.InitializedControllerPoolCount > 0 || PSMHmdPool.InitializedHmdPoolCount > 0)
                 ? POLL_INTERVAL_60FPS : POLL_INTERVAL_5FPS;
-
-            // Restart the timer once event handling is complete.
-            // This prevents overlapping callings to RunFrame.
-            // In practice this is only an issue when debugging.
-            _pollTimer.Start();
         }
 
         private void HandleClientPSMoveResponse(PSMMessage message)

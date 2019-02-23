@@ -9,7 +9,7 @@ using PSMoveService;
 
 namespace SystemTrayApp
 {
-    public class FreePIEContext : SynchronizedContext
+    public class FreePIEContext
     {
         private static readonly Lazy<FreePIEContext> _lazyInstance = new Lazy<FreePIEContext>(() => new FreePIEContext());
         public static FreePIEContext Instance { get { return _lazyInstance.Value; } }

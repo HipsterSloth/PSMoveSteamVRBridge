@@ -24,22 +24,52 @@ namespace SystemTrayApp
 
         private void OnConnectedToSteamVREvent()
         {
-            SynchronizedInvoke.Invoke(this, () => HandleSteamVRConnect());
+            SteamVRCurrentStatus.Text = "CONNECTED";
+            SteamVRConnectButton.Visible = false;
+            SteamVRDisconnectButton.Visible = true;
+            HMDAlignButton.Visible = true;
+            TrackingTestToolButton.Visible = true;
         }
 
         private void OnDisconnectedFromSteamVREvent()
         {
-            SynchronizedInvoke.Invoke(this, () => HandleSteamVRDisconnect());
+            SteamVRCurrentStatus.Text = "DISCONNECTED";
+            SteamVRConnectButton.Visible = true;
+            SteamVRDisconnectButton.Visible = false;
+            HMDAlignButton.Visible = false;
+            TrackingTestToolButton.Visible = false;
         }
 
         public void OnTrackedDeviceActivated(SteamVRTrackedDevice device)
         {
-            SynchronizedInvoke.Invoke(this, () => HandleTrackedDeviceActivated(device));
+            switch (device.DeviceType)
+            {
+                case Valve.VR.ETrackedDeviceClass.HMD:
+                    //SteamVRHeadMountedDisplay hmd = (SteamVRHeadMountedDisplay)device;
+                    //if (hmd.ReadyIcon != null) {
+                    //    HMD_icon.Image = hmd.ReadyIcon;
+                    //}
+                    //HMD_icon.Visible = true;
+                    break;
+                case Valve.VR.ETrackedDeviceClass.Controller:
+                    break;
+                case Valve.VR.ETrackedDeviceClass.TrackingReference:
+                    break;
+            }
         }
 
         public void OnTrackedDeviceDeactivated(SteamVRTrackedDevice device)
         {
-            SynchronizedInvoke.Invoke(this, () => HandleTrackedDeviceDeactivated(device));
+            switch (device.DeviceType)
+            {
+                case Valve.VR.ETrackedDeviceClass.HMD:
+                    //HMD_icon.Visible = false;
+                    break;
+                case Valve.VR.ETrackedDeviceClass.Controller:
+                    break;
+                case Valve.VR.ETrackedDeviceClass.TrackingReference:
+                    break;
+            }
         }
 
         public void OnPanelEntered()
@@ -58,60 +88,12 @@ namespace SystemTrayApp
 
         private void SteamVRConnectButton_Click(object sender, EventArgs e)
         {
-            SynchronizedInvoke.Invoke(SteamVRContext.Instance, () => SteamVRContext.Instance.Connect());
+            SteamVRContext.Instance.Connect();
         }
 
         private void SteamVRDisconnectButton_Click(object sender, EventArgs e)
         {
-            SynchronizedInvoke.Invoke(SteamVRContext.Instance, () => SteamVRContext.Instance.Disconnect());
-        }
-
-        private void HandleSteamVRConnect()
-        {
-            SteamVRCurrentStatus.Text = "CONNECTED";
-            SteamVRConnectButton.Visible = false;
-            SteamVRDisconnectButton.Visible = true;
-            HMDAlignButton.Visible = true;
-            TrackingTestToolButton.Visible = true;
-        }
-
-        private void HandleSteamVRDisconnect()
-        {
-            SteamVRCurrentStatus.Text = "DISCONNECTED";
-            SteamVRConnectButton.Visible = true;
-            SteamVRDisconnectButton.Visible = false;
-            HMDAlignButton.Visible = false;
-            TrackingTestToolButton.Visible = false;
-        }
-
-        private void HandleTrackedDeviceActivated(SteamVRTrackedDevice device)
-        {
-            switch (device.DeviceType) {
-                case Valve.VR.ETrackedDeviceClass.HMD:
-                    //SteamVRHeadMountedDisplay hmd = (SteamVRHeadMountedDisplay)device;
-                    //if (hmd.ReadyIcon != null) {
-                    //    HMD_icon.Image = hmd.ReadyIcon;
-                    //}
-                    //HMD_icon.Visible = true;
-                    break;
-                case Valve.VR.ETrackedDeviceClass.Controller:
-                    break;
-                case Valve.VR.ETrackedDeviceClass.TrackingReference:
-                    break;
-            }
-        }
-
-        private void HandleTrackedDeviceDeactivated(SteamVRTrackedDevice device)
-        {
-            switch (device.DeviceType) {
-                case Valve.VR.ETrackedDeviceClass.HMD:
-                    //HMD_icon.Visible = false;
-                    break;
-                case Valve.VR.ETrackedDeviceClass.Controller:
-                    break;
-                case Valve.VR.ETrackedDeviceClass.TrackingReference:
-                    break;
-            }
+            SteamVRContext.Instance.Disconnect();
         }
 
         private void HMDAlignButton_Click(object sender, EventArgs e)

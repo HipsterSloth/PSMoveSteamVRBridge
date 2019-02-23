@@ -35,6 +35,10 @@ namespace SystemTrayApp
 
             InitializeComponent();
 
+            SteamVRContext.Instance.Init();
+            PSMoveServiceContext.Instance.Init();
+            FreePIEContext.Instance.Init();
+
             // Add user-control panels to each tab
             psmServicePanel = new PSMoveServicePanel();
             this.psmoveServiceTabPage.Controls.Add(psmServicePanel);
@@ -84,6 +88,15 @@ namespace SystemTrayApp
 
             // Go to the PSMoveService tab first
             SetCurrentTab(this.psmoveServiceTabPage);
+        }
+
+        protected override void OnHandleDestroyed(EventArgs e)
+        {
+            base.OnHandleDestroyed(e);
+
+            FreePIEContext.Instance.Cleanup();
+            PSMoveServiceContext.Instance.Cleanup();
+            SteamVRContext.Instance.Cleanup();
         }
 
         protected void SetCurrentTab(TabPage NewTabPage)

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Valve.VR;
 
 namespace SystemTrayApp
 {
@@ -47,12 +48,17 @@ namespace SystemTrayApp
 
             public bool IsSamplingFinished
             {
-                get { return _stableCount > k_sample_window; }
+                get { return _stableCount >= k_sample_window; }
             }
 
             public bool IsPositionStable
             {
                 get { return SampleCount >= k_sample_window && _maxDistFromAverage < k_max_position_variance_meters; }
+            }
+
+            public bool IsPositionUnstable
+            {
+                get { return SampleCount >= k_sample_window && _maxDistFromAverage >= k_max_position_variance_meters; }
             }
 
             public PositionCircularBuffer()
@@ -67,6 +73,11 @@ namespace SystemTrayApp
                 _sampleCount = 0;
                 _stableCount = 0;
                 _avgPositionSample = new OpenGL.Vertex3f();
+            }
+
+            public void ResetStableCount()
+            {
+                _stableCount = 0;
             }
 
             public virtual void RecordSample(OpenGL.ModelMatrix sample)
@@ -185,6 +196,11 @@ namespace SystemTrayApp
                 get { return _controllerLocationSamples.IsPositionStable && _hmdPoseSamples.IsPositionStable; }
             }
 
+            public bool AreDevicesUnstable
+            {
+                get { return _controllerLocationSamples.IsPositionUnstable && _hmdPoseSamples.IsPositionUnstable; }
+            }
+
             public bool IsSamplingFinished
             {
                 get { return _controllerLocationSamples.IsSamplingFinished && _hmdPoseSamples.IsSamplingFinished; }
@@ -224,6 +240,12 @@ namespace SystemTrayApp
                 _hmdPoseSamples.ClearSamples();
             }
 
+            public void ResetStableCount()
+            {
+                _controllerLocationSamples.ResetStableCount();
+                _hmdPoseSamples.ResetStableCount();
+            }
+
             public void RecordControllerSample(OpenGL.ModelMatrix sample)
             {
                 _controllerLocationSamples.RecordSample(sample);
@@ -258,19 +280,24 @@ namespace SystemTrayApp
         private OpenGL.Vertex3f _worldFromDriverPos;
         private OpenGL.Quaternion _worldFromDriverQuat;
 
+        private SteamVROpenGLFrame SteamVRFrame;
+
         public SteamVRHmdAlignTool()
         {
             InitializeComponent();
+
+            this.SteamVRFrame = new SteamVROpenGLFrame();
+            this.SuspendLayout();
+            this.SteamVRFrame.Location = new System.Drawing.Point(5, 5);
+            this.SteamVRFrame.Name = "VideoFrame";
+            this.Controls.Add(this.SteamVRFrame);
+            this.ResumeLayout(false);
+            this.PerformLayout();
 
             _panelState = ePanelState.init;
         }
 
         public void OnTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
-        {
-            SynchronizedInvoke.Invoke(this, () => HandleTrackedDevicesPoseUpdate(poses));
-        }
-
-        private void HandleTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
         {
             if (_panelState == ePanelState.waitForStableDevices || _panelState == ePanelState.recordDevices)
             {
@@ -296,31 +323,31 @@ namespace SystemTrayApp
                     {
                         if (_deviceSampleSet.IsSamplingFinished)
                         {
-                            SamplingProgressBar.Value = 100;
+                            SamplingProgressBar.SetProgressNoAnimation(100);
                             nextPanelState = ePanelState.recordDevices;
                         }
                         else
                         {
-                            SamplingProgressBar.Value = _deviceSampleSet.SamplePercentComplete;
+                            SamplingProgressBar.SetProgressNoAnimation(_deviceSampleSet.SamplePercentComplete);
                         }
                     }
                 }
                 else if (_panelState == ePanelState.recordDevices)
                 {
-                    if (!_deviceSampleSet.AreDevicesStable)
+                    if (_deviceSampleSet.AreDevicesUnstable)
                     {
-                        SamplingProgressBar.Value = 0;
+                        SamplingProgressBar.SetProgressNoAnimation(0);
                         nextPanelState = ePanelState.waitForStableDevices;
                     }
                     else if (!_deviceSampleSet.IsSamplingFinished)
                     {
-                        SamplingProgressBar.Value = _deviceSampleSet.SamplePercentComplete;
+                        SamplingProgressBar.SetProgressNoAnimation(_deviceSampleSet.SamplePercentComplete);
                     }
                     else
                     {
                         RecomputeAlignmentTransform();
                         SaveAlignmentTransform();
-                        SamplingProgressBar.Value = 100;
+                        SamplingProgressBar.SetProgressNoAnimation(100);
                         nextPanelState = ePanelState.testAlignment;
                     }
                 }
@@ -333,41 +360,40 @@ namespace SystemTrayApp
         {
             uint DeviceId = _deviceSampleSet.ControllerDeviceId;
 
-            SynchronizedInvoke.Invoke(SteamVRContext.Instance, () => SteamVRContext.Instance.TriggerHapticPulse(DeviceId, 1.0f));
+            SteamVRContext.Instance.TriggerHapticPulse(DeviceId, 1.0f);
         }
 
         private void CancelButton_Click(object sender, EventArgs e)
         {
-            AppWindow.Instance.SetSteamVRPanel(new SteamVRPanel());
+            if (_panelState == ePanelState.testAlignment)
+                SetPanelState(ePanelState.placeDevices);
+            else
+                AppWindow.Instance.SetSteamVRPanel(new SteamVRPanel());
         }
 
         private void OkButton_Click(object sender, EventArgs e)
         {
-            ePanelState newState = _panelState;
 
             switch (_panelState)
             {
                 case ePanelState.verifyTracking:
-                    newState = ePanelState.placeDevices;
+                    SetPanelState(ePanelState.placeDevices);
                     break;
                 case ePanelState.placeDevices:
-                    newState = ePanelState.waitForStableDevices;
+                    SetPanelState(ePanelState.waitForStableDevices);
                     break;
                 case ePanelState.waitForStableDevices:
-                    newState = ePanelState.recordDevices;
+                    SetPanelState(ePanelState.recordDevices);
                     break;
                 case ePanelState.recordDevices:
-                    newState = ePanelState.testAlignment;
+                    SetPanelState(ePanelState.testAlignment);
                     break;
                 case ePanelState.testAlignment:
-                    AppWindow.Instance.SetSteamVRPanel(new SteamVRPanel());
-                    break;
                 case ePanelState.error:
+                    // Sets state to 'init'
                     AppWindow.Instance.SetSteamVRPanel(new SteamVRPanel());
                     break;
             }
-
-            SetPanelState(newState);
         }
 
         public void OnPanelEntered()
@@ -378,7 +404,15 @@ namespace SystemTrayApp
             InstructionsBodyLabel.Text = "";
             OkButton.Text = "Next";
             OkButton.Visible = true;
-            SamplingProgressBar.Visible = true;
+            SamplingProgressBar.Visible = false;
+
+            float sizeX= 1.0f, sizeY= 1.0f;
+            OpenVR.Chaperone.GetPlayAreaSize(ref sizeX, ref sizeY);
+
+            SteamVRFrame.EnabledMousePan = false;
+            SteamVRFrame.EnabledMouseZoom = true;
+            SteamVRFrame.EnableKeyboardPan = false;
+            SteamVRFrame.Camera.setCameraOrbitLocation(0.0f, 90.0f, Math.Max(Math.Max(sizeX, sizeY), 1.0f));
 
             FetchAlignmentTransform();
 
@@ -441,6 +475,7 @@ namespace SystemTrayApp
                     SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent -= OnTrackedDevicesPoseUpdate;
                     break;
                 case ePanelState.testAlignment:
+                    CancelButton.Text = "Cancel";
                     break;
                 case ePanelState.error:
                     break;
@@ -465,18 +500,28 @@ namespace SystemTrayApp
                 case ePanelState.waitForStableDevices:
                     InstructionsHeaderLabel.Text = "Waiting for Stability";
                     InstructionsBodyLabel.Text = "Calibration will start once the devices are upright and stable.";
-                    SamplingProgressBar.Value = 0;
+                    SamplingProgressBar.SetProgressNoAnimation(0);
                     SamplingProgressBar.Visible = true;
-                    _deviceSampleSet.ClearSamples();
+
+                    if (_panelState == ePanelState.recordDevices)
+                        _deviceSampleSet.ResetStableCount();
+                    else
+                        _deviceSampleSet.ClearSamples();
+
                     SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent += OnTrackedDevicesPoseUpdate;
                     break;
                 case ePanelState.recordDevices:
-                    SamplingProgressBar.Value = 0;
+                    InstructionsHeaderLabel.Text = "Sampling Devices";
+                    InstructionsBodyLabel.Text = "Sample the location of the controller and HMD.";
+                    SamplingProgressBar.SetProgressNoAnimation(0);
                     SamplingProgressBar.Visible = true;
-                    _deviceSampleSet.ClearSamples();
+                    _deviceSampleSet.ResetStableCount();
                     SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent += OnTrackedDevicesPoseUpdate;
                     break;
                 case ePanelState.testAlignment:
+                    InstructionsHeaderLabel.Text = "Test Alignment";
+                    InstructionsBodyLabel.Text = "See if the controller is now properly aligned with the HMD.";
+                    CancelButton.Text = "Redo";
                     OkButton.Text = "Ok";
                     break;
                 case ePanelState.error:

@@ -22,17 +22,9 @@ namespace SystemTrayApp
         [STAThread]
         static void Main()
         {
-            SteamVRContext.Instance.Init();
-            PSMoveServiceContext.Instance.Init();
-            FreePIEContext.Instance.Init();
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new AppWindow());
-
-            FreePIEContext.Instance.Cleanup();
-            PSMoveServiceContext.Instance.Cleanup();
-            SteamVRContext.Instance.Cleanup();
         }
     }
 }

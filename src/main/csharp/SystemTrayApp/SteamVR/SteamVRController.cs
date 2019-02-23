@@ -33,6 +33,12 @@ namespace SystemTrayApp
             base.UpdateProperties(SteamVRSystem);
 
             _controllerType = FetchStringProperty(SteamVRSystem, ETrackedDeviceProperty.Prop_ControllerType_String, "");
+
+            if (_controllerType == "playstation_move" && _renderModelName == "")
+            {
+                _renderModelName = "{psmove}psmove_controller";
+                UpdateRenderModel();
+            }
         }
 
         public void TriggerHapticPulse(float intensityFraction)
