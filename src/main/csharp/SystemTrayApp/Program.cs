@@ -10,12 +10,6 @@ namespace SystemTrayApp
 {
   static class Program
   {
-        public static string GetExecutingDirectoryName()
-        {
-            var location = new Uri(Assembly.GetEntryAssembly().GetName().CodeBase);
-            return new FileInfo(location.AbsolutePath).Directory.FullName;
-        }
-
         /// <summary>
         /// The main entry point for the application.
         /// </summary>

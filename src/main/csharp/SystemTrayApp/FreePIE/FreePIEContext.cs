@@ -431,7 +431,7 @@ namespace SystemTrayApp
             }
 
             if (dll_path.Length == 0) {
-                dll_path = SystemTrayApp.Program.GetExecutingDirectoryName();
+                dll_path = PathUtility.GetTrayAppExecutablePath();
             }
 
             return dll_path;

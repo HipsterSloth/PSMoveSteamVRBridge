@@ -226,6 +226,7 @@
       <DependentUpon>VirtualControllerPanel.cs</DependentUpon>
     </Compile>
     <Compile Include="Utility\MathUtility.cs" />
+    <Compile Include="Utility\PathUtils.cs" />
     <Compile Include="Utility\SteamVRUtility.cs" />
     <Compile Include="Utility\UserInterfaceUtility.cs" />
     <None Include="app.config" />

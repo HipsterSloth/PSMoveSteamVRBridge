@@ -263,8 +263,8 @@ namespace SystemTrayApp
 
     public class PSMoveServiceContext
     {
-        private static string PSMOVESTEAMVRBRIDE_REGKEY_PATH = @"SOFTWARE\WOW6432Node\PSMoveSteamVRBridge\PSMoveSteamVRBridge";
-        private static string PSMOVESERVICE_PROCESS_NAME = "PSMoveService";
+        public static string PSMOVESTEAMVRBRIDE_REGKEY_PATH = @"SOFTWARE\WOW6432Node\PSMoveSteamVRBridge\PSMoveSteamVRBridge";
+        public static string PSMOVESERVICE_PROCESS_NAME = "PSMoveService";
         private static int POLL_INTERVAL_5FPS = 1000 / 5; // ms
         private static int POLL_INTERVAL_60FPS = 1000 / 60; // ms
 
@@ -822,7 +822,7 @@ namespace SystemTrayApp
         {
             if (!GetIsPSMoveServiceRunning())
             {
-                string psm_path = GetPSMoveServicePath();
+                string psm_path = PathUtility.GetPSMoveServicePath();
                 if (psm_path.Length > 0)
                 {
                     bool bSuccess = false;
@@ -865,60 +865,6 @@ namespace SystemTrayApp
                     process.CloseMainWindow();
                 }
             }
-        }
-
-        public static string GetPSMoveSteamVRBridgeInstallPath()
-        {
-            string install_path= "";
-
-            if (PSMoveSteamVRBridgeConfig.Instance.UseInstallationPath) 
-            {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(PSMOVESTEAMVRBRIDE_REGKEY_PATH)) 
-                    {
-                        if (key != null)
-                        {
-                            object value = key.GetValue("Location");
-
-                            if (value is string)
-                            {
-                                install_path = (string)value;
-                            }
-                        }
-                    }                
-                }
-            }
-
-            if (install_path.Length == 0)
-            {
-                install_path = SystemTrayApp.Program.GetExecutingDirectoryName();
-            }
-
-            return install_path;
-        }
-
-        public string GetPSMoveServicePath()
-        {
-            string install_path = GetPSMoveSteamVRBridgeInstallPath();
-            string psm_path = "";
-
-            if (install_path.Length > 0)
-            {
-                psm_path = Path.Combine(install_path, PSMOVESERVICE_PROCESS_NAME);
-
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    psm_path = psm_path + ".exe";
-                }
-
-                if (!File.Exists(psm_path))
-                {
-                    psm_path = "";
-                }
-            }
-
-            return psm_path;
         }
 
         public static bool GetIsPSMoveServiceRunning()

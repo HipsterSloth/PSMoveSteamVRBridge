@@ -92,8 +92,7 @@ namespace SystemTrayApp
 
         string FetchOrCreateConfigPath()
         {
-            string HomeDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string ConfigPath = Path.Combine(HomeDir, "PSMoveSteamVRBridge");
+            string ConfigPath = PathUtility.GetAppDataFolderPath();
 
             if (!Directory.Exists(ConfigPath)) {
                 try {
