@@ -41,6 +41,9 @@ namespace SystemTrayApp
             if (_renderModelName.Length <= 0)
                 return false;
 
+            if (OpenVR.RenderModels == null)
+                return false;
+
             uint componentCount = OpenVR.RenderModels.GetComponentCount(_renderModelName);
             if (componentCount > 0) {
                 List<SteamVRRenderModelComponent> componentList = new List<SteamVRRenderModelComponent>();

@@ -115,6 +115,7 @@ namespace SystemTrayApp
                 ChildComponent component = _componentStateList[componentStateIndex];
 
                 if (component.componentName.Length > 0 &&
+                    OpenVR.RenderModels != null &&
                     OpenVR.RenderModels.GetComponentState(
                             _renderModelName,
                             component.componentName,

@@ -29,6 +29,12 @@ namespace SystemTrayApp
             get { return _devicePoses; }
         }
 
+        private TrackedDevicePose_t[] _rawDevicePoses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
+        public TrackedDevicePose_t[] RawDevicePoses
+        {
+            get { return _rawDevicePoses; }
+        }
+
         private Dictionary<uint, SteamVRTrackedDevice> _deviceTable = new Dictionary<uint, SteamVRTrackedDevice>();
         public Dictionary<uint, SteamVRTrackedDevice> DeviceTable
         {
@@ -79,6 +85,7 @@ namespace SystemTrayApp
 
         public delegate void TrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses);
         public event TrackedDevicesPoseUpdate TrackedDevicesPoseUpdateEvent;
+        public event TrackedDevicesPoseUpdate TrackedDevicesRawPoseUpdateEvent;
 
         public void Init()
         {
@@ -101,14 +108,26 @@ namespace SystemTrayApp
                 _steamVRSystem= OpenVR.Init(ref eVRInitError, EVRApplicationType.VRApplication_Overlay);
                 if (_steamVRSystem == null || eVRInitError != EVRInitError.None)
                 {
+                    Trace.TraceWarning(string.Format("SystemTrayApp.Connect - Failed to initialize SteamVR: {0}", eVRInitError.ToString()));
                     return false;
+                }
+
+                // Tell SteamVR where to look for our action manifest settings
+                EVRInputError eVRInputError= OpenVR.Input.SetActionManifestPath(PathUtility.GetActionManifestPathPath());
+                if (eVRInitError != EVRInitError.None)
+                {
+                    Trace.TraceWarning(string.Format("SystemTrayApp.Connect - Failed to set action manifest path: {0}", eVRInputError.ToString()));
                 }
 
                 // Fetch the initial set of connected tracked devices
                 _steamVRSystem.GetDeviceToAbsoluteTrackingPose(
-                    ETrackingUniverseOrigin.TrackingUniverseRawAndUncalibrated, 
+                    ETrackingUniverseOrigin.TrackingUniverseStanding, 
                     0.0f, 
                     _devicePoses);
+                _steamVRSystem.GetDeviceToAbsoluteTrackingPose(
+                    ETrackingUniverseOrigin.TrackingUniverseRawAndUncalibrated,
+                    0.0f,
+                    _rawDevicePoses);
 
                 for (uint DeviceIndex = 0; DeviceIndex < OpenVR.k_unMaxTrackedDeviceCount; ++DeviceIndex)
                 {
@@ -160,7 +179,7 @@ namespace SystemTrayApp
         private void RunFrame(object sender, EventArgs e)
         {
             VREvent_t Event = new VREvent_t();
-            while (_steamVRSystem.PollNextEvent(ref Event, VREventSize))
+            while (IsConnected && _steamVRSystem.PollNextEvent(ref Event, VREventSize))
             {
                 switch((EVREventType)Event.eventType)
                 {
@@ -198,7 +217,7 @@ namespace SystemTrayApp
                     Dictionary<uint, OpenGL.ModelMatrix> UpdatePosesTable = new Dictionary<uint, OpenGL.ModelMatrix>();
 
                     _steamVRSystem.GetDeviceToAbsoluteTrackingPose(
-                        ETrackingUniverseOrigin.TrackingUniverseRawAndUncalibrated, 0.0f, _devicePoses);
+                        ETrackingUniverseOrigin.TrackingUniverseStanding, 0.0f, _devicePoses);
 
                     for (uint DeviceIndex = 0; DeviceIndex < OpenVR.k_unMaxTrackedDeviceCount; ++DeviceIndex)
                     {
@@ -217,10 +236,27 @@ namespace SystemTrayApp
                     }
                 }
 
-                // Restart the timer once event handling is complete.
-                // This prevents overlapping callings to RunFrame.
-                // In practice this is only an issue when debugging.
-                PollTimer.Start();
+                // Fetch the latest raw controller pose data
+                if (TrackedDevicesRawPoseUpdateEvent != null)
+                {
+                    Dictionary<uint, OpenGL.ModelMatrix> UpdatePosesTable = new Dictionary<uint, OpenGL.ModelMatrix>();
+
+                    _steamVRSystem.GetDeviceToAbsoluteTrackingPose(
+                        ETrackingUniverseOrigin.TrackingUniverseRawAndUncalibrated, 0.0f, _rawDevicePoses);
+
+                    for (uint DeviceIndex = 0; DeviceIndex < OpenVR.k_unMaxTrackedDeviceCount; ++DeviceIndex)
+                    {
+                        if (_rawDevicePoses[DeviceIndex].bDeviceIsConnected)
+                        {
+                            UpdatePosesTable.Add(DeviceIndex, _deviceTable[DeviceIndex].Transform);
+                        }
+                    }
+
+                    if (UpdatePosesTable.Count > 0)
+                    {
+                        TrackedDevicesRawPoseUpdateEvent(UpdatePosesTable);
+                    }
+                }
             }
         }
 
@@ -264,7 +300,7 @@ namespace SystemTrayApp
             return controller;
         }
 
-        public void TriggerHapticPulse(uint DeviceId, float intensityFraction)
+        public void TriggerHapticPulse(uint DeviceId, float intensityFraction, float durationSeconds)
         {
             if (_deviceTable.ContainsKey(DeviceId))
             {
@@ -274,7 +310,7 @@ namespace SystemTrayApp
                 {
                     SteamVRController Controller = device as SteamVRController;
 
-                    Controller.TriggerHapticPulse(intensityFraction);
+                    Controller.TriggerHapticPulse(intensityFraction, durationSeconds);
                 }
             }
         }

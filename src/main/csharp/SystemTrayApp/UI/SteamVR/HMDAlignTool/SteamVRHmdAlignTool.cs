@@ -297,7 +297,7 @@ namespace SystemTrayApp
             _panelState = ePanelState.init;
         }
 
-        public void OnTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
+        public void OnRawTrackedDevicesPoseUpdate(Dictionary<uint, OpenGL.ModelMatrix> poses)
         {
             if (_panelState == ePanelState.waitForStableDevices || _panelState == ePanelState.recordDevices)
             {
@@ -360,7 +360,7 @@ namespace SystemTrayApp
         {
             uint DeviceId = _deviceSampleSet.ControllerDeviceId;
 
-            SteamVRContext.Instance.TriggerHapticPulse(DeviceId, 1.0f);
+            SteamVRContext.Instance.TriggerHapticPulse(DeviceId, 1.0f, 1.0f);
         }
 
         private void CancelButton_Click(object sender, EventArgs e)
@@ -407,7 +407,10 @@ namespace SystemTrayApp
             SamplingProgressBar.Visible = false;
 
             float sizeX= 1.0f, sizeY= 1.0f;
-            OpenVR.Chaperone.GetPlayAreaSize(ref sizeX, ref sizeY);
+            if (OpenVR.Chaperone != null)
+            {
+                OpenVR.Chaperone.GetPlayAreaSize(ref sizeX, ref sizeY);
+            }
 
             SteamVRFrame.EnabledMousePan = false;
             SteamVRFrame.EnabledMouseZoom = true;
@@ -468,11 +471,11 @@ namespace SystemTrayApp
                     break;
                 case ePanelState.waitForStableDevices:
                     SamplingProgressBar.Visible = false;
-                    SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent -= OnTrackedDevicesPoseUpdate;
+                    SteamVRContext.Instance.TrackedDevicesRawPoseUpdateEvent -= OnRawTrackedDevicesPoseUpdate;
                     break;
                 case ePanelState.recordDevices:
                     SamplingProgressBar.Visible = false;
-                    SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent -= OnTrackedDevicesPoseUpdate;
+                    SteamVRContext.Instance.TrackedDevicesRawPoseUpdateEvent -= OnRawTrackedDevicesPoseUpdate;
                     break;
                 case ePanelState.testAlignment:
                     CancelButton.Text = "Cancel";
@@ -508,7 +511,7 @@ namespace SystemTrayApp
                     else
                         _deviceSampleSet.ClearSamples();
 
-                    SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent += OnTrackedDevicesPoseUpdate;
+                    SteamVRContext.Instance.TrackedDevicesRawPoseUpdateEvent += OnRawTrackedDevicesPoseUpdate;
                     break;
                 case ePanelState.recordDevices:
                     InstructionsHeaderLabel.Text = "Sampling Devices";
@@ -516,7 +519,7 @@ namespace SystemTrayApp
                     SamplingProgressBar.SetProgressNoAnimation(0);
                     SamplingProgressBar.Visible = true;
                     _deviceSampleSet.ResetStableCount();
-                    SteamVRContext.Instance.TrackedDevicesPoseUpdateEvent += OnTrackedDevicesPoseUpdate;
+                    SteamVRContext.Instance.TrackedDevicesRawPoseUpdateEvent += OnRawTrackedDevicesPoseUpdate;
                     break;
                 case ePanelState.testAlignment:
                     InstructionsHeaderLabel.Text = "Test Alignment";

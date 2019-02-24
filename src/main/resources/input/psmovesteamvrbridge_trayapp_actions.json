@@ -1,0 +1,45 @@
+{
+    "default_bindings": [
+       {
+          "controller_type" : "vive_controller",
+          "binding_url" : "psmovesteamvrbridge_trayapp_psmove.json"
+       }
+    ], 
+    "actions": [
+    {
+      "name": "/actions/trayapp/in/triggerhaptic",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/trayapp/in/AnalogInput",
+      "type": "vector2"
+    },
+    {
+      "name": "/actions/trayapp/in/Hand_Right",
+      "type": "pose"
+    },
+    {
+      "name": "/actions/trayapp/in/Hand_Left",
+      "type": "pose"
+    },
+    {
+      "name": "/actions/trayapp/out/haptic_left",
+      "type": "vibration"
+    },
+    {
+      "name": "/actions/trayapp/out/haptic_right",
+      "type": "vibration"
+    }
+  ],
+    "localization" : [
+        {
+            "language_tag": "en_US",
+            "/actions/trayapp/in/triggerhaptic" : "Trigger Haptic Pulse",
+            "/actions/trayapp/in/AnalogInput" : "Analog Input",
+            "/actions/trayapp/in/Hand_Right" : "Right Hand Pose",
+            "/actions/trayapp/in/Hand_Left" : "Left Hand Pose",
+            "/actions/trayapp/out/haptic_left" : "Left Haptic Feedback",
+            "/actions/trayapp/out/haptic_right" : "Right Haptic Feedback"
+        }
+    ]
+}

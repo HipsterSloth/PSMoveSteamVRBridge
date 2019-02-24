@@ -171,12 +171,14 @@ namespace SystemTrayApp
         private void DisposeSteamVRResources()
         {
             if (_texturePtr != IntPtr.Zero) {
-                OpenVR.RenderModels.FreeTexture(_texturePtr);
+                if (OpenVR.RenderModels != null)
+                    OpenVR.RenderModels.FreeTexture(_texturePtr);
                 _texturePtr = IntPtr.Zero;
             }
 
             if (_renderModelPtr != IntPtr.Zero) {
-                OpenVR.RenderModels.FreeRenderModel(_renderModelPtr);
+                if (OpenVR.RenderModels != null)
+                    OpenVR.RenderModels.FreeRenderModel(_renderModelPtr);
                 _renderModelPtr = IntPtr.Zero;
             }
         }
