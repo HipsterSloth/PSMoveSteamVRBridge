@@ -20,6 +20,7 @@ namespace steamvrbridge {
         ConfigManagerPlatform()
             : m_hDirectory(INVALID_HANDLE_VALUE)
             , m_hTermEvent(0)
+            , m_kLoadConfigDelaySeconds(0.1)
         {
 
         }
@@ -82,7 +83,7 @@ namespace steamvrbridge {
             std::for_each(
                 m_configList.begin(), m_configList.end(), 
                 [](ConfigState &configState) {
-                    delete configState.configWorkerThread;
+                    delete configState.configNew;
                 });
             m_configList.clear();
         }
@@ -96,11 +97,16 @@ namespace steamvrbridge {
                 std::find_if(
                     m_configList.begin(), m_configList.end(), 
                     [config](const ConfigState &entry) -> bool {
-                        return entry.configMainThread == config;
+                        return entry.configExisting == config;
                     });
 
             if (it == m_configList.end()) {
-                m_configList.push_back({config, config->Clone(), false});
+                m_configList.push_back({
+                    config, // configMainThread
+                    config->Clone(), // configWorkerThread
+                    false, // bHasWorkerThreadConfigChanged
+                    std::chrono::system_clock::now() // lastUpdatedTimestamp
+                });
             }
         }
 
@@ -112,17 +118,43 @@ namespace steamvrbridge {
                 // Take the lock so that we can iterate over the config list
                 std::lock_guard<std::mutex> scoped_lock(m_configListMutex);
 
-                // Notify each dirty config that it was changed
-                std::for_each(
-                    m_configList.begin(), m_configList.end(), 
-                    [](ConfigState &configState) {
-                        if (configState.bHasWorkerThreadConfigChanged) {
-                            configState.configMainThread->OnConfigChanged(configState.configWorkerThread);
-                            configState.bHasWorkerThreadConfigChanged= false;
-                        }
-                    });
+                // Reload any dirty config, 
+                // then notify the existing config that it was changed
+                bool bAnyPendingConfigLoads= false;
+                for(auto iter = m_configList.begin(); iter != m_configList.end(); ++iter)
+                {
+                    ConfigState &configState= *iter;
 
-                m_bAnyWorkerThreadConfigsChanged.store(false);
+                    if (configState.bHasWorkerThreadConfigChanged) 
+                    {
+                        auto now = std::chrono::system_clock::now();
+                        std::chrono::duration<double> diff = now - configState.lastUpdatedTimestamp;
+
+                        if (diff.count() > m_kLoadConfigDelaySeconds)
+                        {
+                            if (configState.configNew->load())
+                            {
+                                configState.configExisting->OnConfigChanged(configState.configNew);
+                                configState.bHasWorkerThreadConfigChanged= false;
+                            }
+                            else
+                            {
+                                // Need to retry load
+                                bAnyPendingConfigLoads= true;
+                            }
+                        }
+                        else
+                        {
+                            // Need to wait on timeout
+                            bAnyPendingConfigLoads= true;
+                        }
+                    }
+                }
+
+                if (!bAnyPendingConfigLoads)
+                {
+                    m_bAnyWorkerThreadConfigsChanged.store(false);
+                }
             }
         }
 
@@ -179,6 +211,9 @@ namespace steamvrbridge {
                                 std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
                                 std::string fileName= converter.to_bytes(wsFileName);
 
+                                // Trim off any \0's at the end of the string
+                                fileName.erase(std::find(fileName.begin(), fileName.end(), '\0'), fileName.end());
+
                                 OnConfigFileChanged(fileName);
                             }
 
@@ -221,16 +256,16 @@ namespace steamvrbridge {
                 m_configList.begin(), m_configList.end(), 
                 [filename](const ConfigState &entry) -> bool 
                 {
-                    return entry.configMainThread->getConfigName() == filename;
+                    const std::string entryFilename= entry.configExisting->getConfigName();
+                    return entryFilename.compare(filename) == 0;
                 });
 
             if (it != m_configList.end())
             {
                 ConfigState &entry = *it;
 
-                entry.configWorkerThread->load();
                 entry.bHasWorkerThreadConfigChanged= true;
-
+                entry.lastUpdatedTimestamp= std::chrono::system_clock::now();
                 m_bAnyWorkerThreadConfigsChanged.store(true);
             }
         }
@@ -238,9 +273,10 @@ namespace steamvrbridge {
     protected:
         struct ConfigState
         {
-            Config *configMainThread;
-            Config *configWorkerThread;
+            Config *configExisting;
+            Config *configNew;
             bool bHasWorkerThreadConfigChanged;
+            std::chrono::time_point<std::chrono::system_clock> lastUpdatedTimestamp;
         };
 
         HANDLE m_hDirectory;
@@ -249,6 +285,7 @@ namespace steamvrbridge {
         std::mutex m_configListMutex;
         std::vector<ConfigState> m_configList;
         std::atomic_bool m_bAnyWorkerThreadConfigsChanged;
+        double m_kLoadConfigDelaySeconds;
     };
 #endif
 
@@ -274,7 +311,7 @@ namespace steamvrbridge {
             return false;
 		}
 
-        if (m_platformState->Init(m_configFolderPath))
+        if (!m_platformState->Init(m_configFolderPath))
         {
             Logger::Error("ConfigManager::Init() - Failed to init platform state.");
             return false;

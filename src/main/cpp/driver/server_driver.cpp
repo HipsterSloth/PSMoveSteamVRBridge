@@ -31,7 +31,7 @@ namespace steamvrbridge {
 
 	vr::EVRInitError CServerDriver_PSMoveService::Init(
 		vr::IVRDriverContext *pDriverContext) {
-		//initialise log counter for fps measurement
+		//initialize log counter for fps measurement
 		VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
 
 		vr::EVRInitError initError = vr::VRInitError_None;
@@ -44,7 +44,10 @@ namespace steamvrbridge {
 
             if (m_configManager.Init())
             {
-			    // Load the config file, if it exists
+			    // Register the server driver config file with the config manager to listen for updates
+                m_config.init();
+
+                // Load the config file
 			    m_config.load();
 
 			    // Launch PSMoveService automatically if it's not already running

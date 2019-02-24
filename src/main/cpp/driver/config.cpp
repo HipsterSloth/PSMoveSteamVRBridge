@@ -56,9 +56,18 @@ namespace steamvrbridge {
 
 		if (Utils::Path_FileExists( path ) )
 		{
-			configuru::Config cfg = configuru::parse_file(path, configuru::JSON);
-			ReadFromJSON(cfg);
-			bLoadedOk = true;
+            try
+            {
+			    configuru::Config cfg = configuru::parse_file(path, configuru::JSON);
+			    ReadFromJSON(cfg);
+                Logger::Info("Config::load - Successfully (re)loaded: %s", path.c_str());
+			    bLoadedOk = true;
+            }
+            catch (std::runtime_error e)
+            {
+                Logger::Warn("Config::load - Error loading: %s", path.c_str());
+                Logger::Warn("Config::load - %s", e.what());
+            }
 		}
 
 		return bLoadedOk;
