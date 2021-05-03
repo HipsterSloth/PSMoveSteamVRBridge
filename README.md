@@ -1,7 +1,10 @@
+# NOTICE OF ARCHIVAL
+This project is no longer in development and is now archived. Anyone that wants to continue work on this project is welcome in their own fork, but repo is no longer accepting pull requests, considering any issues, anwswering questions, or offering support. WYSIWYG.
+
 # PSMoveSteamVRBridge [![Build status](https://ci.appveyor.com/api/projects/status/epo1qleh474o539v?svg=true)](https://ci.appveyor.com/project/HipsterSloth/psmovesteamvrbridge)  [![Documentation](https://img.shields.io/badge/code-documented-brightgreen.svg)](https://superevensteven.github.io/PSMoveSteamVRBridge/annotated.html)
 PSMoveSteamVRBridge is a client for [PSMoveService](https://github.com/cboulay/PSMoveService) that takes the pose and button data of PSMove/DualShock4/PSNavi controller and forwards it into SteamVR. The [FAQ](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki/Frequently-Asked-Questions) is a good starting point for any specific questions you may have about the project. 
 
-**NOTE** This is alpha software still heavily in development. If you are downloading this project to play games on SteamVR please be aware that this tool may not work for the game you want to play so buyer beware. That said, if you are feeling brave and want to test this we appreciate the feedback about what works and what doesn't.
+**NOTE** This is alpha software. If you are downloading this project to play games on SteamVR please be aware that this tool may not work for the game you want to play so buyer beware.
 
 # Prebuilt Releases
 You can download prebuilt releases (Windows only at the moment) from the [Releases](https://github.com/HipsterSloth/PSMoveSteamVRBridge/releases) page. Then follow the initial setup instructions found in the [wiki](https://github.com/HipsterSloth/PSMoveSteamVRBridge/wiki#initial-setup-video). 
@@ -18,19 +21,6 @@ If you want to make modifications to the service or want to debug it, you can bu
 In the installer folder of this project is an XML definition file for the BitRock installer project. This is a cross-platform installer that offer free licenses for opensource projects. This project's installer is built using that.
 
 [![alt text][bitrock-logo]][bitrock-url]
-
-# Getting Help
-Please start with the wiki. If you can't find help with your problem then please search through the issues (especially the closed ones) to see if your problem has been addressed already. If you still find no previous mention of your problem then you have one of two options:
-
-A) Join us in the the [PSMoveService Google Group](https://groups.google.com/forum/#!forum/psmoveservice) to ask your question. There are several people there who have experience debugging problems with the PSMoveService and PSMoveSteamVRBridge.
-
-B) If your problem actually is a new bug and you have files to attach (logs, pictures, etc) then go ahead and create a new issue. That said, it's probably best to start with the Google Group first anyway since we can help add context before posting an issue.
-
-# Near Term Goals
- * Ongoing Stabilization of plugin
- 
-# Long Term Goals
- * In VR configuration of settings
 
 # Attribution and Thanks
 Special thanks to the following people who helped make this project possible:
